@@ -1,0 +1,6 @@
+export { useUserStore } from './user.store'
+export { useUIStore } from './ui.store'
+export { useTaskStore } from './tasks.store'
+export { useFriendsStore } from './friends.store'
+export { useEventsStore } from './events.store'
+export { useWishlistStore } from './wishlist.store'
