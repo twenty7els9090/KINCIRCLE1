@@ -21,8 +21,20 @@ export function TabBar() {
   const { activeTab, setActiveTab } = useUIStore()
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#F0E8E8] safe-area-bottom">
-      <div className="max-w-[450px] mx-auto flex justify-around items-center h-16">
+    <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-4 pointer-events-none">
+      <nav
+        className={cn(
+          'max-w-[400px] mx-auto pointer-events-auto',
+          'rounded-full px-2 py-2',
+          'flex items-center justify-around'
+        )}
+        style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.85)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.03), 0 4px 20px rgba(0, 0, 0, 0.05)',
+        }}
+      >
         {tabs.map((tab) => {
           const Icon = tab.icon
           const isActive = activeTab === tab.id
@@ -32,21 +44,30 @@ export function TabBar() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'flex flex-col items-center justify-center gap-1 px-4 py-2 transition-all duration-200',
-                'min-w-[60px] rounded-xl',
-                isActive ? 'text-burgundy' : 'text-[#8E8E93]'
+                'flex flex-col items-center justify-center gap-1',
+                'px-4 py-2 rounded-full',
+                'transition-all duration-200 ease-out',
+                'min-w-[70px]',
+                isActive ? 'scale-105' : 'scale-100'
               )}
             >
-              <Icon
+              <div
                 className={cn(
-                  'transition-all duration-200',
-                  isActive ? 'w-6 h-6 stroke-[2.5]' : 'w-6 h-6 stroke-[2]'
+                  'p-2 rounded-full transition-all duration-200',
+                  isActive && 'bg-burgundy/10'
                 )}
-              />
+              >
+                <Icon
+                  className={cn(
+                    'transition-all duration-200',
+                    isActive ? 'w-5 h-5 text-burgundy stroke-[2.5]' : 'w-5 h-5 text-[#8E8E93] stroke-[2]'
+                  )}
+                />
+              </div>
               <span
                 className={cn(
                   'text-xs transition-all duration-200',
-                  isActive ? 'font-medium' : 'font-normal'
+                  isActive ? 'font-semibold text-burgundy' : 'font-normal text-[#8E8E93]'
                 )}
               >
                 {tab.label}
@@ -54,7 +75,7 @@ export function TabBar() {
             </button>
           )
         })}
-      </div>
-    </nav>
+      </nav>
+    </div>
   )
 }

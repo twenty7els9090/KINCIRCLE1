@@ -2,24 +2,13 @@
 
 import { useState } from 'react'
 import {
-  CheckCircle2,
+  Check,
   Archive,
   Trash2,
-  MoreVertical,
   Package,
-  Sparkles,
-  Clock,
-  User,
+  Plus,
+  Minus,
 } from 'lucide-react'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 import type { Task, TaskCategory, User as UserType } from '@/lib/supabase/database.types'
 import * as LucideIcons from 'lucide-react'
@@ -30,6 +19,7 @@ interface TaskCardProps {
     creator?: UserType | null
   }
   onComplete?: (taskId: string) => void
+  onUncomplete?: (taskId: string) => void
   onArchive?: (taskId: string) => void
   onDelete?: (taskId: string) => void
   onClick?: (taskId: string) => void
@@ -45,12 +35,13 @@ function DynamicIcon({ name, className }: { name: string; className?: string }) 
 export function TaskCard({
   task,
   onComplete,
+  onUncomplete,
   onArchive,
   onDelete,
   onClick,
   isHighlighted,
 }: TaskCardProps) {
-  const [isPressed, setIsPressed] = useState(false)
+  const [isAnimating, setIsAnimating] = useState(false)
 
   const isCompleted = task.status === 'completed'
   const isArchived = task.status === 'archived'
@@ -74,159 +65,185 @@ export function TaskCard({
     return `${task.quantity} ${unit}`
   }
 
+  // Handle action button click
+  const handleActionClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setIsAnimating(true)
+    
+    setTimeout(() => {
+      setIsAnimating(false)
+    }, 300)
+
+    if (isCompleted && onUncomplete) {
+      onUncomplete(task.id)
+    } else if (!isCompleted && onComplete) {
+      onComplete(task.id)
+    }
+  }
+
+  // Handle delete/archive click
+  const handleDeleteOrArchive = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (isCompleted && onArchive) {
+      onArchive(task.id)
+    } else if (!isCompleted && onDelete) {
+      onDelete(task.id)
+    }
+  }
+
   return (
     <div
       onClick={() => onClick?.(task.id)}
-      onMouseDown={() => setIsPressed(true)}
-      onMouseUp={() => setIsPressed(false)}
-      onMouseLeave={() => setIsPressed(false)}
       className={cn(
-        'relative bg-[#F8F5F5] rounded-2xl p-4 transition-all duration-200',
-        'hover:shadow-card cursor-pointer',
-        isPressed && 'scale-[0.98]',
+        'relative bg-white rounded-[20px] overflow-hidden',
+        'transition-all duration-300 ease-out',
+        'hover:shadow-lg cursor-pointer',
         isHighlighted && 'card-highlight',
-        isCompleted && 'opacity-75'
+        isCompleted && 'opacity-90'
       )}
+      style={{
+        boxShadow: '0 8px 20px rgba(0, 0, 0, 0.05)',
+      }}
     >
-      <div className="flex gap-3">
-        {/* Image/Icon section */}
-        <div
-          className={cn(
-            'flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center overflow-hidden',
-            !task.image_url && getGradientClass()
-          )}
-        >
-          {task.image_url ? (
-            <img
-              src={task.image_url}
-              alt={task.title}
-              className="w-full h-full object-cover"
-            />
-          ) : (
+      {/* Image section - top part */}
+      <div
+        className={cn(
+          'relative w-full h-40 rounded-t-[20px] overflow-hidden',
+          !task.image_url && getGradientClass()
+        )}
+      >
+        {task.image_url ? (
+          <img
+            src={task.image_url}
+            alt={task.title}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
             <DynamicIcon
               name={task.category?.icon || 'Package'}
-              className="w-7 h-7 text-white"
+              className="w-16 h-16 text-white/80"
             />
+          </div>
+        )}
+
+        {/* Delete/Archive button - top right */}
+        <button
+          onClick={handleDeleteOrArchive}
+          className={cn(
+            'absolute top-3 right-3 w-10 h-10 rounded-full',
+            'flex items-center justify-center',
+            'transition-all duration-200',
+            'hover:scale-110 active:scale-95',
+            isCompleted 
+              ? 'bg-white/90 hover:bg-white' 
+              : 'bg-white/90 hover:bg-red-50'
+          )}
+        >
+          {isCompleted ? (
+            <Archive className="w-5 h-5 text-[#8E8E93] hover:text-burgundy" />
+          ) : (
+            <Trash2 className="w-5 h-5 text-[#8E8E93] hover:text-red-500" />
+          )}
+        </button>
+
+        {/* Category badge - top left */}
+        {task.category && (
+          <div className="absolute top-3 left-3">
+            <span className={cn(
+              'px-3 py-1.5 rounded-full text-xs font-medium',
+              'bg-white/90 backdrop-blur-sm text-[#1C1C1E]'
+            )}>
+              {task.category.name}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Content section */}
+      <div className="p-4">
+        {/* Title */}
+        <h3
+          className={cn(
+            'text-xl font-semibold text-[#1C1C1E]',
+            isCompleted && 'line-through text-[#8E8E93]'
+          )}
+        >
+          {task.title}
+        </h3>
+
+        {/* Description */}
+        {task.description && (
+          <p className="text-sm text-[#8E8E93] mt-1 line-clamp-2">
+            {task.description}
+          </p>
+        )}
+
+        {/* Meta info row */}
+        <div className="flex items-center gap-3 mt-3">
+          {/* Quantity */}
+          {getQuantityDisplay() && (
+            <span className="text-sm text-[#8E8E93]">
+              {getQuantityDisplay()}
+            </span>
+          )}
+
+          {/* Price */}
+          {task.price && (
+            <span className="text-sm font-medium text-burgundy">
+              {task.price.toLocaleString('ru-RU')} ₽
+            </span>
+          )}
+
+          {/* Assigned to */}
+          {task.assigned_to && task.assigned_to.length > 0 && (
+            <span className="text-xs text-[#8E8E93]">
+              для {task.assigned_to.length} чел.
+            </span>
           )}
         </div>
 
-        {/* Content section */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <h4
-                className={cn(
-                  'font-medium text-[#1C1C1E] truncate',
-                  isCompleted && 'line-through text-[#8E8E93]'
-                )}
-              >
-                {task.title}
-              </h4>
-              {task.description && (
-                <p className="text-sm text-[#8E8E93] truncate mt-0.5">
-                  {task.description}
-                </p>
-              )}
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center gap-1">
-              {isCompleted && !isArchived && onArchive && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-[#8E8E93] hover:text-burgundy"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onArchive(task.id)
-                  }}
-                >
-                  <Archive className="w-4 h-4" />
-                </Button>
-              )}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-[#8E8E93]"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <MoreVertical className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {!isCompleted && onComplete && (
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onComplete(task.id)
-                      }}
-                    >
-                      <CheckCircle2 className="w-4 h-4 mr-2 text-green-500" />
-                      Выполнено
-                    </DropdownMenuItem>
-                  )}
-                  {onDelete && (
-                    <DropdownMenuItem
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onDelete(task.id)
-                      }}
-                      className="text-red-500"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Удалить
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-
-          {/* Meta info */}
-          <div className="flex items-center gap-2 mt-2 flex-wrap">
-            {/* Category badge */}
-            {task.category && (
-              <Badge
-                variant="secondary"
-                className="bg-white text-[#8E8E93] text-xs"
-              >
-                {task.category.name}
-              </Badge>
+        {/* Action button */}
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={handleActionClick}
+            disabled={isAnimating}
+            className={cn(
+              'flex items-center gap-2 px-5 py-2.5 rounded-full',
+              'text-sm font-medium transition-all duration-300',
+              'active:scale-95',
+              isAnimating && 'scale-110',
+              isCompleted
+                ? 'bg-burgundy text-white'
+                : 'bg-burgundy text-white hover:bg-burgundy-light'
             )}
-
-            {/* Quantity */}
-            {getQuantityDisplay() && (
-              <Badge
-                variant="secondary"
-                className="bg-white text-[#8E8E93] text-xs"
-              >
-                {getQuantityDisplay()}
-              </Badge>
+          >
+            {isCompleted ? (
+              <>
+                <Check className="w-4 h-4" strokeWidth={2.5} />
+                <span>Добавлено</span>
+              </>
+            ) : (
+              <>
+                <Plus className="w-4 h-4" strokeWidth={2.5} />
+                <span>Добавить</span>
+              </>
             )}
-
-            {/* Price */}
-            {task.price && (
-              <Badge
-                variant="secondary"
-                className="bg-burgundy/10 text-burgundy text-xs"
-              >
-                {task.price.toLocaleString('ru-RU')} ₽
-              </Badge>
-            )}
-          </div>
-
-          {/* Completed info */}
-          {isCompleted && task.completed_at && (
-            <div className="flex items-center gap-1.5 mt-2 text-xs text-[#8E8E93]">
-              <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
-              <span>
-                Выполнено {new Date(task.completed_at).toLocaleDateString('ru-RU')}
-              </span>
-            </div>
-          )}
+          </button>
         </div>
+
+        {/* Completed info */}
+        {isCompleted && task.completed_at && (
+          <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-[#F0E8E8]">
+            <Check className="w-4 h-4 text-green-500" />
+            <span className="text-xs text-[#8E8E93]">
+              Выполнено {new Date(task.completed_at).toLocaleDateString('ru-RU', {
+                day: 'numeric',
+                month: 'short'
+              })}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   )

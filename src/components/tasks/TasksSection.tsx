@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Package, Plus, Archive, Filter } from 'lucide-react'
+import { Package, Plus, Archive } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -103,6 +103,8 @@ export function TasksSection() {
 
       if (!error && data) {
         setTasks([data as Task, ...tasks])
+        setHighlightedTaskId(data.id)
+        setTimeout(() => setHighlightedTaskId(null), 2000)
       }
     } catch (error) {
       console.error('Error creating task:', error)
@@ -132,6 +134,32 @@ export function TasksSection() {
       }
     } catch (error) {
       console.error('Error completing task:', error)
+    }
+  }
+
+  const handleUncompleteTask = async (taskId: string) => {
+    try {
+      const supabase = getSupabaseClient()
+      const { error } = await supabase
+        .from('tasks')
+        .update({
+          status: 'active',
+          completed_by: null,
+          completed_at: null,
+        })
+        .eq('id', taskId)
+
+      if (!error) {
+        setTasks(
+          tasks.map((t) =>
+            t.id === taskId
+              ? { ...t, status: 'active' as const, completed_by: null, completed_at: null }
+              : t
+          )
+        )
+      }
+    } catch (error) {
+      console.error('Error uncompleting task:', error)
     }
   }
 
@@ -197,27 +225,47 @@ export function TasksSection() {
     <div className="flex-1 flex flex-col">
       {/* Progress bar */}
       {progress.total > 0 && (
-        <div className="px-4 py-3 bg-white border-b border-[#F0E8E8]">
+        <div className="px-4 py-3 bg-white">
           <ProgressBar completed={progress.completed} total={progress.total} />
         </div>
       )}
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1">
-        <div className="px-4 pt-4 pb-2 border-b border-[#F0E8E8]">
-          <TabsList className="bg-[#F8F5F5]">
-            <TabsTrigger value="active" className="data-[state=active]:bg-white data-[state=active]:text-burgundy">
+        <div className="px-4 pt-4 pb-3">
+          <TabsList className="bg-[#F8F5F5] rounded-full p-1">
+            <TabsTrigger 
+              value="active" 
+              className="rounded-full data-[state=active]:bg-burgundy data-[state=active]:text-white transition-all duration-200"
+            >
               Активные
               {activeTasks.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-burgundy/10">
+                <span className={cn(
+                  "ml-1.5 px-2 py-0.5 text-xs rounded-full",
+                  activeTab === 'active' ? "bg-white/20 text-white" : "bg-burgundy/10 text-burgundy"
+                )}>
                   {activeTasks.length}
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="completed" className="data-[state=active]:bg-white data-[state=active]:text-burgundy">
+            <TabsTrigger 
+              value="completed" 
+              className="rounded-full data-[state=active]:bg-burgundy data-[state=active]:text-white transition-all duration-200"
+            >
               Выполнено
+              {completedTasks.length > 0 && (
+                <span className={cn(
+                  "ml-1.5 px-2 py-0.5 text-xs rounded-full",
+                  activeTab === 'completed' ? "bg-white/20 text-white" : "bg-burgundy/10 text-burgundy"
+                )}>
+                  {completedTasks.length}
+                </span>
+              )}
             </TabsTrigger>
-            <TabsTrigger value="archived" className="data-[state=active]:bg-white data-[state=active]:text-burgundy">
+            <TabsTrigger 
+              value="archived" 
+              className="rounded-full data-[state=active]:bg-burgundy data-[state=active]:text-white transition-all duration-200"
+            >
               <Archive className="w-4 h-4 mr-1" />
               Архив
             </TabsTrigger>
@@ -225,13 +273,13 @@ export function TasksSection() {
         </div>
 
         {/* Task lists */}
-        <div className="flex-1 overflow-y-auto">
-          <TabsContent value="active" className="p-4 space-y-3 m-0">
+        <div className="flex-1 overflow-y-auto px-4 pb-24">
+          <TabsContent value="active" className="space-y-4 m-0 mt-2">
             {activeTasks.length === 0 ? (
               <EmptyState
                 icon={Package}
                 title="Нет активных задач"
-                description="Добавьте первую задачу в список"
+                description="Нажмите + чтобы добавить задачу"
               />
             ) : (
               activeTasks.map((task) => (
@@ -239,6 +287,7 @@ export function TasksSection() {
                   key={task.id}
                   task={task}
                   onComplete={handleCompleteTask}
+                  onUncomplete={handleUncompleteTask}
                   onDelete={handleDeleteTask}
                   isHighlighted={highlightedTaskId === task.id}
                 />
@@ -246,18 +295,20 @@ export function TasksSection() {
             )}
           </TabsContent>
 
-          <TabsContent value="completed" className="p-4 space-y-3 m-0">
+          <TabsContent value="completed" className="space-y-4 m-0 mt-2">
             {completedTasks.length === 0 ? (
               <EmptyState
                 icon={Package}
                 title="Нет выполненных задач"
-                description="Отмеченные как выполненные задачи появятся здесь"
+                description="Нажмите 'Добавить' на карточке задачи"
               />
             ) : (
               completedTasks.map((task) => (
                 <TaskCard
                   key={task.id}
                   task={task}
+                  onComplete={handleCompleteTask}
+                  onUncomplete={handleUncompleteTask}
                   onArchive={handleArchiveTask}
                   onDelete={handleDeleteTask}
                 />
@@ -265,7 +316,7 @@ export function TasksSection() {
             )}
           </TabsContent>
 
-          <TabsContent value="archived" className="p-4 space-y-3 m-0">
+          <TabsContent value="archived" className="space-y-4 m-0 mt-2">
             {archivedTasks.length === 0 ? (
               <EmptyState
                 icon={Archive}
@@ -284,13 +335,12 @@ export function TasksSection() {
       {/* Floating action button */}
       <button
         onClick={() => setShowTaskForm(true)}
-        className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95"
-        style={{ 
-          backgroundColor: '#8B1E3F',
+        className="fixed bottom-24 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 bg-burgundy"
+        style={{
           boxShadow: '0 4px 20px rgba(139, 30, 63, 0.3)'
         }}
       >
-        <Plus className="w-6 h-6" style={{ color: 'white', strokeWidth: 2.5 }} />
+        <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
       </button>
 
       {/* Task form modal */}
@@ -304,4 +354,9 @@ export function TasksSection() {
       />
     </div>
   )
+}
+
+// Helper function
+function cn(...classes: (string | boolean | undefined)[]) {
+  return classes.filter(Boolean).join(' ')
 }

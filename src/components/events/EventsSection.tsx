@@ -204,7 +204,7 @@ export function EventsSection() {
       </div>
 
       {/* Events list */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div className="flex-1 overflow-y-auto p-4 pb-28 space-y-3">
         {displayEvents.length === 0 ? (
           <EmptyState
             icon={CalendarDays}
@@ -231,13 +231,12 @@ export function EventsSection() {
       {/* Floating action button */}
       <button
         onClick={() => setShowEventForm(true)}
-        className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95"
-        style={{ 
-          backgroundColor: '#8B1E3F',
+        className="fixed bottom-24 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 bg-burgundy"
+        style={{
           boxShadow: '0 4px 20px rgba(139, 30, 63, 0.3)'
         }}
       >
-        <Plus className="w-6 h-6" style={{ color: 'white', strokeWidth: 2.5 }} />
+        <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
       </button>
 
       {/* Event form modal */}
