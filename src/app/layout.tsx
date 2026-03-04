@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
@@ -45,12 +46,15 @@ export default function RootLayout({
   return (
     <html lang="ru" suppressHydrationWarning>
       <head>
-        {/* Telegram WebApp script */}
-        <script src="https://telegram.org/js/telegram-web-app.js" async />
+        {/* Telegram WebApp script - must load before React */}
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white text-[#1C1C1E]`}
       >
+        <Script
+          src="https://telegram.org/js/telegram-web-app.js"
+          strategy="beforeInteractive"
+        />
         {children}
         <Toaster />
       </body>

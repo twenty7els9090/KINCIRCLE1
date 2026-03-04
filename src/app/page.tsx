@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { TabBar } from '@/components/layout/TabBar'
 import { Header } from '@/components/layout/Header'
 import { TasksSection } from '@/components/tasks/TasksSection'
@@ -9,7 +9,6 @@ import { WishlistSection } from '@/components/wishlist/WishlistSection'
 import { ProfileSection } from '@/components/profile/ProfileSection'
 import { BirthdayReminders } from '@/components/shared/BirthdayReminders'
 import { useUIStore, useUserStore, useFriendsStore } from '@/store'
-import { getSupabaseClient } from '@/lib/supabase'
 import { Loader2 } from 'lucide-react'
 
 export default function Home() {
@@ -19,87 +18,7 @@ export default function Home() {
   const [isInitialized, setIsInitialized] = useState(false)
   const [birthdayUsers, setBirthdayUsers] = useState<any[]>([])
 
-  // Initialize Telegram WebApp and authenticate
-  useEffect(() => {
-    initializeApp()
-  }, [])
-
-  const initializeApp = async () => {
-    setLoading(true)
-
-    try {
-      // Check if running in Telegram WebApp
-      if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
-        const tg = (window as any).Telegram.WebApp
-        
-        // Expand the mini app
-        tg.expand()
-        
-        // Get init data
-        const initData = tg.initData
-        const tgUser = tg.initDataUnsafe?.user
-
-        if (tgUser) {
-          // Authenticate with our backend
-          const response = await fetch('/api/auth/telegram', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ initData }),
-          })
-
-          const data = await response.json()
-          
-          if (data.user) {
-            setUser(data.user)
-            
-            // Fetch families
-            await fetchUserFamilies(data.user.id)
-          }
-        }
-      } else {
-        // Demo mode for development
-        console.log('Not running in Telegram, using demo mode')
-        
-        // Create a demo user for development
-        const demoUser = {
-          id: 'demo-user-id',
-          telegram_id: 123456789,
-          username: 'demo_user',
-          first_name: 'Demo',
-          last_name: 'User',
-          avatar_url: null,
-          birthday: '1990-05-15',
-          chat_id: 123456789,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }
-        setUser(demoUser)
-        
-        // Create demo family
-        setFamilies([{
-          id: 'demo-family-id',
-          name: 'Демо семья',
-          created_by: 'demo-user-id',
-          created_at: new Date().toISOString(),
-          members: [{
-            id: 'demo-member-id',
-            family_id: 'demo-family-id',
-            user_id: 'demo-user-id',
-            role: 'admin',
-            joined_at: new Date().toISOString(),
-            user: demoUser,
-          }],
-        }])
-      }
-    } catch (error) {
-      console.error('Error initializing app:', error)
-    } finally {
-      setLoading(false)
-      setIsInitialized(true)
-    }
-  }
-
-  const fetchUserFamilies = async (userId: string) => {
+  const fetchUserFamilies = useCallback(async (userId: string) => {
     try {
       const response = await fetch(`/api/families?userId=${userId}`)
       const data = await response.json()
@@ -110,7 +29,126 @@ export default function Home() {
     } catch (error) {
       console.error('Error fetching families:', error)
     }
+  }, [setFamilies])
+
+  const authenticateWithTelegram = useCallback(async (tgUser: any, initData: string) => {
+    try {
+      const response = await fetch('/api/auth/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ initData }),
+      })
+
+      const data = await response.json()
+      
+      if (data.user) {
+        setUser(data.user)
+        await fetchUserFamilies(data.user.id)
+        return true
+      }
+    } catch (error) {
+      console.error('Error authenticating:', error)
+    }
+    return false
+  }, [setUser, fetchUserFamilies])
+
+  const initializeApp = useCallback(async () => {
+    setLoading(true)
+
+    try {
+      // Check if running in Telegram WebApp with retry
+      let tg: any = null
+      let attempts = 0
+      const maxAttempts = 10
+
+      // Wait for Telegram WebApp to be ready
+      while (!tg && attempts < maxAttempts) {
+        if (typeof window !== 'undefined') {
+          tg = (window as any).Telegram?.WebApp
+        }
+        if (!tg) {
+          await new Promise(resolve => setTimeout(resolve, 100))
+          attempts++
+        }
+      }
+
+      if (tg) {
+        console.log('Telegram WebApp detected, initializing...')
+        
+        // Expand the mini app
+        tg.expand()
+        
+        // Call ready() to signal that app is ready
+        if (tg.ready) {
+          tg.ready()
+        }
+
+        // Get init data
+        const initData = tg.initData
+        const tgUser = tg.initDataUnsafe?.user
+
+        console.log('Telegram user:', tgUser)
+
+        if (tgUser && initData) {
+          const success = await authenticateWithTelegram(tgUser, initData)
+          if (success) {
+            console.log('Successfully authenticated with Telegram')
+          } else {
+            console.log('Failed to authenticate, falling back to demo')
+            await initializeDemoMode()
+          }
+        } else {
+          console.log('No Telegram user data, falling back to demo')
+          await initializeDemoMode()
+        }
+      } else {
+        console.log('Telegram WebApp not found after retries, using demo mode')
+        await initializeDemoMode()
+      }
+    } catch (error) {
+      console.error('Error initializing app:', error)
+      await initializeDemoMode()
+    } finally {
+      setLoading(false)
+      setIsInitialized(true)
+    }
+  }, [setLoading, authenticateWithTelegram])
+
+  const initializeDemoMode = async () => {
+    const demoUser = {
+      id: 'demo-user-id',
+      telegram_id: 123456789,
+      username: 'demo_user',
+      first_name: 'Demo',
+      last_name: 'User',
+      avatar_url: null,
+      birthday: '1990-05-15',
+      chat_id: 123456789,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+    setUser(demoUser)
+    
+    setFamilies([{
+      id: 'demo-family-id',
+      name: 'Демо семья',
+      created_by: 'demo-user-id',
+      created_at: new Date().toISOString(),
+      members: [{
+        id: 'demo-member-id',
+        family_id: 'demo-family-id',
+        user_id: 'demo-user-id',
+        role: 'admin',
+        joined_at: new Date().toISOString(),
+        user: demoUser,
+      }],
+    }])
   }
+
+  // Initialize Telegram WebApp and authenticate
+  useEffect(() => {
+    initializeApp()
+  }, [initializeApp])
 
   // Get upcoming birthdays from friends
   useEffect(() => {
@@ -122,7 +160,7 @@ export default function Home() {
         last_name: f.last_name,
         avatar_url: f.avatar_url,
         birthday: f.birthday!,
-        hasWishlist: true, // Assume all have wishlist for demo
+        hasWishlist: true,
       }))
       .filter((f) => {
         const birthday = new Date(f.birthday)
@@ -133,7 +171,7 @@ export default function Home() {
         const daysUntil = Math.ceil(
           (birthday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
         )
-        return daysUntil <= 30 // Show birthdays within 30 days
+        return daysUntil <= 30
       })
       .slice(0, 5)
     
@@ -165,7 +203,7 @@ export default function Home() {
       )}
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col pb-16">
+      <main className="flex-1 flex flex-col">
         {activeTab === 'tasks' && <TasksSection />}
         {activeTab === 'events' && <EventsSection />}
         {activeTab === 'wishlist' && <WishlistSection />}
