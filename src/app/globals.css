@@ -2,6 +2,23 @@
 
 /* KINCIRCLE Design System - White + Burgundy Theme */
 
+/* Tailwind v4 Theme Configuration */
+@theme {
+  --color-burgundy: #8B1E3F;
+  --color-burgundy-light: #A93B5C;
+  --color-burgundy-dark: #6B1830;
+  --color-burgundy-50: #FDF5F7;
+  --color-burgundy-100: #F8E8EC;
+  --color-burgundy-200: #F0D0D9;
+  --color-burgundy-300: #E4A8BA;
+  --color-burgundy-400: #D4809A;
+  --color-burgundy-500: #C2587A;
+  --color-burgundy-600: #A93B5C;
+  --color-burgundy-700: #8B1E3F;
+  --color-burgundy-800: #6B1830;
+  --color-burgundy-900: #4A1121;
+}
+
 :root {
   /* Primary Colors */
   --burgundy: #8B1E3F;
