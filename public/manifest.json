@@ -1,0 +1,19 @@
+{
+  "name": "KINCIRCLE",
+  "short_name": "KINCIRCLE",
+  "description": "Семейное приложение для заботы друг о друге",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#8B1E3F",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["lifestyle", "social", "productivity"]
+}
