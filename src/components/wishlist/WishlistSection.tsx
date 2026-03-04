@@ -212,7 +212,7 @@ export function WishlistSection() {
             variant={viewMode === 'own' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setViewMode('own')}
-            className={viewMode === 'own' ? 'bg-burgundy hover:bg-burgundy-light' : ''}
+            style={viewMode === 'own' ? { backgroundColor: '#8B1E3F', color: 'white' } : {}}
           >
             <Heart className="w-4 h-4 mr-1" />
             Мой вишлист
@@ -222,7 +222,7 @@ export function WishlistSection() {
               variant={viewMode === 'friend' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setViewMode('friend')}
-              className={viewMode === 'friend' ? 'bg-burgundy hover:bg-burgundy-light' : ''}
+              style={viewMode === 'friend' ? { backgroundColor: '#8B1E3F', color: 'white' } : {}}
             >
               <Gift className="w-4 h-4 mr-1" />
               Друзья
@@ -241,9 +241,10 @@ export function WishlistSection() {
                 onClick={() => handleSelectFriend(friend.id)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-xl whitespace-nowrap transition-all ${
                   selectedFriendId === friend.id
-                    ? 'bg-burgundy text-white'
+                    ? 'text-white'
                     : 'bg-[#F8F5F5] hover:bg-[#F0E8E8]'
                 }`}
+                style={selectedFriendId === friend.id ? { backgroundColor: '#8B1E3F' } : {}}
               >
                 <span>{friend.first_name}</span>
               </button>
@@ -289,10 +290,13 @@ export function WishlistSection() {
       {viewMode === 'own' && (
         <button
           onClick={() => setShowItemForm(true)}
-          className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-burgundy text-white flex items-center justify-center shadow-float hover:bg-burgundy-light transition-all duration-200 hover:scale-105 active:scale-95"
-          style={{ boxShadow: '0 4px 20px rgba(139, 30, 63, 0.3)' }}
+          className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95"
+          style={{ 
+            backgroundColor: '#8B1E3F',
+            boxShadow: '0 4px 20px rgba(139, 30, 63, 0.3)'
+          }}
         >
-          <Plus className="w-6 h-6 stroke-[2.5]" />
+          <Plus className="w-6 h-6" style={{ color: 'white', strokeWidth: 2.5 }} />
         </button>
       )}
 
@@ -353,9 +357,9 @@ export function WishlistSection() {
               Отмена
             </Button>
             <Button
-              className="bg-burgundy hover:bg-burgundy-light"
               onClick={handleCreateItem}
               disabled={!formData.title}
+              style={{ backgroundColor: '#8B1E3F', color: 'white' }}
             >
               Добавить
             </Button>

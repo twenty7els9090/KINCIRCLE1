@@ -267,7 +267,7 @@ export function TaskForm({
             <Button
               type="submit"
               disabled={isLoading}
-              className="bg-burgundy hover:bg-burgundy-light"
+              style={{ backgroundColor: '#8B1E3F', color: 'white' }}
             >
               {isLoading ? 'Создание...' : 'Создать'}
             </Button>

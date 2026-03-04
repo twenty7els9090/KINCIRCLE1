@@ -284,10 +284,13 @@ export function TasksSection() {
       {/* Floating action button */}
       <button
         onClick={() => setShowTaskForm(true)}
-        className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-burgundy text-white flex items-center justify-center shadow-float hover:bg-burgundy-light transition-all duration-200 hover:scale-105 active:scale-95"
-        style={{ boxShadow: '0 4px 20px rgba(139, 30, 63, 0.3)' }}
+        className="fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95"
+        style={{ 
+          backgroundColor: '#8B1E3F',
+          boxShadow: '0 4px 20px rgba(139, 30, 63, 0.3)'
+        }}
       >
-        <Plus className="w-6 h-6 stroke-[2.5]" />
+        <Plus className="w-6 h-6" style={{ color: 'white', strokeWidth: 2.5 }} />
       </button>
 
       {/* Task form modal */}
