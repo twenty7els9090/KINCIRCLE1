@@ -291,7 +291,7 @@ export default function Home() {
   // Loading state
   if (isLoading || !isInitialized) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FFECD1' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f5fffa' }}>
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-10 h-10 animate-spin" style={{ color: '#3E000C' }} />
           <p style={{ color: '#3E000C60' }}>Загрузка...</p>
@@ -301,7 +301,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col max-w-[450px] mx-auto" style={{ backgroundColor: '#FFECD1' }}>
+    <div className="min-h-screen flex flex-col max-w-[450px] mx-auto" style={{ backgroundColor: '#f5fffa' }}>
       {/* Header */}
       <Header />
 
