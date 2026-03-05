@@ -28,7 +28,6 @@ export function WishlistSection() {
   const [friendWishlist, setFriendWishlist] = useState<WishlistItem[]>([])
   const [editingItem, setEditingItem] = useState<WishlistItem | null>(null)
 
-  // Form state
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -36,14 +35,12 @@ export function WishlistSection() {
     price: '',
   })
 
-  // Fetch user's wishlist when user is ready (friends are loaded globally in page.tsx)
   useEffect(() => {
     if (user) {
       fetchMyWishlist()
     }
   }, [user])
 
-  // Realtime subscription for own wishlist
   useEffect(() => {
     if (!user || viewMode !== 'own') return
 
@@ -75,16 +72,13 @@ export function WishlistSection() {
           }
         }
       )
-      .subscribe((status) => {
-        console.log('Wishlist realtime status:', status)
-      })
+      .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
     }
   }, [user, viewMode, myWishlist, addWishlistItem, updateWishlistItem, removeWishlistItem])
 
-  // Realtime for friend's wishlist when viewing
   useEffect(() => {
     if (!selectedFriendId || viewMode !== 'friend') return
 
@@ -185,7 +179,6 @@ export function WishlistSection() {
         .single()
 
       if (!error && data) {
-        // Realtime will handle this, but add locally for instant feedback
         if (!myWishlist.some(item => item.id === data.id)) {
           addWishlistItem(data)
         }
@@ -337,10 +330,7 @@ export function WishlistSection() {
   return (
     <>
       {/* Main content */}
-      <div 
-        className="flex-1 flex flex-col"
-        style={{ background: 'linear-gradient(180deg, #FDF5F7 0%, #FFFFFF 100%)' }}
-      >
+      <div className="flex-1 flex flex-col bg-[#FFECD1]">
         {/* View mode switcher */}
         <div className="px-4 py-3">
           <div className="flex gap-2">
@@ -350,13 +340,8 @@ export function WishlistSection() {
                 'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200',
               )}
               style={{
-                background: viewMode === 'own' 
-                  ? 'linear-gradient(135deg, #8B1E3F 0%, #A93B5C 100%)'
-                  : '#F8E8EC',
-                color: viewMode === 'own' ? '#FFFFFF' : '#8B1E3F',
-                boxShadow: viewMode === 'own' 
-                  ? '0 4px 12px rgba(139, 30, 63, 0.25)' 
-                  : 'none',
+                backgroundColor: viewMode === 'own' ? '#3E000C' : '#FFFFFF',
+                color: viewMode === 'own' ? '#FFECD1' : '#3E000C',
               }}
             >
               <Heart className="w-4 h-4" />
@@ -369,13 +354,8 @@ export function WishlistSection() {
                   'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200',
                 )}
                 style={{
-                  background: viewMode === 'friend' 
-                    ? 'linear-gradient(135deg, #8B1E3F 0%, #A93B5C 100%)'
-                    : '#F8E8EC',
-                  color: viewMode === 'friend' ? '#FFFFFF' : '#8B1E3F',
-                  boxShadow: viewMode === 'friend' 
-                    ? '0 4px 12px rgba(139, 30, 63, 0.25)' 
-                    : 'none',
+                  backgroundColor: viewMode === 'friend' ? '#3E000C' : '#FFFFFF',
+                  color: viewMode === 'friend' ? '#FFECD1' : '#3E000C',
                 }}
               >
                 <Gift className="w-4 h-4" />
@@ -397,10 +377,8 @@ export function WishlistSection() {
                     'flex items-center gap-2 px-4 py-2 rounded-xl whitespace-nowrap transition-all',
                   )}
                   style={{
-                    background: selectedFriendId === friend.id
-                      ? 'linear-gradient(135deg, #8B1E3F 0%, #A93B5C 100%)'
-                      : '#F8E8EC',
-                    color: selectedFriendId === friend.id ? '#FFFFFF' : '#8B1E3F',
+                    backgroundColor: selectedFriendId === friend.id ? '#3E000C' : '#FFFFFF',
+                    color: selectedFriendId === friend.id ? '#FFECD1' : '#3E000C',
                   }}
                 >
                   <span>{friend.first_name}</span>
@@ -444,52 +422,42 @@ export function WishlistSection() {
           )}
         </div>
 
-        {/* Floating action button (only for own wishlist) */}
+        {/* Floating action button */}
         {viewMode === 'own' && (
           <button
             onClick={() => setShowItemForm(true)}
             className="fixed bottom-28 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95"
             style={{
-              background: 'linear-gradient(135deg, #8B1E3F 0%, #A93B5C 100%)',
-              boxShadow: '0 6px 24px rgba(139, 30, 63, 0.4)',
+              backgroundColor: '#3E000C',
+              boxShadow: '0 4px 20px rgba(62, 0, 12, 0.3)',
             }}
           >
-            <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
+            <Plus className="w-6 h-6 text-[#FFECD1]" strokeWidth={2.5} />
           </button>
         )}
       </div>
 
       {/* Full screen form */}
       {showItemForm && (
-        <div 
-          className="fixed inset-0 z-[60] flex flex-col"
-          style={{ background: 'linear-gradient(180deg, #FDF5F7 0%, #FFFFFF 100%)' }}
-        >
+        <div className="fixed inset-0 z-[60] flex flex-col bg-[#FFECD1]">
           {/* Header */}
-          <div 
-            className="flex items-center justify-between p-4"
-            style={{
-              background: 'linear-gradient(135deg, #8B1E3F 0%, #A93B5C 100%)',
-            }}
-          >
+          <div className="flex items-center justify-between p-4 bg-[#3E000C]">
             <button
               onClick={handleCloseForm}
-              className="p-2 -ml-2 rounded-full transition-colors"
-              style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)' }}
+              className="p-2 -ml-2 rounded-full bg-[#FFECD1]/10"
             >
-              <ChevronLeft className="w-6 h-6 text-white" />
+              <ChevronLeft className="w-6 h-6 text-[#FFECD1]" />
             </button>
             
-            <h1 className="text-lg font-semibold text-white">
+            <h1 className="text-lg font-semibold text-[#FFECD1]">
               {editingItem ? 'Редактировать' : 'Добавить желание'}
             </h1>
             
             <button
               onClick={handleCloseForm}
-              className="p-2 -mr-2 rounded-full transition-colors"
-              style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)' }}
+              className="p-2 -mr-2 rounded-full bg-[#FFECD1]/10"
             >
-              <X className="w-6 h-6 text-white" />
+              <X className="w-6 h-6 text-[#FFECD1]" />
             </button>
           </div>
 
@@ -497,48 +465,48 @@ export function WishlistSection() {
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {/* Title */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#1C1C1E]">Название</label>
+              <label className="text-sm font-medium text-[#3E000C]">Название</label>
               <Input
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="Что бы вы хотели?"
-                className="border-[#F0D0D9] focus:border-[#8B1E3F] bg-white rounded-xl py-3"
+                className="border-[#3E000C]/20 focus:border-[#3E000C] bg-white rounded-xl py-3"
               />
             </div>
 
             {/* Price */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#1C1C1E]">Цена (₽)</label>
+              <label className="text-sm font-medium text-[#3E000C]">Цена (₽)</label>
               <Input
                 type="number"
                 value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                 placeholder="Примерная стоимость"
-                className="border-[#F0D0D9] focus:border-[#8B1E3F] bg-white rounded-xl py-3"
+                className="border-[#3E000C]/20 focus:border-[#3E000C] bg-white rounded-xl py-3"
               />
             </div>
 
             {/* Description */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#1C1C1E]">Описание</label>
+              <label className="text-sm font-medium text-[#3E000C]">Описание</label>
               <Textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Размер, цвет, детали..."
                 rows={2}
-                className="border-[#F0D0D9] focus:border-[#8B1E3F] resize-none bg-white rounded-xl"
+                className="border-[#3E000C]/20 focus:border-[#3E000C] resize-none bg-white rounded-xl"
               />
             </div>
 
             {/* Link */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#1C1C1E]">Ссылка</label>
+              <label className="text-sm font-medium text-[#3E000C]">Ссылка</label>
               <Input
                 type="url"
                 value={formData.link}
                 onChange={(e) => setFormData({ ...formData, link: e.target.value })}
                 placeholder="https://..."
-                className="border-[#F0D0D9] focus:border-[#8B1E3F] bg-white rounded-xl py-3"
+                className="border-[#3E000C]/20 focus:border-[#3E000C] bg-white rounded-xl py-3"
               />
             </div>
           </div>
@@ -548,10 +516,10 @@ export function WishlistSection() {
             <button
               onClick={editingItem ? handleUpdateItem : handleCreateItem}
               disabled={!formData.title}
-              className="w-full py-4 rounded-2xl font-semibold text-white transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-4 rounded-2xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
-                background: 'linear-gradient(135deg, #8B1E3F 0%, #A93B5C 100%)',
-                boxShadow: '0 4px 16px rgba(139, 30, 63, 0.3)',
+                backgroundColor: '#3E000C',
+                color: '#FFECD1',
               }}
             >
               {editingItem ? 'Сохранить' : 'Добавить'}

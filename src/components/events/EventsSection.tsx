@@ -26,10 +26,8 @@ export function EventsSection() {
   const [showEventForm, setShowEventForm] = useState(false)
   const [activeFilter, setActiveFilter] = useState<'upcoming' | 'past'>('upcoming')
   
-  // Use ref to prevent double subscriptions
   const realtimeRef = useRef(false)
 
-  // Form state
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -40,21 +38,18 @@ export function EventsSection() {
     invited_friends: [] as string[],
   })
 
-  // Fetch events when user is ready
   useEffect(() => {
     if (user) {
       fetchEvents()
     }
   }, [user])
 
-  // Realtime subscription - only once
   useEffect(() => {
     if (!user || realtimeRef.current) return
 
     const supabase = getSupabaseClient()
     realtimeRef.current = true
 
-    // Events changes
     const eventsChannel = supabase
       .channel('events-changes')
       .on(
@@ -120,7 +115,6 @@ export function EventsSection() {
       )
       .subscribe()
 
-    // Event participants changes
     const participantsChannel = supabase
       .channel('event-participants-changes')
       .on(
@@ -260,7 +254,6 @@ export function EventsSection() {
   const handleRespond = async (eventId: string, response: 'going' | 'not_going') => {
     if (!user) return
 
-    // Optimistic update FIRST
     const event = events.find(e => e.id === eventId)
     if (event) {
       const existingParticipant = event.participants?.find(p => p.user_id === user.id)
@@ -304,7 +297,6 @@ export function EventsSection() {
   }
 
   const handleDeleteEvent = async (eventId: string) => {
-    // Optimistic update FIRST
     removeEvent(eventId)
 
     try {
@@ -333,7 +325,6 @@ export function EventsSection() {
     }))
   }
 
-  // Filter events
   const now = new Date()
   const upcomingEvents = events.filter((e) => new Date(e.event_date) >= now)
   const pastEvents = events.filter((e) => new Date(e.event_date) < now)
@@ -345,11 +336,7 @@ export function EventsSection() {
 
   return (
     <>
-      {/* Main content */}
-      <div 
-        className="flex-1 flex flex-col"
-        style={{ background: 'linear-gradient(180deg, #FDF5F7 0%, #FFFFFF 100%)' }}
-      >
+      <div className="flex-1 flex flex-col">
         {/* Filter tabs */}
         <div className="px-4 py-3">
           <div className="flex gap-2">
@@ -359,13 +346,9 @@ export function EventsSection() {
                 'px-4 py-2 rounded-full text-sm font-medium transition-all duration-200',
               )}
               style={{
-                background: activeFilter === 'upcoming' 
-                  ? 'linear-gradient(135deg, #8B1E3F 0%, #A93B5C 100%)'
-                  : '#F8E8EC',
-                color: activeFilter === 'upcoming' ? '#FFFFFF' : '#8B1E3F',
-                boxShadow: activeFilter === 'upcoming' 
-                  ? '0 4px 12px rgba(139, 30, 63, 0.25)' 
-                  : 'none',
+                backgroundColor: activeFilter === 'upcoming' ? '#3E000C' : '#FFFFFF',
+                color: activeFilter === 'upcoming' ? '#FFECD1' : '#3E000C',
+                border: activeFilter === 'upcoming' ? 'none' : '1px solid #3E000C20',
               }}
             >
               Предстоящие
@@ -373,10 +356,8 @@ export function EventsSection() {
                 <span 
                   className="ml-1.5 px-1.5 py-0.5 text-xs rounded-full"
                   style={{ 
-                    backgroundColor: activeFilter === 'upcoming' 
-                      ? 'rgba(255,255,255,0.2)' 
-                      : '#8B1E3F',
-                    color: '#FFFFFF'
+                    backgroundColor: activeFilter === 'upcoming' ? '#FFECD1' : '#3E000C',
+                    color: activeFilter === 'upcoming' ? '#3E000C' : '#FFECD1'
                   }}
                 >
                   {upcomingEvents.length}
@@ -389,13 +370,9 @@ export function EventsSection() {
                 'px-4 py-2 rounded-full text-sm font-medium transition-all duration-200',
               )}
               style={{
-                background: activeFilter === 'past' 
-                  ? 'linear-gradient(135deg, #8B1E3F 0%, #A93B5C 100%)'
-                  : '#F8E8EC',
-                color: activeFilter === 'past' ? '#FFFFFF' : '#8B1E3F',
-                boxShadow: activeFilter === 'past' 
-                  ? '0 4px 12px rgba(139, 30, 63, 0.25)' 
-                  : 'none',
+                backgroundColor: activeFilter === 'past' ? '#3E000C' : '#FFFFFF',
+                color: activeFilter === 'past' ? '#FFECD1' : '#3E000C',
+                border: activeFilter === 'past' ? 'none' : '1px solid #3E000C20',
               }}
             >
               Прошедшие
@@ -409,7 +386,7 @@ export function EventsSection() {
             <div className="flex items-center justify-center py-8">
               <div 
                 className="w-8 h-8 rounded-full animate-spin"
-                style={{ border: '2px solid #F0D0D9', borderTopColor: '#8B1E3F' }}
+                style={{ border: '2px solid #3E000C20', borderTopColor: '#3E000C' }}
               />
             </div>
           ) : displayEvents.length === 0 ? (
@@ -440,43 +417,33 @@ export function EventsSection() {
           onClick={() => setShowEventForm(true)}
           className="fixed bottom-28 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95"
           style={{
-            background: 'linear-gradient(135deg, #8B1E3F 0%, #A93B5C 100%)',
-            boxShadow: '0 6px 24px rgba(139, 30, 63, 0.4)',
+            backgroundColor: '#3E000C',
+            boxShadow: '0 4px 20px rgba(62, 0, 12, 0.3)',
           }}
         >
-          <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
+          <Plus className="w-6 h-6 text-[#FFECD1]" strokeWidth={2.5} />
         </button>
       </div>
 
-      {/* Full screen event form */}
+      {/* Event form */}
       {showEventForm && (
-        <div 
-          className="fixed inset-0 z-[60] flex flex-col"
-          style={{ background: 'linear-gradient(180deg, #FDF5F7 0%, #FFFFFF 100%)' }}
-        >
+        <div className="fixed inset-0 z-[60] bg-[#FFECD1] flex flex-col">
           {/* Header */}
-          <div 
-            className="flex items-center justify-between p-4"
-            style={{
-              background: 'linear-gradient(135deg, #8B1E3F 0%, #A93B5C 100%)',
-            }}
-          >
+          <div className="flex items-center justify-between p-4 bg-[#3E000C]">
             <button
               onClick={() => { resetForm(); setShowEventForm(false); }}
-              className="p-2 -ml-2 rounded-full transition-colors"
-              style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)' }}
+              className="p-2 -ml-2 rounded-full bg-[#FFECD1]/10"
             >
-              <ChevronLeft className="w-6 h-6 text-white" />
+              <ChevronLeft className="w-6 h-6 text-[#FFECD1]" />
             </button>
             
-            <h1 className="text-lg font-semibold text-white">Новое мероприятие</h1>
+            <h1 className="text-lg font-semibold text-[#FFECD1]">Новое мероприятие</h1>
             
             <button
               onClick={() => { resetForm(); setShowEventForm(false); }}
-              className="p-2 -mr-2 rounded-full transition-colors"
-              style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)' }}
+              className="p-2 -mr-2 rounded-full bg-[#FFECD1]/10"
             >
-              <X className="w-6 h-6 text-white" />
+              <X className="w-6 h-6 text-[#FFECD1]" />
             </button>
           </div>
 
@@ -484,64 +451,64 @@ export function EventsSection() {
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {/* Title */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#1C1C1E]">Название</label>
+              <label className="text-sm font-medium text-[#3E000C]">Название</label>
               <Input
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="День рождения, Встреча..."
-                className="border-[#F0D0D9] focus:border-[#8B1E3F] bg-white rounded-xl py-3"
+                className="border-[#3E000C]/20 focus:border-[#3E000C] bg-white rounded-xl py-3"
               />
             </div>
 
             {/* Date and time */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#1C1C1E]">Дата</label>
+                <label className="text-sm font-medium text-[#3E000C]">Дата</label>
                 <Input
                   type="date"
                   value={formData.event_date}
                   onChange={(e) => setFormData({ ...formData, event_date: e.target.value })}
-                  className="border-[#F0D0D9] focus:border-[#8B1E3F] bg-white rounded-xl py-3"
+                  className="border-[#3E000C]/20 focus:border-[#3E000C] bg-white rounded-xl py-3"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#1C1C1E]">Время</label>
+                <label className="text-sm font-medium text-[#3E000C]">Время</label>
                 <Input
                   type="time"
                   value={formData.event_time}
                   onChange={(e) => setFormData({ ...formData, event_time: e.target.value })}
-                  className="border-[#F0D0D9] focus:border-[#8B1E3F] bg-white rounded-xl py-3"
+                  className="border-[#3E000C]/20 focus:border-[#3E000C] bg-white rounded-xl py-3"
                 />
               </div>
             </div>
 
             {/* Location */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#1C1C1E]">Место</label>
+              <label className="text-sm font-medium text-[#3E000C]">Место</label>
               <Input
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder="Адрес или название места"
-                className="border-[#F0D0D9] focus:border-[#8B1E3F] bg-white rounded-xl py-3"
+                className="border-[#3E000C]/20 focus:border-[#3E000C] bg-white rounded-xl py-3"
               />
             </div>
 
             {/* Description */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#1C1C1E]">Описание</label>
+              <label className="text-sm font-medium text-[#3E000C]">Описание</label>
               <Textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Детали мероприятия"
                 rows={2}
-                className="border-[#F0D0D9] focus:border-[#8B1E3F] resize-none bg-white rounded-xl"
+                className="border-[#3E000C]/20 focus:border-[#3E000C] resize-none bg-white rounded-xl"
               />
             </div>
 
             {/* Guest selection */}
             {friends.length > 0 && (
               <div className="space-y-3">
-                <label className="text-sm font-medium text-[#1C1C1E]">Кого пригласить?</label>
+                <label className="text-sm font-medium text-[#3E000C]">Кого пригласить?</label>
                 
                 {/* All friends option */}
                 <button
@@ -549,21 +516,21 @@ export function EventsSection() {
                   onClick={() => setFormData(prev => ({ ...prev, invite_all: true, invited_friends: [] }))}
                   className="w-full flex items-center gap-3 p-3 rounded-xl transition-all"
                   style={{
-                    backgroundColor: formData.invite_all ? '#FDF5F7' : '#FFFFFF',
-                    border: `2px solid ${formData.invite_all ? '#8B1E3F' : '#F0D0D9'}`,
+                    backgroundColor: formData.invite_all ? '#3E000C' : '#FFFFFF',
+                    border: `2px solid ${formData.invite_all ? '#3E000C' : '#3E000C20'}`,
                   }}
                 >
                   <div 
                     className="w-5 h-5 rounded-full border-2 flex items-center justify-center"
                     style={{
-                      borderColor: formData.invite_all ? '#8B1E3F' : '#C2587A',
-                      backgroundColor: formData.invite_all ? '#8B1E3F' : 'transparent',
+                      borderColor: formData.invite_all ? '#FFECD1' : '#3E000C40',
+                      backgroundColor: formData.invite_all ? '#FFECD1' : 'transparent',
                     }}
                   >
-                    {formData.invite_all && <Check className="w-3 h-3 text-white" />}
+                    {formData.invite_all && <Check className="w-3 h-3 text-[#3E000C]" />}
                   </div>
-                  <Users className="w-5 h-5 text-[#A93B5C]" />
-                  <span className="font-medium text-[#1C1C1E]">Всех друзей</span>
+                  <Users className="w-5 h-5" style={{ color: formData.invite_all ? '#FFECD1' : '#3E000C60' }} />
+                  <span className="font-medium" style={{ color: formData.invite_all ? '#FFECD1' : '#3E000C' }}>Всех друзей</span>
                 </button>
 
                 {/* Select specific friends */}
@@ -572,21 +539,21 @@ export function EventsSection() {
                   onClick={() => setFormData(prev => ({ ...prev, invite_all: false }))}
                   className="w-full flex items-center gap-3 p-3 rounded-xl transition-all"
                   style={{
-                    backgroundColor: !formData.invite_all ? '#FDF5F7' : '#FFFFFF',
-                    border: `2px solid ${!formData.invite_all ? '#8B1E3F' : '#F0D0D9'}`,
+                    backgroundColor: !formData.invite_all ? '#3E000C' : '#FFFFFF',
+                    border: `2px solid ${!formData.invite_all ? '#3E000C' : '#3E000C20'}`,
                   }}
                 >
                   <div 
                     className="w-5 h-5 rounded-full border-2 flex items-center justify-center"
                     style={{
-                      borderColor: !formData.invite_all ? '#8B1E3F' : '#C2587A',
-                      backgroundColor: !formData.invite_all ? '#8B1E3F' : 'transparent',
+                      borderColor: !formData.invite_all ? '#FFECD1' : '#3E000C40',
+                      backgroundColor: !formData.invite_all ? '#FFECD1' : 'transparent',
                     }}
                   >
-                    {!formData.invite_all && <Check className="w-3 h-3 text-white" />}
+                    {!formData.invite_all && <Check className="w-3 h-3 text-[#3E000C]" />}
                   </div>
-                  <Users className="w-5 h-5 text-[#A93B5C]" />
-                  <span className="font-medium text-[#1C1C1E]">Выбрать конкретных</span>
+                  <Users className="w-5 h-5" style={{ color: !formData.invite_all ? '#FFECD1' : '#3E000C60' }} />
+                  <span className="font-medium" style={{ color: !formData.invite_all ? '#FFECD1' : '#3E000C' }}>Выбрать конкретных</span>
                 </button>
 
                 {/* Friend selection list */}
@@ -601,28 +568,25 @@ export function EventsSection() {
                           onClick={() => toggleFriendInvite(friend.id)}
                           className="w-full flex items-center gap-3 p-2 rounded-xl transition-all"
                           style={{
-                            backgroundColor: isSelected ? '#FDF5F7' : 'transparent',
+                            backgroundColor: isSelected ? '#3E000C10' : 'transparent',
                           }}
                         >
                           <div 
                             className="w-5 h-5 rounded-full border-2 flex items-center justify-center"
                             style={{
-                              borderColor: isSelected ? '#8B1E3F' : '#E4A8BA',
-                              backgroundColor: isSelected ? '#8B1E3F' : 'transparent',
+                              borderColor: isSelected ? '#3E000C' : '#3E000C30',
+                              backgroundColor: isSelected ? '#3E000C' : 'transparent',
                             }}
                           >
-                            {isSelected && <Check className="w-3 h-3 text-white" />}
+                            {isSelected && <Check className="w-3 h-3 text-[#FFECD1]" />}
                           </div>
                           <Avatar className="w-8 h-8">
                             <AvatarImage src={friend.avatar_url || undefined} />
-                            <AvatarFallback 
-                              className="text-xs"
-                              style={{ backgroundColor: '#F0D0D9', color: '#8B1E3F' }}
-                            >
+                            <AvatarFallback className="bg-[#3E000C] text-[#FFECD1] text-xs">
                               {friend.first_name?.[0]?.toUpperCase() || '?'}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="text-sm text-[#1C1C1E]">{friend.first_name}</span>
+                          <span className="text-sm text-[#3E000C]">{friend.first_name}</span>
                         </button>
                       )
                     })}
@@ -630,7 +594,7 @@ export function EventsSection() {
                 )}
 
                 {!formData.invite_all && formData.invited_friends.length === 0 && (
-                  <p className="text-xs text-[#A93B5C] text-center py-2">
+                  <p className="text-xs text-[#3E000C]/60 text-center py-2">
                     Выберите друзей для приглашения
                   </p>
                 )}
@@ -643,10 +607,10 @@ export function EventsSection() {
             <button
               onClick={handleCreateEvent}
               disabled={!canSubmit}
-              className="w-full py-4 rounded-2xl font-semibold text-white transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-4 rounded-2xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
-                background: 'linear-gradient(135deg, #8B1E3F 0%, #A93B5C 100%)',
-                boxShadow: '0 4px 16px rgba(139, 30, 63, 0.3)',
+                backgroundColor: '#3E000C',
+                color: '#FFECD1',
               }}
             >
               Создать

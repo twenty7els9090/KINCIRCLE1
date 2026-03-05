@@ -43,13 +43,11 @@ export function EventCard({
   const eventDate = new Date(event.event_date)
   const isPast = eventDate < new Date()
   
-  // Get current user's response
   const currentUserParticipant = event.participants?.find(
     (p) => p.user_id === currentUserId
   )
   const userResponse = currentUserParticipant?.response || null
 
-  // Get list of people going
   const goingParticipants = event.participants?.filter((p) => p.response === 'going') || []
   const goingCount = goingParticipants.length
   const notGoingParticipants = event.participants?.filter((p) => p.response === 'not_going') || []
@@ -57,13 +55,11 @@ export function EventCard({
 
   const isCreator = event.created_by === currentUserId
 
-  // Visible avatars (max 5)
   const visibleParticipants = goingParticipants.slice(0, MAX_VISIBLE_AVATARS)
   const remainingCount = Math.max(0, goingCount - MAX_VISIBLE_AVATARS)
 
-  // Gradient for events without image
   const getGradient = () => {
-    return 'linear-gradient(135deg, #8B1E3F 0%, #A93B5C 50%, #C2587A 100%)'
+    return 'linear-gradient(135deg, #3E000C 0%, #5C0013 50%, #7A001A 100%)'
   }
 
   return (
@@ -79,7 +75,7 @@ export function EventCard({
           isPast && 'opacity-70'
         )}
         style={{
-          boxShadow: '0 8px 20px rgba(0, 0, 0, 0.08)',
+          boxShadow: '0 8px 20px rgba(62, 0, 12, 0.15)',
           height: '280px',
         }}
       >
@@ -103,7 +99,7 @@ export function EventCard({
         <div 
           className="absolute inset-0"
           style={{
-            background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)'
+            background: 'linear-gradient(to top, rgba(62, 0, 12, 0.9) 0%, rgba(62, 0, 12, 0.4) 50%, transparent 100%)'
           }}
         />
 
@@ -113,13 +109,13 @@ export function EventCard({
           <div className="flex items-start justify-between">
             {/* Date badges */}
             <div className="flex items-center gap-2">
-              <div className="px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm">
-                <span className="text-sm font-medium text-white">
+              <div className="px-3 py-1.5 rounded-full bg-[#FFECD1]/20 backdrop-blur-sm">
+                <span className="text-sm font-medium text-[#FFECD1]">
                   {format(eventDate, 'd MMM', { locale: ru })}
                 </span>
               </div>
-              <div className="px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm">
-                <span className="text-sm font-medium text-white">
+              <div className="px-3 py-1.5 rounded-full bg-[#FFECD1]/20 backdrop-blur-sm">
+                <span className="text-sm font-medium text-[#FFECD1]">
                   {format(eventDate, 'HH:mm')}
                 </span>
               </div>
@@ -132,9 +128,9 @@ export function EventCard({
                   e.stopPropagation()
                   onDelete(event.id)
                 }}
-                className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 bg-white/20 backdrop-blur-sm"
+                className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 bg-[#FFECD1]/20 backdrop-blur-sm"
               >
-                <Trash2 className="w-4 h-4 text-white" />
+                <Trash2 className="w-4 h-4 text-[#FFECD1]" />
               </button>
             )}
           </div>
@@ -142,19 +138,19 @@ export function EventCard({
           {/* Bottom content */}
           <div className="space-y-3">
             {/* Title */}
-            <h3 className="text-2xl font-bold text-white drop-shadow-md">
+            <h3 className="text-2xl font-bold text-[#FFECD1] drop-shadow-md">
               {event.title}
             </h3>
 
             {/* Location */}
             {event.location && (
               <div className="flex items-center gap-1.5">
-                <MapPin className="w-4 h-4 text-white/70" />
-                <span className="text-sm text-white/80">{event.location}</span>
+                <MapPin className="w-4 h-4 text-[#FFECD1]/70" />
+                <span className="text-sm text-[#FFECD1]/80">{event.location}</span>
               </div>
             )}
 
-            {/* Going participants - show avatars and names */}
+            {/* Going participants */}
             {goingCount > 0 && (
               <button
                 onClick={(e) => {
@@ -166,34 +162,34 @@ export function EventCard({
                 {/* Avatars stack */}
                 <div className="flex -space-x-2">
                   {visibleParticipants.map((p) => (
-                    <Avatar key={p.id} className="w-7 h-7 border-2 border-white/20">
+                    <Avatar key={p.id} className="w-7 h-7 border-2 border-[#3E000C]">
                       <AvatarImage src={p.user?.avatar_url || undefined} />
                       <AvatarFallback 
                         className="text-xs"
-                        style={{ backgroundColor: '#F0D0D9', color: '#8B1E3F' }}
+                        style={{ backgroundColor: '#FFECD1', color: '#3E000C' }}
                       >
                         {p.user?.first_name?.[0]?.toUpperCase() || '?'}
                       </AvatarFallback>
                     </Avatar>
                   ))}
                   {remainingCount > 0 && (
-                    <div className="w-7 h-7 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border-2 border-white/20">
-                      <span className="text-xs text-white font-medium">+{remainingCount}</span>
+                    <div className="w-7 h-7 rounded-full bg-[#FFECD1]/20 backdrop-blur-sm flex items-center justify-center border-2 border-[#3E000C]">
+                      <span className="text-xs text-[#FFECD1] font-medium">+{remainingCount}</span>
                     </div>
                   )}
                 </div>
                 
-                {/* Names */}
-                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm">
-                  <Users className="w-4 h-4 text-white" />
-                  <span className="text-sm text-white">
+                {/* Count */}
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-[#FFECD1]/20 backdrop-blur-sm">
+                  <Users className="w-4 h-4 text-[#FFECD1]" />
+                  <span className="text-sm text-[#FFECD1]">
                     {goingCount} {goingCount === 1 ? 'пойдёт' : 'пойдут'}
                   </span>
                 </div>
               </button>
             )}
 
-            {/* Response buttons - always show for non-past events */}
+            {/* Response buttons */}
             {!isPast && currentUserId && !isCreator && (
               <div className="flex gap-2 pt-2">
                 <button
@@ -207,8 +203,8 @@ export function EventCard({
                     'flex-1',
                   )}
                   style={{
-                    backgroundColor: userResponse === 'going' ? '#FFFFFF' : 'rgba(255, 255, 255, 0.2)',
-                    color: userResponse === 'going' ? '#8B1E3F' : '#FFFFFF',
+                    backgroundColor: userResponse === 'going' ? '#FFECD1' : 'rgba(255, 236, 209, 0.2)',
+                    color: userResponse === 'going' ? '#3E000C' : '#FFECD1',
                     backdropFilter: userResponse !== 'going' ? 'blur(8px)' : 'none',
                   }}
                 >
@@ -226,8 +222,8 @@ export function EventCard({
                     'flex-1',
                   )}
                   style={{
-                    backgroundColor: userResponse === 'not_going' ? '#EF4444' : 'rgba(255, 255, 255, 0.2)',
-                    color: '#FFFFFF',
+                    backgroundColor: userResponse === 'not_going' ? '#EF4444' : 'rgba(255, 236, 209, 0.2)',
+                    color: '#FFECD1',
                     backdropFilter: userResponse !== 'not_going' ? 'blur(8px)' : 'none',
                   }}
                 >
@@ -246,18 +242,18 @@ export function EventCard({
           className="max-w-sm border-0"
           style={{ 
             borderRadius: '20px',
-            background: 'linear-gradient(180deg, #FDF5F7 0%, #FFFFFF 100%)',
+            backgroundColor: '#FFECD1',
           }}
         >
           <DialogHeader>
-            <DialogTitle className="text-[#8B1E3F]">Участники</DialogTitle>
+            <DialogTitle className="text-[#3E000C]">Участники</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-4 max-h-[60vh] overflow-y-auto">
             {/* Going */}
             {goingCount > 0 && (
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-[#8B1E3F]">
+                <div className="flex items-center gap-2 text-sm text-[#3E000C]">
                   <div 
                     className="w-5 h-5 rounded-full flex items-center justify-center"
                     style={{ backgroundColor: '#DCFCE7' }}
@@ -271,22 +267,22 @@ export function EventCard({
                     <div 
                       key={p.id} 
                       className="flex items-center gap-3 p-2 rounded-xl"
-                      style={{ backgroundColor: '#FDF5F7' }}
+                      style={{ backgroundColor: '#FFFFFF' }}
                     >
                       <Avatar className="w-10 h-10">
                         <AvatarImage src={p.user?.avatar_url || undefined} />
                         <AvatarFallback 
-                          style={{ backgroundColor: '#F0D0D9', color: '#8B1E3F' }}
+                          style={{ backgroundColor: '#3E000C', color: '#FFECD1' }}
                         >
                           {p.user?.first_name?.[0]?.toUpperCase() || '?'}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-medium text-[#1C1C1E]">
+                        <p className="font-medium text-[#3E000C]">
                           {p.user?.first_name} {p.user?.last_name}
                         </p>
                         {p.user?.username && (
-                          <p className="text-sm text-[#A93B5C]">@{p.user.username}</p>
+                          <p className="text-sm text-[#3E000C]/60">@{p.user.username}</p>
                         )}
                       </div>
                     </div>
@@ -298,7 +294,7 @@ export function EventCard({
             {/* Not going */}
             {notGoingCount > 0 && (
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-[#8B1E3F]">
+                <div className="flex items-center gap-2 text-sm text-[#3E000C]">
                   <div 
                     className="w-5 h-5 rounded-full flex items-center justify-center"
                     style={{ backgroundColor: '#FEE2E2' }}
@@ -312,22 +308,22 @@ export function EventCard({
                     <div 
                       key={p.id} 
                       className="flex items-center gap-3 p-2 rounded-xl"
-                      style={{ backgroundColor: '#FDF5F7' }}
+                      style={{ backgroundColor: '#FFFFFF' }}
                     >
                       <Avatar className="w-10 h-10">
                         <AvatarImage src={p.user?.avatar_url || undefined} />
                         <AvatarFallback 
-                          style={{ backgroundColor: '#F0D0D9', color: '#8B1E3F' }}
+                          style={{ backgroundColor: '#3E000C', color: '#FFECD1' }}
                         >
                           {p.user?.first_name?.[0]?.toUpperCase() || '?'}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-medium text-[#1C1C1E]">
+                        <p className="font-medium text-[#3E000C]">
                           {p.user?.first_name} {p.user?.last_name}
                         </p>
                         {p.user?.username && (
-                          <p className="text-sm text-[#A93B5C]">@{p.user.username}</p>
+                          <p className="text-sm text-[#3E000C]/60">@{p.user.username}</p>
                         )}
                       </div>
                     </div>
@@ -337,7 +333,7 @@ export function EventCard({
             )}
             
             {goingCount === 0 && notGoingCount === 0 && (
-              <p className="text-center text-[#A93B5C] py-4">
+              <p className="text-center text-[#3E000C]/60 py-4">
                 Пока никто не ответил
               </p>
             )}

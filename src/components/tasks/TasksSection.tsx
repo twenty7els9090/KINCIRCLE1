@@ -16,12 +16,10 @@ export function TasksSection() {
   const [showTaskForm, setShowTaskForm] = useState(false)
   const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null)
   
-  // Use ref to track if realtime is already subscribed
   const realtimeRef = useRef(false)
 
   const currentFamily = families.find((f) => f.id === currentFamilyId)
 
-  // Fetch tasks and categories
   useEffect(() => {
     if (currentFamilyId) {
       fetchTasks()
@@ -29,7 +27,6 @@ export function TasksSection() {
     }
   }, [currentFamilyId])
 
-  // Realtime subscription for tasks - only once per family
   useEffect(() => {
     if (!currentFamilyId || realtimeRef.current) return
 
@@ -52,10 +49,8 @@ export function TasksSection() {
           const oldData = payload.old as any
 
           if (eventType === 'INSERT') {
-            // Check if already in store
             const exists = useTaskStore.getState().tasks.some(t => t.id === newData.id)
             if (!exists) {
-              // Fetch complete task with relations
               const { data } = await supabase
                 .from('tasks')
                 .select(`
@@ -75,11 +70,9 @@ export function TasksSection() {
           } else if (eventType === 'UPDATE') {
             const newStatus = newData.status
             
-            // If archived/deleted, remove from list
             if (newStatus === 'archived' || newStatus === 'deleted') {
               removeTask(newData.id)
             } else {
-              // Only fetch if not already updated optimistically
               const currentTask = useTaskStore.getState().tasks.find(t => t.id === newData.id)
               if (currentTask?.status !== newStatus || currentTask?.updated_at !== newData.updated_at) {
                 const { data } = await supabase
@@ -180,7 +173,6 @@ export function TasksSection() {
         .single()
 
       if (!error && data) {
-        // Add locally for instant feedback (realtime might be slower)
         if (!tasks.some(t => t.id === data.id)) {
           addTask(data as Task)
           setHighlightedTaskId(data.id)
@@ -193,7 +185,6 @@ export function TasksSection() {
   }
 
   const handleCompleteTask = async (taskId: string) => {
-    // Optimistic update FIRST
     updateTask(taskId, {
       status: 'completed',
       completed_by: user?.id || null,
@@ -212,7 +203,6 @@ export function TasksSection() {
         .eq('id', taskId)
     } catch (error) {
       console.error('Error completing task:', error)
-      // Revert on error
       updateTask(taskId, {
         status: 'active',
         completed_by: null,
@@ -222,7 +212,6 @@ export function TasksSection() {
   }
 
   const handleUncompleteTask = async (taskId: string) => {
-    // Optimistic update FIRST
     updateTask(taskId, {
       status: 'active',
       completed_by: null,
@@ -241,7 +230,6 @@ export function TasksSection() {
         .eq('id', taskId)
     } catch (error) {
       console.error('Error uncompleting task:', error)
-      // Revert on error
       updateTask(taskId, {
         status: 'completed',
         completed_by: user?.id || null,
@@ -251,7 +239,6 @@ export function TasksSection() {
   }
 
   const handleArchiveTask = async (taskId: string) => {
-    // Optimistic update FIRST
     removeTask(taskId)
 
     try {
@@ -269,7 +256,6 @@ export function TasksSection() {
   }
 
   const handleDeleteTask = async (taskId: string) => {
-    // Optimistic update FIRST
     removeTask(taskId)
 
     try {
@@ -285,10 +271,7 @@ export function TasksSection() {
 
   if (!currentFamilyId) {
     return (
-      <div 
-        className="flex-1 flex items-center justify-center p-4"
-        style={{ background: 'linear-gradient(180deg, #FDF5F7 0%, #FFFFFF 100%)' }}
-      >
+      <div className="flex-1 flex items-center justify-center p-4 bg-[#FFECD1]">
         <EmptyState
           icon={Package}
           title="Нет семьи"
@@ -299,17 +282,14 @@ export function TasksSection() {
   }
 
   return (
-    <div 
-      className="flex-1 flex flex-col"
-      style={{ background: 'linear-gradient(180deg, #FDF5F7 0%, #FFFFFF 100%)' }}
-    >
+    <div className="flex-1 flex flex-col bg-[#FFECD1]">
       {/* Task list */}
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-32 space-y-4">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <div 
               className="w-8 h-8 rounded-full animate-spin"
-              style={{ border: '2px solid #F0D0D9', borderTopColor: '#8B1E3F' }}
+              style={{ border: '2px solid #3E000C20', borderTopColor: '#3E000C' }}
             />
           </div>
         ) : tasks.length === 0 ? (
@@ -338,11 +318,11 @@ export function TasksSection() {
         onClick={() => setShowTaskForm(true)}
         className="fixed bottom-28 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95"
         style={{
-          background: 'linear-gradient(135deg, #8B1E3F 0%, #A93B5C 100%)',
-          boxShadow: '0 6px 24px rgba(139, 30, 63, 0.4)',
+          backgroundColor: '#3E000C',
+          boxShadow: '0 4px 20px rgba(62, 0, 12, 0.3)',
         }}
       >
-        <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
+        <Plus className="w-6 h-6 text-[#FFECD1]" strokeWidth={2.5} />
       </button>
 
       {/* Task form modal */}

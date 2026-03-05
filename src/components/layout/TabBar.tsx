@@ -25,12 +25,12 @@ export function TabBar() {
       <nav
         className={cn(
           'max-w-[350px] mx-auto pointer-events-auto',
-          'rounded-2xl px-2 py-2',
+          'rounded-full px-2 py-2',
           'flex items-center justify-around'
         )}
         style={{
-          background: 'linear-gradient(135deg, #8B1E3F 0%, #A93B5C 50%, #C2587A 100%)',
-          boxShadow: '0 8px 32px rgba(139, 30, 63, 0.4)',
+          backgroundColor: '#3E000C',
+          boxShadow: '0 4px 20px rgba(62, 0, 12, 0.3)',
         }}
       >
         {tabs.map((tab) => {
@@ -42,26 +42,25 @@ export function TabBar() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'flex flex-col items-center justify-center',
-                'px-4 py-2 rounded-xl',
-                'transition-all duration-300 ease-out',
-                isActive ? 'bg-white/20 scale-105' : 'hover:bg-white/10 scale-100'
+                'flex items-center justify-center',
+                'p-3 rounded-full',
+                'transition-all duration-200 ease-out',
+                isActive ? 'scale-110' : 'scale-100'
               )}
             >
-              <Icon
+              <div
                 className={cn(
-                  'w-6 h-6 transition-all duration-300',
-                  isActive ? 'text-white stroke-[2.5]' : 'text-white/60 stroke-[2]'
-                )}
-              />
-              <span
-                className={cn(
-                  'text-[10px] mt-1 font-medium transition-all duration-300',
-                  isActive ? 'text-white' : 'text-white/50'
+                  'p-2.5 rounded-full transition-all duration-200',
+                  isActive && 'bg-[#FFECD1]'
                 )}
               >
-                {tab.label}
-              </span>
+                <Icon
+                  className={cn(
+                    'w-6 h-6 transition-all duration-200',
+                    isActive ? 'text-[#3E000C] stroke-[2.5]' : 'text-[#FFECD1]/60 stroke-[2]'
+                  )}
+                />
+              </div>
             </button>
           )
         })}
