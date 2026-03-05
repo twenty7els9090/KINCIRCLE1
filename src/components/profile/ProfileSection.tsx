@@ -14,7 +14,9 @@ import {
   Package,
   Trash2,
   RotateCcw,
+  CheckCircle2,
 } from 'lucide-react'
+import * as LucideIcons from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -31,7 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { useUserStore, useFriendsStore, useTaskStore } from '@/store'
 import { getSupabaseClient } from '@/lib/supabase'
-import type { User as UserType, Task } from '@/lib/supabase/database.types'
+import type { User as UserType, Task, TaskCategory } from '@/lib/supabase/database.types'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 
@@ -57,7 +59,7 @@ export function ProfileSection() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<UserType[]>([])
   const [activeTab, setActiveTab] = useState<'profile' | 'friends' | 'family'>('profile')
-  const [archivedTasks, setArchivedTasks] = useState<Task[]>([])
+  const [archivedTasks, setArchivedTasks] = useState<(Task & { category?: TaskCategory | null })[]>([])
 
   // Edit profile form
   const [profileForm, setProfileForm] = useState({
@@ -191,7 +193,7 @@ export function ProfileSection() {
         .order('archived_at', { ascending: false })
 
       if (data) {
-        setArchivedTasks(data as Task[])
+        setArchivedTasks(data as (Task & { category?: TaskCategory | null })[])
       }
     } catch (error) {
       console.error('Error fetching archived tasks:', error)
@@ -926,7 +928,7 @@ export function ProfileSection() {
               Архив задач
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 max-h-[50vh] overflow-y-auto">
+          <div className="space-y-2 max-h-[60vh] overflow-y-auto">
             {archivedTasks.length === 0 ? (
               <EmptyState
                 icon={Archive}
@@ -934,38 +936,63 @@ export function ProfileSection() {
                 description="Выполненные и архивированные задачи появятся здесь"
               />
             ) : (
-              archivedTasks.map((task) => (
-                <div
-                  key={task.id}
-                  className="flex items-center gap-3 bg-[#F8F5F5] rounded-xl p-3"
-                >
-                  <div className="flex-1">
-                    <p className="font-medium text-[#1C1C1E]">{task.title}</p>
-                    {task.completed_at && (
-                      <p className="text-xs text-[#8E8E93]">
-                        Выполнено: {format(new Date(task.completed_at), 'd MMM', { locale: ru })}
-                      </p>
-                    )}
+              archivedTasks.map((task) => {
+                const Icon = task.category?.icon 
+                  ? (LucideIcons as Record<string, React.ComponentType<{ className?: string }>>)[task.category.icon]
+                  : Package
+                
+                return (
+                  <div
+                    key={task.id}
+                    className="flex items-center gap-3 bg-[#F8F5F5] rounded-xl p-3 transition-all hover:bg-[#F0E8E8]"
+                  >
+                    {/* Icon */}
+                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center flex-shrink-0">
+                      {Icon ? <Icon className="w-5 h-5 text-burgundy" /> : <Package className="w-5 h-5 text-burgundy" />}
+                    </div>
+                    
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-[#1C1C1E] truncate">{task.title}</p>
+                        <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {task.category && (
+                          <span className="text-xs text-burgundy/70">{task.category.name}</span>
+                        )}
+                        {task.completed_at && (
+                          <span className="text-xs text-[#8E8E93]">
+                            {format(new Date(task.completed_at), 'd MMM', { locale: ru })}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Actions */}
+                    <div className="flex gap-1 flex-shrink-0">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="w-8 h-8 rounded-full hover:bg-white"
+                        onClick={() => handleRestoreTask(task.id)}
+                        title="Восстановить"
+                      >
+                        <RotateCcw className="w-4 h-4 text-[#8E8E93]" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="w-8 h-8 rounded-full hover:bg-red-50"
+                        onClick={() => handleDeleteTaskPermanently(task.id)}
+                        title="Удалить навсегда"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-400" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleRestoreTask(task.id)}
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-red-500 hover:text-red-600"
-                      onClick={() => handleDeleteTaskPermanently(task.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))
+                )
+              })
             )}
           </div>
         </DialogContent>

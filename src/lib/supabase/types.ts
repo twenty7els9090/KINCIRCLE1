@@ -236,6 +236,7 @@ export interface Database {
           event_date: string;
           invited_users: string[] | null;
           image_url: string | null;
+          is_public: boolean;
           created_at: string;
         };
         Insert: {
@@ -247,6 +248,7 @@ export interface Database {
           event_date: string;
           invited_users?: string[] | null;
           image_url?: string | null;
+          is_public?: boolean;
           created_at?: string;
         };
         Update: {
@@ -258,6 +260,7 @@ export interface Database {
           event_date?: string;
           invited_users?: string[] | null;
           image_url?: string | null;
+          is_public?: boolean;
           created_at?: string;
         };
       };

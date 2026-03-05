@@ -1,26 +1,20 @@
 'use client'
 
 import { useState } from 'react'
-import { Camera, X } from 'lucide-react'
+import { Camera, X, ChevronRight, ChevronLeft, ShoppingBag, Home, Sparkles, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog'
+import { cn } from '@/lib/utils'
 import type { TaskCategory, User } from '@/lib/supabase/database.types'
+import * as LucideIcons from 'lucide-react'
 
 interface TaskFormProps {
   open: boolean
@@ -44,10 +38,34 @@ export interface TaskFormData {
 const units = ['шт', 'кг', 'г', 'л', 'мл', 'уп', 'м']
 
 const taskTypes = [
-  { value: 'shopping', label: '🛒 Покупки' },
-  { value: 'home', label: '🏠 Дом' },
-  { value: 'other', label: '📋 Другое' },
+  { 
+    value: 'shopping' as const, 
+    label: 'Покупки', 
+    icon: ShoppingBag, 
+    description: 'Продукты, вещи, товары',
+    gradient: 'from-blue-400 to-blue-600'
+  },
+  { 
+    value: 'home' as const, 
+    label: 'Дом', 
+    icon: Home, 
+    description: 'Уборка, ремонт, сад',
+    gradient: 'from-green-400 to-green-600'
+  },
+  { 
+    value: 'other' as const, 
+    label: 'Другое', 
+    icon: Sparkles, 
+    description: 'Всё остальное',
+    gradient: 'from-purple-400 to-purple-600'
+  },
 ]
+
+// Dynamic icon component
+function DynamicIcon({ name, className }: { name: string; className?: string }) {
+  const Icon = (LucideIcons as Record<string, React.ComponentType<{ className?: string }>>)[name]
+  return Icon ? <Icon className={className} /> : <Sparkles className={className} />
+}
 
 export function TaskForm({
   open,
@@ -56,7 +74,8 @@ export function TaskForm({
   categories,
   isLoading,
 }: TaskFormProps) {
-  const [taskType, setTaskType] = useState<'shopping' | 'home' | 'other'>('shopping')
+  const [step, setStep] = useState(1)
+  const [taskType, setTaskType] = useState<'shopping' | 'home' | 'other' | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [imageUrl, setImageUrl] = useState<string>('')
   const [formData, setFormData] = useState({
@@ -67,10 +86,34 @@ export function TaskForm({
   })
 
   // Filter categories by type
-  const filteredCategories = categories.filter((c) => c.type === taskType)
+  const filteredCategories = taskType ? categories.filter((c) => c.type === taskType) : []
+
+  const totalSteps = 4
+
+  const handleNext = () => {
+    if (step < totalSteps) {
+      setStep(step + 1)
+    }
+  }
+
+  const handleBack = () => {
+    if (step > 1) {
+      setStep(step - 1)
+    }
+  }
+
+  const handleTypeSelect = (type: 'shopping' | 'home' | 'other') => {
+    setTaskType(type)
+    setSelectedCategory('') // Reset category when type changes
+    setStep(2)
+  }
+
+  const handleCategorySelect = (categoryId: string) => {
+    setSelectedCategory(categoryId)
+  }
 
   const handleSubmit = () => {
-    if (!formData.title || !selectedCategory) return
+    if (!formData.title || !selectedCategory || !taskType) return
 
     onSubmit({
       title: formData.title,
@@ -82,16 +125,26 @@ export function TaskForm({
       image_url: imageUrl || undefined,
     })
 
-    // Reset form
+    // Reset all
+    resetForm()
+    onOpenChange(false)
+  }
+
+  const resetForm = () => {
+    setStep(1)
+    setTaskType(null)
+    setSelectedCategory('')
+    setImageUrl('')
     setFormData({
       title: '',
       description: '',
       quantity: '',
       unit: 'шт',
     })
-    setSelectedCategory('')
-    setImageUrl('')
-    setTaskType('shopping')
+  }
+
+  const handleClose = () => {
+    resetForm()
     onOpenChange(false)
   }
 
@@ -102,171 +155,320 @@ export function TaskForm({
     setImageUrl(url)
   }
 
-  // Reset category when type changes
-  const handleTypeChange = (value: string) => {
-    setTaskType(value as 'shopping' | 'home' | 'other')
-    setSelectedCategory('') // Reset category when type changes
+  // Check if can proceed
+  const canProceed = () => {
+    switch (step) {
+      case 1:
+        return taskType !== null
+      case 2:
+        return selectedCategory !== ''
+      case 3:
+        return formData.title.trim() !== ''
+      case 4:
+        return true
+      default:
+        return false
+    }
   }
 
-  const canSubmit = formData.title && selectedCategory
+  const selectedCategoryData = categories.find(c => c.id === selectedCategory)
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-burgundy">Новая задача</DialogTitle>
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-hidden p-0">
+        <DialogHeader className="p-6 pb-0">
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-burgundy text-lg">
+              Новая задача
+            </DialogTitle>
+            {/* Step indicator */}
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4].map((s) => (
+                <div
+                  key={s}
+                  className={cn(
+                    'w-2 h-2 rounded-full transition-all',
+                    s === step ? 'w-6 bg-burgundy' : 'bg-[#E5E0E0]'
+                  )}
+                />
+              ))}
+            </div>
+          </div>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Task type selector */}
-          <div className="space-y-2">
-            <Label>Тип задачи</Label>
-            <Select value={taskType} onValueChange={handleTypeChange}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {taskTypes.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Title */}
-          <div className="space-y-2">
-            <Label htmlFor="title">
-              {taskType === 'shopping' ? 'Что купить? *' : 'Название задачи *'}
-            </Label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder={
-                taskType === 'shopping'
-                  ? 'Например: Молоко, Хлеб...'
-                  : 'Название задачи'
-              }
-            />
-          </div>
-
-          {/* Category - REQUIRED dropdown */}
-          <div className="space-y-2">
-            <Label>Категория *</Label>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Выберите категорию" />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredCategories.length === 0 ? (
-                  <div className="px-2 py-4 text-center text-sm text-[#8E8E93]">
-                    Нет категорий для этого типа
-                  </div>
-                ) : (
-                  filteredCategories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Quantity and unit - only for shopping */}
-          {taskType === 'shopping' && (
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label>Количество (опц.)</Label>
-                <Input
-                  type="number"
-                  step="0.1"
-                  value={formData.quantity}
-                  onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                  placeholder="1"
-                />
+        <div className="p-6 min-h-[400px]">
+          {/* Step 1: Task Type */}
+          {step === 1 && (
+            <div className="space-y-4">
+              <div className="text-center mb-6">
+                <h2 className="text-xl font-semibold text-[#1C1C1E]">Что добавляем?</h2>
+                <p className="text-sm text-[#8E8E93] mt-1">Выберите тип задачи</p>
               </div>
-              <div className="space-y-2">
-                <Label>Единица</Label>
-                <Select value={formData.unit} onValueChange={(v) => setFormData({ ...formData, unit: v })}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {units.map((u) => (
-                      <SelectItem key={u} value={u}>
-                        {u}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+
+              <div className="space-y-3">
+                {taskTypes.map((type) => {
+                  const Icon = type.icon
+                  const isSelected = taskType === type.value
+                  return (
+                    <button
+                      key={type.value}
+                      onClick={() => handleTypeSelect(type.value)}
+                      className={cn(
+                        'w-full flex items-center gap-4 p-4 rounded-2xl',
+                        'border-2 transition-all duration-200',
+                        'hover:scale-[1.02] active:scale-[0.98]',
+                        isSelected
+                          ? 'border-burgundy bg-burgundy/5'
+                          : 'border-[#F0E8E8] hover:border-burgundy/50'
+                      )}
+                    >
+                      <div className={cn(
+                        'w-14 h-14 rounded-xl flex items-center justify-center',
+                        'bg-gradient-to-br',
+                        type.gradient
+                      )}>
+                        <Icon className="w-7 h-7 text-white" />
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="font-semibold text-[#1C1C1E]">{type.label}</p>
+                        <p className="text-sm text-[#8E8E93]">{type.description}</p>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-[#8E8E93]" />
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )}
 
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Описание (опционально)</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Добавьте детали..."
-              rows={2}
-            />
-          </div>
-
-          {/* Image upload */}
-          <div className="space-y-2">
-            <Label>Фото (опционально)</Label>
-            {imageUrl ? (
-              <div className="relative inline-block">
-                <img
-                  src={imageUrl}
-                  alt="Task"
-                  className="w-24 h-24 rounded-xl object-cover"
-                />
+          {/* Step 2: Category */}
+          {step === 2 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 mb-4">
                 <button
-                  type="button"
-                  onClick={() => setImageUrl('')}
-                  className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center"
+                  onClick={handleBack}
+                  className="p-2 rounded-full hover:bg-[#F8F5F5] transition-colors"
                 >
-                  <X className="w-4 h-4" />
+                  <ChevronLeft className="w-5 h-5 text-[#8E8E93]" />
                 </button>
+                <div>
+                  <h2 className="text-xl font-semibold text-[#1C1C1E]">Категория</h2>
+                  <p className="text-sm text-[#8E8E93]">Уточните, что именно</p>
+                </div>
               </div>
-            ) : (
-              <label className="flex items-center justify-center w-24 h-24 rounded-xl border-2 border-dashed border-[#E5E0E0] cursor-pointer hover:border-burgundy transition-colors">
-                <Camera className="w-6 h-6 text-[#8E8E93]" />
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageUpload}
-                />
-              </label>
-            )}
-          </div>
-        </div>
 
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-          >
-            Отмена
-          </Button>
-          <Button
-            type="button"
-            disabled={isLoading || !canSubmit}
-            style={{ backgroundColor: '#8B1E3F', color: 'white' }}
-            onClick={handleSubmit}
-          >
-            {isLoading ? 'Создание...' : 'Создать'}
-          </Button>
-        </DialogFooter>
+              <div className="grid grid-cols-2 gap-3 max-h-[320px] overflow-y-auto pb-2">
+                {filteredCategories.map((category) => {
+                  const isSelected = selectedCategory === category.id
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() => handleCategorySelect(category.id)}
+                      className={cn(
+                        'flex flex-col items-center gap-2 p-4 rounded-2xl',
+                        'border-2 transition-all duration-200',
+                        'hover:scale-[1.02] active:scale-[0.98]',
+                        isSelected
+                          ? 'border-burgundy bg-burgundy/5'
+                          : 'border-[#F0E8E8] hover:border-burgundy/50'
+                      )}
+                    >
+                      <div className={cn(
+                        'w-12 h-12 rounded-xl flex items-center justify-center',
+                        isSelected ? 'bg-burgundy/10' : 'bg-[#F8F5F5]'
+                      )}>
+                        <DynamicIcon
+                          name={category.icon || 'Package'}
+                          className={cn('w-6 h-6', isSelected ? 'text-burgundy' : 'text-[#8E8E93]')}
+                        />
+                      </div>
+                      <span className={cn(
+                        'text-sm font-medium text-center',
+                        isSelected ? 'text-burgundy' : 'text-[#1C1C1E]'
+                      )}>
+                        {category.name}
+                      </span>
+                      {isSelected && (
+                        <div className="absolute top-2 right-2">
+                          <Check className="w-4 h-4 text-burgundy" />
+                        </div>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+
+              {selectedCategory && (
+                <Button
+                  onClick={handleNext}
+                  className="w-full bg-burgundy hover:bg-burgundy-light text-white"
+                >
+                  Далее
+                </Button>
+              )}
+            </div>
+          )}
+
+          {/* Step 3: Details */}
+          {step === 3 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 mb-4">
+                <button
+                  onClick={handleBack}
+                  className="p-2 rounded-full hover:bg-[#F8F5F5] transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5 text-[#8E8E93]" />
+                </button>
+                <div>
+                  <h2 className="text-xl font-semibold text-[#1C1C1E]">Детали</h2>
+                  <p className="text-sm text-[#8E8E93]">
+                    {selectedCategoryData?.name} • {taskTypes.find(t => t.value === taskType)?.label}
+                  </p>
+                </div>
+              </div>
+
+              {/* Title */}
+              <div className="space-y-2">
+                <Label htmlFor="title">
+                  {taskType === 'shopping' ? 'Что купить? *' : 'Название *'}
+                </Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  placeholder={
+                    taskType === 'shopping'
+                      ? 'Например: Молоко, Хлеб...'
+                      : 'Название задачи'
+                  }
+                  className="text-base"
+                />
+              </div>
+
+              {/* Quantity and unit - only for shopping */}
+              {taskType === 'shopping' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label>Количество</Label>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={formData.quantity}
+                      onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                      placeholder="1"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Единица</Label>
+                    <div className="flex flex-wrap gap-1">
+                      {units.map((u) => (
+                        <button
+                          key={u}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, unit: u })}
+                          className={cn(
+                            'px-3 py-2 rounded-lg text-sm transition-all',
+                            formData.unit === u
+                              ? 'bg-burgundy text-white'
+                              : 'bg-[#F8F5F5] text-[#1C1C1E] hover:bg-[#F0E8E8]'
+                          )}
+                        >
+                          {u}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Description */}
+              <div className="space-y-2">
+                <Label htmlFor="description">Описание (опц.)</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Добавьте детали..."
+                  rows={2}
+                />
+              </div>
+
+              <Button
+                onClick={handleNext}
+                disabled={!formData.title.trim()}
+                className="w-full bg-burgundy hover:bg-burgundy-light text-white"
+              >
+                Далее
+              </Button>
+            </div>
+          )}
+
+          {/* Step 4: Photo */}
+          {step === 4 && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 mb-4">
+                <button
+                  onClick={handleBack}
+                  className="p-2 rounded-full hover:bg-[#F8F5F5] transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5 text-[#8E8E93]" />
+                </button>
+                <div>
+                  <h2 className="text-xl font-semibold text-[#1C1C1E]">Фото</h2>
+                  <p className="text-sm text-[#8E8E93]">Добавьте изображение (опционально)</p>
+                </div>
+              </div>
+
+              {/* Image upload */}
+              <div className="space-y-3">
+                {imageUrl ? (
+                  <div className="relative inline-block">
+                    <img
+                      src={imageUrl}
+                      alt="Task"
+                      className="w-full h-48 rounded-2xl object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setImageUrl('')}
+                      className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full h-48 rounded-2xl border-2 border-dashed border-[#E5E0E0] cursor-pointer hover:border-burgundy transition-colors bg-[#FAFAFA]">
+                    <Camera className="w-10 h-10 text-[#8E8E93] mb-2" />
+                    <span className="text-sm text-[#8E8E93]">Нажмите для загрузки</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                    />
+                  </label>
+                )}
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={handleSubmit}
+                  className="flex-1"
+                >
+                  Без фото
+                </Button>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isLoading}
+                  className="flex-1 bg-burgundy hover:bg-burgundy-light text-white"
+                >
+                  {isLoading ? 'Создание...' : 'Создать задачу'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   )

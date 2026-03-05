@@ -24,6 +24,7 @@ import type { Event, EventParticipant, User } from '@/lib/supabase/database.type
 interface EventWithParticipants extends Event {
   creator?: User
   participants?: (EventParticipant & { user?: User })[]
+  is_public: boolean
 }
 
 export function EventsSection() {
@@ -78,17 +79,17 @@ export function EventsSection() {
       if (!error && data) {
         // Filter events that user should see:
         // 1. Created by user
-        // 2. User is in invited_users
-        // 3. Created by a friend AND (invited_users is empty OR user is in invited_users)
+        // 2. User is in invited_users (private event)
+        // 3. Created by a friend AND is_public = true (public event for all friends)
         const visibleEvents = (data as EventWithParticipants[]).filter(event => {
           // User created it
           if (event.created_by === user.id) return true
           
-          // User is explicitly invited
+          // User is explicitly invited (private event)
           if (event.invited_users?.includes(user.id)) return true
           
-          // Created by a friend and invited_users is empty (means all friends)
-          if (friendIds.includes(event.created_by) && (!event.invited_users || event.invited_users.length === 0)) return true
+          // Created by a friend and is_public = true (visible to all friends)
+          if (friendIds.includes(event.created_by) && event.is_public === true) return true
           
           return false
         })
@@ -111,9 +112,10 @@ export function EventsSection() {
         ? `${formData.event_date}T${formData.event_time}:00`
         : `${formData.event_date}T12:00:00`
 
-      // If invite_all, leave invited_users empty (means all friends)
-      // Otherwise, use selected friends
-      const invitedUsers = formData.invite_all ? [] : formData.invited_friends
+      // If invite_all (is_public = true), all friends can see the event
+      // Otherwise (is_public = false), only selected friends in invited_users can see it
+      const isPublic = formData.invite_all
+      const invitedUsers = formData.invite_all ? null : formData.invited_friends
 
       const { data, error } = await supabase
         .from('events')
@@ -124,6 +126,7 @@ export function EventsSection() {
           location: formData.location || null,
           event_date: eventDateTime,
           invited_users: invitedUsers,
+          is_public: isPublic,
         })
         .select(`
           *,
