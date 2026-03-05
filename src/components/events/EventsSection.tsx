@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Calendar, Plus, CalendarDays, Users, Check, X, ChevronLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,6 +26,8 @@ export function EventsSection() {
   const [isLoading, setIsLoading] = useState(false)
   const [showEventForm, setShowEventForm] = useState(false)
   const [activeFilter, setActiveFilter] = useState<'upcoming' | 'past'>('upcoming')
+  const [friendsLoaded, setFriendsLoaded] = useState(false)
+  const prevFriendsLength = useRef(friends.length)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -38,12 +40,23 @@ export function EventsSection() {
     invited_friends: [] as string[],
   })
 
-  // Fetch events - now includes events from friends
+  // Track when friends are loaded
   useEffect(() => {
-    if (user) {
+    // Friends are considered loaded when:
+    // 1. They were empty and now have items, OR
+    // 2. They were already populated on mount
+    if (friends.length > 0 || prevFriendsLength.current > 0) {
+      setFriendsLoaded(true)
+    }
+    prevFriendsLength.current = friends.length
+  }, [friends.length])
+
+  // Fetch events when user and friends are ready
+  useEffect(() => {
+    if (user && friendsLoaded) {
       fetchEvents()
     }
-  }, [user, friends])
+  }, [user, friendsLoaded])
 
   // Realtime subscription for events
   useEffect(() => {
@@ -177,8 +190,11 @@ export function EventsSection() {
     try {
       const supabase = getSupabaseClient()
       
-      // Get friend IDs
-      const friendIds = friends.map(f => f.id)
+      // Get friend IDs - use current friends value
+      const currentFriends = useFriendsStore.getState().friends
+      const friendIds = currentFriends.map(f => f.id)
+      
+      console.log('Fetching events with friends:', friendIds.length)
       
       // Get all events
       const { data, error } = await supabase
@@ -201,6 +217,7 @@ export function EventsSection() {
           return false
         })
         
+        console.log('Visible events:', visibleEvents.length)
         setEvents(visibleEvents)
       }
     } catch (error) {
@@ -373,7 +390,11 @@ export function EventsSection() {
 
         {/* Events list */}
         <div className="flex-1 overflow-y-auto px-4 pb-32 space-y-4">
-          {displayEvents.length === 0 ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-burgundy"></div>
+            </div>
+          ) : displayEvents.length === 0 ? (
             <EmptyState
               icon={CalendarDays}
               title="Нет мероприятий"
