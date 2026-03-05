@@ -23,28 +23,20 @@ export function FloatingActionButton({ onClick, disabled }: FloatingActionButton
       className={cn(
         'fixed bottom-20 right-4 z-40',
         'w-14 h-14 rounded-full',
+        'bg-burgundy text-white',
         'flex items-center justify-center',
-        'transition-all duration-200',
-        'hover:scale-105',
-        'active:scale-95',
+        'shadow-float transition-all duration-200',
+        'hover:bg-burgundy-light hover:scale-105',
+        'active:scale-95 active:shadow-sm',
         disabled && 'opacity-50 cursor-not-allowed'
       )}
       style={{
-        backgroundColor: 'rgba(62, 0, 12, 0.15)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255, 255, 255, 0.25)',
         boxShadow: isPressed
-          ? '0 2px 8px rgba(0, 0, 0, 0.1)'
-          : '0 4px 20px rgba(0, 0, 0, 0.08)',
+          ? '0 2px 8px rgba(139, 30, 63, 0.3)'
+          : '0 4px 20px rgba(139, 30, 63, 0.3)',
       }}
     >
-      <Plus 
-        className="w-6 h-6" 
-        fill="#FFFFFF" 
-        stroke="#3E000C" 
-        strokeWidth={1.5}
-      />
+      <Plus className="w-6 h-6 stroke-[2.5]" />
     </button>
   )
 }
@@ -90,7 +82,7 @@ export function ExtendedFloatingActionButton({
               <span className="text-sm font-medium text-[#1C1C1E]">
                 {option.label}
               </span>
-              <span className="w-8 h-8 rounded-full bg-[#3E000C]/10 flex items-center justify-center">
+              <span className="w-8 h-8 rounded-full bg-burgundy/10 flex items-center justify-center">
                 {option.icon}
               </span>
             </button>
@@ -104,29 +96,21 @@ export function ExtendedFloatingActionButton({
         disabled={disabled}
         className={cn(
           'w-14 h-14 rounded-full',
+          'bg-burgundy text-white',
           'flex items-center justify-center',
-          'transition-all duration-200',
-          'hover:scale-105',
+          'shadow-float transition-all duration-200',
+          'hover:bg-burgundy-light hover:scale-105',
           'active:scale-95',
           disabled && 'opacity-50 cursor-not-allowed',
-          isOpen && 'rotate-45'
+          isOpen && 'rotate-45 bg-burgundy-dark'
         )}
         style={{
-          backgroundColor: isOpen ? 'rgba(62, 0, 12, 0.25)' : 'rgba(62, 0, 12, 0.15)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255, 255, 255, 0.25)',
           boxShadow: isOpen
-            ? '0 2px 8px rgba(0, 0, 0, 0.12)'
-            : '0 4px 20px rgba(0, 0, 0, 0.08)',
+            ? '0 2px 8px rgba(139, 30, 63, 0.4)'
+            : '0 4px 20px rgba(139, 30, 63, 0.3)',
         }}
       >
-        <Plus 
-          className="w-6 h-6 transition-transform duration-200" 
-          fill="#FFFFFF" 
-          stroke="#3E000C" 
-          strokeWidth={1.5}
-        />
+        <Plus className="w-6 h-6 stroke-[2.5] transition-transform duration-200" />
       </button>
     </div>
   )

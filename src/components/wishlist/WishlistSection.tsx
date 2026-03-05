@@ -442,7 +442,7 @@ export function WishlistSection() {
       {showItemForm && (
         <div className="fixed inset-0 z-[60] flex flex-col bg-[#f5fffa]">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 bg-[#3E000C]" style={{ paddingTop: '57px' }}>
+          <div className="flex items-center justify-between p-4 bg-[#3E000C]" style={{ paddingTop: '64px' }}>
             <button
               onClick={handleCloseForm}
               className="p-2 -ml-2 rounded-full bg-[#f5fffa]/10"

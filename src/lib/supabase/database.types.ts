@@ -400,6 +400,35 @@ export interface Database {
           created_at?: string
         }
       }
+      task_items: {
+        Row: {
+          id: string
+          category_id: string
+          name: string
+          image_url: string | null
+          unit: string
+          order: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          category_id: string
+          name: string
+          image_url?: string | null
+          unit?: string
+          order?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          category_id?: string
+          name?: string
+          image_url?: string | null
+          unit?: string
+          order?: number
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -485,4 +514,9 @@ export type UserWithFriends = User & {
 
 export type WishlistItemWithOwner = WishlistItem & {
   owner: User
+}
+
+export type TaskItem = Database['public']['Tables']['task_items']['Row']
+export type TaskItemWithCategory = TaskItem & {
+  category: TaskCategory
 }
