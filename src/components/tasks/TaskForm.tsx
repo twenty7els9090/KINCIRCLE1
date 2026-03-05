@@ -1,9 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { Camera, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,85 +20,95 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { CategorySelector } from './CategorySelector'
 import type { TaskCategory, User } from '@/lib/supabase/database.types'
-
-const taskSchema = z.object({
-  title: z.string().min(1, 'Введите название'),
-  description: z.string().optional(),
-  type: z.enum(['shopping', 'home', 'other']),
-  category_id: z.string().optional().nullable(),
-  quantity: z.number().optional().nullable(),
-  unit: z.string().optional(),
-  price: z.number().optional().nullable(),
-})
-
-type TaskFormData = z.infer<typeof taskSchema>
 
 interface TaskFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (data: TaskFormData & { image_url?: string }) => void
+  onSubmit: (data: TaskFormData) => void
   categories: TaskCategory[]
   familyMembers?: User[]
   isLoading?: boolean
 }
 
+export interface TaskFormData {
+  title: string
+  description?: string
+  type: 'shopping' | 'home' | 'other'
+  category_id: string
+  quantity?: number
+  unit?: string
+  image_url?: string
+}
+
 const units = ['шт', 'кг', 'г', 'л', 'мл', 'уп', 'м']
+
+const taskTypes = [
+  { value: 'shopping', label: '🛒 Покупки' },
+  { value: 'home', label: '🏠 Дом' },
+  { value: 'other', label: '📋 Другое' },
+]
 
 export function TaskForm({
   open,
   onOpenChange,
   onSubmit,
   categories,
-  familyMembers = [],
   isLoading,
 }: TaskFormProps) {
   const [taskType, setTaskType] = useState<'shopping' | 'home' | 'other'>('shopping')
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [imageUrl, setImageUrl] = useState<string | null>(null)
-  const [quantity, setQuantity] = useState<string>('')
-  const [unit, setUnit] = useState<string>('шт')
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    setValue,
-    formState: { errors },
-  } = useForm<TaskFormData>({
-    resolver: zodResolver(taskSchema),
-    defaultValues: {
-      type: 'shopping',
-    },
+  const [selectedCategory, setSelectedCategory] = useState<string>('')
+  const [imageUrl, setImageUrl] = useState<string>('')
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    quantity: '',
+    unit: 'шт',
   })
 
-  const handleFormSubmit = (data: TaskFormData) => {
+  // Filter categories by type
+  const filteredCategories = categories.filter((c) => c.type === taskType)
+
+  const handleSubmit = () => {
+    if (!formData.title || !selectedCategory) return
+
     onSubmit({
-      ...data,
+      title: formData.title,
+      description: formData.description || undefined,
+      type: taskType,
       category_id: selectedCategory,
-      quantity: quantity ? parseFloat(quantity) : null,
-      unit: taskType === 'shopping' ? unit : undefined,
+      quantity: formData.quantity ? parseFloat(formData.quantity) : undefined,
+      unit: taskType === 'shopping' ? formData.unit : undefined,
       image_url: imageUrl || undefined,
     })
+
     // Reset form
-    reset()
-    setSelectedCategory(null)
-    setImageUrl(null)
-    setQuantity('')
-    setUnit('шт')
+    setFormData({
+      title: '',
+      description: '',
+      quantity: '',
+      unit: 'шт',
+    })
+    setSelectedCategory('')
+    setImageUrl('')
+    setTaskType('shopping')
     onOpenChange(false)
   }
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-
-    // For now, just create a local URL preview
-    // In production, upload to Supabase Storage
     const url = URL.createObjectURL(file)
     setImageUrl(url)
   }
+
+  // Reset category when type changes
+  const handleTypeChange = (value: string) => {
+    setTaskType(value as 'shopping' | 'home' | 'other')
+    setSelectedCategory('') // Reset category when type changes
+  }
+
+  const canSubmit = formData.title && selectedCategory
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -110,83 +117,80 @@ export function TaskForm({
           <DialogTitle className="text-burgundy">Новая задача</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+        <div className="space-y-4">
           {/* Task type selector */}
-          <div className="flex gap-2">
-            {(['shopping', 'home', 'other'] as const).map((type) => (
-              <Button
-                key={type}
-                type="button"
-                variant={taskType === type ? 'default' : 'outline'}
-                onClick={() => {
-                  setTaskType(type)
-                  setValue('type', type)
-                  setSelectedCategory(null)
-                }}
-                className={taskType === type ? 'bg-burgundy hover:bg-burgundy-light' : ''}
-              >
-                {type === 'shopping' && '🛒 Покупки'}
-                {type === 'home' && '🏠 Дом'}
-                {type === 'other' && '📋 Другое'}
-              </Button>
-            ))}
+          <div className="space-y-2">
+            <Label>Тип задачи</Label>
+            <Select value={taskType} onValueChange={handleTypeChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {taskTypes.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-
-          {/* Category selector for shopping */}
-          {taskType === 'shopping' && (
-            <CategorySelector
-              categories={categories}
-              selectedId={selectedCategory}
-              onSelect={setSelectedCategory}
-              type="shopping"
-            />
-          )}
-
-          {/* Category selector for home */}
-          {taskType === 'home' && (
-            <CategorySelector
-              categories={categories}
-              selectedId={selectedCategory}
-              onSelect={setSelectedCategory}
-              type="home"
-            />
-          )}
 
           {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="title">
-              {taskType === 'shopping' ? 'Что купить?' : 'Название задачи'}
+              {taskType === 'shopping' ? 'Что купить? *' : 'Название задачи *'}
             </Label>
             <Input
               id="title"
-              {...register('title')}
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder={
                 taskType === 'shopping'
                   ? 'Например: Молоко, Хлеб...'
                   : 'Название задачи'
               }
             />
-            {errors.title && (
-              <p className="text-sm text-red-500">{errors.title.message}</p>
-            )}
           </div>
 
-          {/* Quantity and unit for shopping */}
+          {/* Category - REQUIRED dropdown */}
+          <div className="space-y-2">
+            <Label>Категория *</Label>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Выберите категорию" />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredCategories.length === 0 ? (
+                  <div className="px-2 py-4 text-center text-sm text-[#8E8E93]">
+                    Нет категорий для этого типа
+                  </div>
+                ) : (
+                  filteredCategories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Quantity and unit - only for shopping */}
           {taskType === 'shopping' && (
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label>Количество</Label>
+                <Label>Количество (опц.)</Label>
                 <Input
                   type="number"
                   step="0.1"
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
+                  value={formData.quantity}
+                  onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                   placeholder="1"
                 />
               </div>
               <div className="space-y-2">
                 <Label>Единица</Label>
-                <Select value={unit} onValueChange={setUnit}>
+                <Select value={formData.unit} onValueChange={(v) => setFormData({ ...formData, unit: v })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -207,21 +211,10 @@ export function TaskForm({
             <Label htmlFor="description">Описание (опционально)</Label>
             <Textarea
               id="description"
-              {...register('description')}
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Добавьте детали..."
               rows={2}
-            />
-          </div>
-
-          {/* Price */}
-          <div className="space-y-2">
-            <Label htmlFor="price">Цена (опционально)</Label>
-            <Input
-              id="price"
-              type="number"
-              step="0.01"
-              {...register('price', { valueAsNumber: true })}
-              placeholder="0.00"
             />
           </div>
 
@@ -237,7 +230,7 @@ export function TaskForm({
                 />
                 <button
                   type="button"
-                  onClick={() => setImageUrl(null)}
+                  onClick={() => setImageUrl('')}
                   className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center"
                 >
                   <X className="w-4 h-4" />
@@ -255,24 +248,25 @@ export function TaskForm({
               </label>
             )}
           </div>
+        </div>
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Отмена
-            </Button>
-            <Button
-              type="submit"
-              disabled={isLoading}
-              style={{ backgroundColor: '#8B1E3F', color: 'white' }}
-            >
-              {isLoading ? 'Создание...' : 'Создать'}
-            </Button>
-          </DialogFooter>
-        </form>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
+            Отмена
+          </Button>
+          <Button
+            type="button"
+            disabled={isLoading || !canSubmit}
+            style={{ backgroundColor: '#8B1E3F', color: 'white' }}
+            onClick={handleSubmit}
+          >
+            {isLoading ? 'Создание...' : 'Создать'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )

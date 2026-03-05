@@ -24,7 +24,7 @@ export function TabBar() {
     <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-4 pointer-events-none">
       <nav
         className={cn(
-          'max-w-[400px] mx-auto pointer-events-auto',
+          'max-w-[350px] mx-auto pointer-events-auto',
           'rounded-full px-2 py-2',
           'flex items-center justify-around'
         )}
@@ -44,34 +44,25 @@ export function TabBar() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'flex flex-col items-center justify-center gap-1',
-                'px-4 py-2 rounded-full',
+                'flex items-center justify-center',
+                'p-3 rounded-full',
                 'transition-all duration-200 ease-out',
-                'min-w-[70px]',
-                isActive ? 'scale-105' : 'scale-100'
+                isActive ? 'scale-110' : 'scale-100'
               )}
             >
               <div
                 className={cn(
-                  'p-2 rounded-full transition-all duration-200',
-                  isActive && 'bg-burgundy/10'
+                  'p-2.5 rounded-full transition-all duration-200',
+                  isActive && 'bg-burgundy'
                 )}
               >
                 <Icon
                   className={cn(
-                    'transition-all duration-200',
-                    isActive ? 'w-5 h-5 text-burgundy stroke-[2.5]' : 'w-5 h-5 text-[#8E8E93] stroke-[2]'
+                    'w-6 h-6 transition-all duration-200',
+                    isActive ? 'text-white stroke-[2.5]' : 'text-[#8E8E93] stroke-[2]'
                   )}
                 />
               </div>
-              <span
-                className={cn(
-                  'text-xs transition-all duration-200',
-                  isActive ? 'font-semibold text-burgundy' : 'font-normal text-[#8E8E93]'
-                )}
-              >
-                {tab.label}
-              </span>
             </button>
           )
         })}

@@ -3,11 +3,9 @@
 import { useState } from 'react'
 import {
   Check,
-  Archive,
   Trash2,
   Package,
   Plus,
-  Minus,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Task, TaskCategory, User as UserType } from '@/lib/supabase/database.types'
@@ -44,7 +42,6 @@ export function TaskCard({
   const [isAnimating, setIsAnimating] = useState(false)
 
   const isCompleted = task.status === 'completed'
-  const isArchived = task.status === 'archived'
 
   // Get gradient class based on category type
   const getGradientClass = () => {
@@ -95,20 +92,21 @@ export function TaskCard({
     <div
       onClick={() => onClick?.(task.id)}
       className={cn(
-        'relative bg-white rounded-[20px] overflow-hidden',
+        'relative rounded-[20px] overflow-hidden',
         'transition-all duration-300 ease-out',
-        'hover:shadow-lg cursor-pointer',
-        isHighlighted && 'card-highlight',
-        isCompleted && 'opacity-90'
+        'cursor-pointer',
+        isHighlighted && 'ring-2 ring-burgundy',
+        isCompleted && 'opacity-85'
       )}
       style={{
-        boxShadow: '0 8px 20px rgba(0, 0, 0, 0.05)',
+        boxShadow: '0 8px 20px rgba(0, 0, 0, 0.08)',
+        height: '220px',
       }}
     >
-      {/* Image section - top part */}
+      {/* Background image/gradient */}
       <div
         className={cn(
-          'relative w-full h-40 rounded-t-[20px] overflow-hidden',
+          'absolute inset-0',
           !task.image_url && getGradientClass()
         )}
       >
@@ -122,128 +120,92 @@ export function TaskCard({
           <div className="w-full h-full flex items-center justify-center">
             <DynamicIcon
               name={task.category?.icon || 'Package'}
-              className="w-16 h-16 text-white/80"
+              className="w-20 h-20 text-white/30"
             />
-          </div>
-        )}
-
-        {/* Delete/Archive button - top right */}
-        <button
-          onClick={handleDeleteOrArchive}
-          className={cn(
-            'absolute top-3 right-3 w-10 h-10 rounded-full',
-            'flex items-center justify-center',
-            'transition-all duration-200',
-            'hover:scale-110 active:scale-95',
-            isCompleted 
-              ? 'bg-white/90 hover:bg-white' 
-              : 'bg-white/90 hover:bg-red-50'
-          )}
-        >
-          {isCompleted ? (
-            <Archive className="w-5 h-5 text-[#8E8E93] hover:text-burgundy" />
-          ) : (
-            <Trash2 className="w-5 h-5 text-[#8E8E93] hover:text-red-500" />
-          )}
-        </button>
-
-        {/* Category badge - top left */}
-        {task.category && (
-          <div className="absolute top-3 left-3">
-            <span className={cn(
-              'px-3 py-1.5 rounded-full text-xs font-medium',
-              'bg-white/90 backdrop-blur-sm text-[#1C1C1E]'
-            )}>
-              {task.category.name}
-            </span>
           </div>
         )}
       </div>
 
-      {/* Content section */}
-      <div className="p-4">
-        {/* Title */}
-        <h3
-          className={cn(
-            'text-xl font-semibold text-[#1C1C1E]',
-            isCompleted && 'line-through text-[#8E8E93]'
+      {/* Overlay gradient for text readability */}
+      <div 
+        className="absolute inset-0"
+        style={{
+          background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)'
+        }}
+      />
+
+      {/* Content on top of image */}
+      <div className="absolute inset-0 flex flex-col justify-end p-4">
+        {/* Top row - badges */}
+        <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
+          {/* Category badge */}
+          {task.category && (
+            <span className={cn(
+              'px-3 py-1 rounded-full text-xs font-medium',
+              'bg-white/20 backdrop-blur-sm text-white'
+            )}>
+              {task.category.name}
+            </span>
           )}
-        >
-          {task.title}
-        </h3>
 
-        {/* Description */}
-        {task.description && (
-          <p className="text-sm text-[#8E8E93] mt-1 line-clamp-2">
-            {task.description}
-          </p>
-        )}
+          {/* Delete/Archive button */}
+          <button
+            onClick={handleDeleteOrArchive}
+            className={cn(
+              'w-9 h-9 rounded-full',
+              'flex items-center justify-center',
+              'transition-all duration-200',
+              'hover:scale-110 active:scale-95',
+              'bg-white/20 backdrop-blur-sm'
+            )}
+          >
+            <Trash2 className="w-4 h-4 text-white" />
+          </button>
+        </div>
 
-        {/* Meta info row */}
-        <div className="flex items-center gap-3 mt-3">
-          {/* Quantity */}
+        {/* Bottom content */}
+        <div className="space-y-2">
+          {/* Title */}
+          <h3 className="text-2xl font-bold text-white drop-shadow-md">
+            {task.title}
+          </h3>
+
+          {/* Meta row - only quantity */}
           {getQuantityDisplay() && (
-            <span className="text-sm text-[#8E8E93]">
+            <span className="text-sm text-white/80">
               {getQuantityDisplay()}
             </span>
           )}
 
-          {/* Price */}
-          {task.price && (
-            <span className="text-sm font-medium text-burgundy">
-              {task.price.toLocaleString('ru-RU')} ₽
-            </span>
-          )}
-
-          {/* Assigned to */}
-          {task.assigned_to && task.assigned_to.length > 0 && (
-            <span className="text-xs text-[#8E8E93]">
-              для {task.assigned_to.length} чел.
-            </span>
-          )}
-        </div>
-
-        {/* Action button */}
-        <div className="mt-4 flex justify-end">
-          <button
-            onClick={handleActionClick}
-            disabled={isAnimating}
-            className={cn(
-              'flex items-center gap-2 px-5 py-2.5 rounded-full',
-              'text-sm font-medium transition-all duration-300',
-              'active:scale-95',
-              isAnimating && 'scale-110',
-              isCompleted
-                ? 'bg-burgundy text-white'
-                : 'bg-burgundy text-white hover:bg-burgundy-light'
-            )}
-          >
-            {isCompleted ? (
-              <>
-                <Check className="w-4 h-4" strokeWidth={2.5} />
-                <span>Добавлено</span>
-              </>
-            ) : (
-              <>
-                <Plus className="w-4 h-4" strokeWidth={2.5} />
-                <span>Добавить</span>
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Completed info */}
-        {isCompleted && task.completed_at && (
-          <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-[#F0E8E8]">
-            <Check className="w-4 h-4 text-green-500" />
-            <span className="text-xs text-[#8E8E93]">
-              Выполнено {new Date(task.completed_at).toLocaleDateString('ru-RU', {
-                day: 'numeric',
-                month: 'short'
-              })}
-            </span>
+          {/* Action button */}
+          <div className="flex justify-end pt-2">
+            <button
+              onClick={handleActionClick}
+              disabled={isAnimating}
+              className={cn(
+                'flex items-center gap-2 px-5 py-2.5 rounded-full',
+                'text-sm font-medium transition-all duration-300',
+                'active:scale-95',
+                isAnimating && 'scale-110',
+                isCompleted
+                  ? 'bg-white text-burgundy'
+                  : 'bg-burgundy text-white hover:bg-burgundy-light'
+              )}
+            >
+              {isCompleted ? (
+                <>
+                  <Check className="w-4 h-4" strokeWidth={2.5} />
+                  <span>Добавлено</span>
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4" strokeWidth={2.5} />
+                  <span>Добавить</span>
+                </>
+              )}
+            </button>
           </div>
-        )}
+        </div>
       </div>
     </div>
   )

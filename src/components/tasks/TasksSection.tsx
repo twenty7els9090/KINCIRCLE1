@@ -1,11 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Package, Plus, Archive } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Package, Plus } from 'lucide-react'
 import { EmptyState } from '@/components/shared/EmptyState'
-import { ProgressBar } from '@/components/shared/ProgressBar'
 import { TaskCard } from './TaskCard'
 import { TaskForm } from './TaskForm'
 import { useTaskStore, useUserStore } from '@/store'
@@ -13,15 +10,13 @@ import { getSupabaseClient } from '@/lib/supabase'
 import type { Task } from '@/lib/supabase/database.types'
 
 export function TasksSection() {
-  const { tasks, categories, setTasks, setCategories, getTodayProgress } = useTaskStore()
+  const { tasks, categories, setTasks, setCategories } = useTaskStore()
   const { currentFamilyId, families, user } = useUserStore()
   const [isLoading, setIsLoading] = useState(false)
   const [showTaskForm, setShowTaskForm] = useState(false)
-  const [activeTab, setActiveTab] = useState<'active' | 'completed' | 'archived'>('active')
   const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null)
 
   const currentFamily = families.find((f) => f.id === currentFamilyId)
-  const progress = getTodayProgress()
 
   // Fetch tasks and categories
   useEffect(() => {
@@ -45,7 +40,7 @@ export function TasksSection() {
           creator:users!tasks_created_by_fkey(*)
         `)
         .eq('family_id', currentFamilyId)
-        .neq('status', 'deleted')
+        .in('status', ['active', 'completed'])
         .order('created_at', { ascending: false })
 
       if (!error && data) {
@@ -90,7 +85,6 @@ export function TasksSection() {
           category_id: taskData.category_id,
           quantity: taskData.quantity,
           unit: taskData.unit,
-          price: taskData.price,
           image_url: taskData.image_url,
           status: 'active',
         })
@@ -163,6 +157,7 @@ export function TasksSection() {
     }
   }
 
+  // Archive task from completed state
   const handleArchiveTask = async (taskId: string) => {
     try {
       const supabase = getSupabaseClient()
@@ -182,6 +177,7 @@ export function TasksSection() {
     }
   }
 
+  // Delete task from active state
   const handleDeleteTask = async (taskId: string) => {
     try {
       const supabase = getSupabaseClient()
@@ -198,11 +194,6 @@ export function TasksSection() {
     }
   }
 
-  // Filter tasks by status
-  const activeTasks = tasks.filter((t) => t.status === 'active')
-  const completedTasks = tasks.filter((t) => t.status === 'completed')
-  const archivedTasks = tasks.filter((t) => t.status === 'archived')
-
   // No family selected
   if (!currentFamilyId) {
     return (
@@ -211,11 +202,6 @@ export function TasksSection() {
           icon={Package}
           title="Нет семьи"
           description="Создайте или присоединитесь к семье, чтобы начать управлять задачами"
-          action={
-            <Button className="bg-burgundy hover:bg-burgundy-light">
-              Создать семью
-            </Button>
-          }
         />
       </div>
     )
@@ -223,119 +209,33 @@ export function TasksSection() {
 
   return (
     <div className="flex-1 flex flex-col">
-      {/* Progress bar */}
-      {progress.total > 0 && (
-        <div className="px-4 py-3 bg-white">
-          <ProgressBar completed={progress.completed} total={progress.total} />
-        </div>
-      )}
-
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1">
-        <div className="px-4 pt-4 pb-3">
-          <TabsList className="bg-[#F8F5F5] rounded-full p-1">
-            <TabsTrigger 
-              value="active" 
-              className="rounded-full data-[state=active]:bg-burgundy data-[state=active]:text-white transition-all duration-200"
-            >
-              Активные
-              {activeTasks.length > 0 && (
-                <span className={cn(
-                  "ml-1.5 px-2 py-0.5 text-xs rounded-full",
-                  activeTab === 'active' ? "bg-white/20 text-white" : "bg-burgundy/10 text-burgundy"
-                )}>
-                  {activeTasks.length}
-                </span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger 
-              value="completed" 
-              className="rounded-full data-[state=active]:bg-burgundy data-[state=active]:text-white transition-all duration-200"
-            >
-              Выполнено
-              {completedTasks.length > 0 && (
-                <span className={cn(
-                  "ml-1.5 px-2 py-0.5 text-xs rounded-full",
-                  activeTab === 'completed' ? "bg-white/20 text-white" : "bg-burgundy/10 text-burgundy"
-                )}>
-                  {completedTasks.length}
-                </span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger 
-              value="archived" 
-              className="rounded-full data-[state=active]:bg-burgundy data-[state=active]:text-white transition-all duration-200"
-            >
-              <Archive className="w-4 h-4 mr-1" />
-              Архив
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-        {/* Task lists */}
-        <div className="flex-1 overflow-y-auto px-4 pb-24">
-          <TabsContent value="active" className="space-y-4 m-0 mt-2">
-            {activeTasks.length === 0 ? (
-              <EmptyState
-                icon={Package}
-                title="Нет активных задач"
-                description="Нажмите + чтобы добавить задачу"
-              />
-            ) : (
-              activeTasks.map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onComplete={handleCompleteTask}
-                  onUncomplete={handleUncompleteTask}
-                  onDelete={handleDeleteTask}
-                  isHighlighted={highlightedTaskId === task.id}
-                />
-              ))
-            )}
-          </TabsContent>
-
-          <TabsContent value="completed" className="space-y-4 m-0 mt-2">
-            {completedTasks.length === 0 ? (
-              <EmptyState
-                icon={Package}
-                title="Нет выполненных задач"
-                description="Нажмите 'Добавить' на карточке задачи"
-              />
-            ) : (
-              completedTasks.map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  onComplete={handleCompleteTask}
-                  onUncomplete={handleUncompleteTask}
-                  onArchive={handleArchiveTask}
-                  onDelete={handleDeleteTask}
-                />
-              ))
-            )}
-          </TabsContent>
-
-          <TabsContent value="archived" className="space-y-4 m-0 mt-2">
-            {archivedTasks.length === 0 ? (
-              <EmptyState
-                icon={Archive}
-                title="Архив пуст"
-                description="Архивированные задачи появятся здесь"
-              />
-            ) : (
-              archivedTasks.map((task) => (
-                <TaskCard key={task.id} task={task} />
-              ))
-            )}
-          </TabsContent>
-        </div>
-      </Tabs>
+      {/* Task list */}
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-32 space-y-4">
+        {tasks.length === 0 ? (
+          <EmptyState
+            icon={Package}
+            title="Нет задач"
+            description="Нажмите + чтобы добавить задачу"
+          />
+        ) : (
+          tasks.map((task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              onComplete={handleCompleteTask}
+              onUncomplete={handleUncompleteTask}
+              onArchive={handleArchiveTask}
+              onDelete={handleDeleteTask}
+              isHighlighted={highlightedTaskId === task.id}
+            />
+          ))
+        )}
+      </div>
 
       {/* Floating action button */}
       <button
         onClick={() => setShowTaskForm(true)}
-        className="fixed bottom-24 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 bg-burgundy"
+        className="fixed bottom-28 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 bg-burgundy"
         style={{
           boxShadow: '0 4px 20px rgba(139, 30, 63, 0.3)'
         }}
@@ -354,9 +254,4 @@ export function TasksSection() {
       />
     </div>
   )
-}
-
-// Helper function
-function cn(...classes: (string | boolean | undefined)[]) {
-  return classes.filter(Boolean).join(' ')
 }

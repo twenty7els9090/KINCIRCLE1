@@ -34,7 +34,6 @@ export function WishlistSection() {
     title: '',
     description: '',
     link: '',
-    price: '',
   })
 
   // Fetch user's wishlist
@@ -98,7 +97,6 @@ export function WishlistSection() {
           title: formData.title,
           description: formData.description || null,
           link: formData.link || null,
-          price: formData.price ? parseFloat(formData.price) : null,
         })
         .select()
         .single()
@@ -110,7 +108,6 @@ export function WishlistSection() {
           title: '',
           description: '',
           link: '',
-          price: '',
         })
         setShowItemForm(false)
       }
@@ -201,18 +198,17 @@ export function WishlistSection() {
   }
 
   const displayItems = viewMode === 'own' ? myWishlist : friendWishlist
-  const selectedFriend = friends.find((f) => f.id === selectedFriendId)
 
   return (
     <div className="flex-1 flex flex-col">
       {/* View mode switcher */}
-      <div className="px-4 py-3 border-b border-[#F0E8E8]">
+      <div className="px-4 py-3">
         <div className="flex gap-2">
           <Button
             variant={viewMode === 'own' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setViewMode('own')}
-            style={viewMode === 'own' ? { backgroundColor: '#8B1E3F', color: 'white' } : {}}
+            className={viewMode === 'own' ? 'bg-burgundy hover:bg-burgundy-light rounded-full' : 'rounded-full'}
           >
             <Heart className="w-4 h-4 mr-1" />
             Мой вишлист
@@ -222,7 +218,7 @@ export function WishlistSection() {
               variant={viewMode === 'friend' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setViewMode('friend')}
-              style={viewMode === 'friend' ? { backgroundColor: '#8B1E3F', color: 'white' } : {}}
+              className={viewMode === 'friend' ? 'bg-burgundy hover:bg-burgundy-light rounded-full' : 'rounded-full'}
             >
               <Gift className="w-4 h-4 mr-1" />
               Друзья
@@ -254,7 +250,7 @@ export function WishlistSection() {
       )}
 
       {/* Wishlist items */}
-      <div className="flex-1 overflow-y-auto p-4 pb-28 space-y-3">
+      <div className="flex-1 overflow-y-auto px-4 pb-32 space-y-4">
         {!selectedFriendId && viewMode === 'friend' ? (
           <EmptyState
             icon={Gift}
@@ -290,7 +286,7 @@ export function WishlistSection() {
       {viewMode === 'own' && (
         <button
           onClick={() => setShowItemForm(true)}
-          className="fixed bottom-24 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 bg-burgundy"
+          className="fixed bottom-28 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 bg-burgundy"
           style={{
             boxShadow: '0 4px 20px rgba(139, 30, 63, 0.3)'
           }}
@@ -308,7 +304,7 @@ export function WishlistSection() {
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Название</Label>
+              <Label htmlFor="title">Название *</Label>
               <Input
                 id="title"
                 value={formData.title}
@@ -336,17 +332,6 @@ export function WishlistSection() {
                 value={formData.link}
                 onChange={(e) => setFormData({ ...formData, link: e.target.value })}
                 placeholder="https://..."
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="price">Примерная цена</Label>
-              <Input
-                id="price"
-                type="number"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                placeholder="0"
               />
             </div>
           </div>

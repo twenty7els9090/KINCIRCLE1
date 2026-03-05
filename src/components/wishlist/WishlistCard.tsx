@@ -5,20 +5,10 @@ import {
   Gift,
   ExternalLink,
   Lock,
-  Unlock,
-  MoreVertical,
-  Trash2,
-  Edit,
   Check,
+  Trash2,
+  Link,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 import type { WishlistItem } from '@/lib/supabase/database.types'
 
@@ -28,7 +18,6 @@ interface WishlistCardProps {
   currentUserId?: string
   onBook?: (itemId: string) => void
   onUnbook?: (itemId: string) => void
-  onEdit?: (itemId: string) => void
   onDelete?: (itemId: string) => void
 }
 
@@ -38,7 +27,6 @@ export function WishlistCard({
   currentUserId,
   onBook,
   onUnbook,
-  onEdit,
   onDelete,
 }: WishlistCardProps) {
   const [isPressed, setIsPressed] = useState(false)
@@ -47,10 +35,12 @@ export function WishlistCard({
   const canBook = !isOwner && !item.is_booked
   const canUnbook = isBookedByMe
 
-  // Format price
-  const formatPrice = (price: number | null) => {
-    if (!price) return null
-    return price.toLocaleString('ru-RU') + ' ₽'
+  // Get gradient for background
+  const getGradient = () => {
+    if (item.is_booked) {
+      return 'linear-gradient(135deg, #8E8E93 0%, #AEAEB2 100%)'
+    }
+    return 'linear-gradient(135deg, #D4809A 0%, #E4A8BA 50%, #F0D0D9 100%)'
   }
 
   return (
@@ -59,147 +49,148 @@ export function WishlistCard({
       onMouseUp={() => setIsPressed(false)}
       onMouseLeave={() => setIsPressed(false)}
       className={cn(
-        'bg-[#F8F5F5] rounded-2xl p-4 transition-all duration-200',
+        'relative rounded-[20px] overflow-hidden',
+        'transition-all duration-300 ease-out',
+        'cursor-pointer',
         isPressed && 'scale-[0.98]',
-        item.is_booked && 'opacity-75'
+        item.is_booked && 'opacity-80'
       )}
+      style={{
+        boxShadow: '0 8px 20px rgba(0, 0, 0, 0.08)',
+        height: '220px',
+      }}
     >
-      <div className="flex gap-3">
-        {/* Icon/Image */}
-        <div
-          className={cn(
-            'flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center',
-            item.is_booked ? 'bg-[#E5E0E0]' : 'gradient-birthday'
+      {/* Background gradient */}
+      <div
+        className="absolute inset-0"
+        style={{ background: getGradient() }}
+      >
+        {/* Gift icon pattern */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Gift className="w-24 h-24 text-white/20" />
+        </div>
+      </div>
+
+      {/* Overlay gradient for text readability */}
+      <div 
+        className="absolute inset-0"
+        style={{
+          background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)'
+        }}
+      />
+
+      {/* Content */}
+      <div className="absolute inset-0 flex flex-col justify-between p-4">
+        {/* Top row */}
+        <div className="flex items-start justify-between">
+          {/* Booked badge */}
+          {item.is_booked && (
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm">
+              <Lock className="w-3.5 h-3.5 text-white" />
+              <span className="text-xs font-medium text-white">
+                {isBookedByMe ? 'Ваше' : 'Забронировано'}
+              </span>
+            </div>
           )}
-        >
-          <Gift
-            className={cn(
-              'w-7 h-7',
-              item.is_booked ? 'text-[#8E8E93]' : 'text-white'
-            )}
-          />
+
+          {/* Delete button for owner */}
+          {isOwner && onDelete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onDelete(item.id)
+              }}
+              className={cn(
+                'w-9 h-9 rounded-full',
+                'flex items-center justify-center',
+                'transition-all duration-200',
+                'hover:scale-110 active:scale-95',
+                'bg-white/20 backdrop-blur-sm'
+              )}
+            >
+              <Trash2 className="w-4 h-4 text-white" />
+            </button>
+          )}
         </div>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <h4
-                className={cn(
-                  'font-medium text-[#1C1C1E] truncate',
-                  item.is_booked && 'line-through text-[#8E8E93]'
-                )}
-              >
-                {item.title}
-              </h4>
-              {item.description && (
-                <p className="text-sm text-[#8E8E93] truncate mt-0.5">
-                  {item.description}
-                </p>
-              )}
-            </div>
+        {/* Bottom content */}
+        <div className="space-y-2">
+          {/* Title */}
+          <h3 className="text-2xl font-bold text-white drop-shadow-md">
+            {item.title}
+          </h3>
 
-            {/* Actions menu */}
-            {isOwner && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-[#8E8E93]"
+          {/* Description */}
+          {item.description && (
+            <p className="text-sm text-white/80 line-clamp-2">
+              {item.description}
+            </p>
+          )}
+
+          {/* Link */}
+          {item.link && (
+            <a
+              href={item.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1 text-sm text-white/80 hover:text-white transition-colors"
+            >
+              <Link className="w-3.5 h-3.5" />
+              <span>Ссылка</span>
+            </a>
+          )}
+
+          {/* Action button */}
+          <div className="flex justify-end pt-2">
+            {!isOwner && (
+              item.is_booked ? (
+                canUnbook && onUnbook && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onUnbook(item.id)
+                    }}
+                    className={cn(
+                      'flex items-center gap-2 px-5 py-2.5 rounded-full',
+                      'text-sm font-medium transition-all duration-200',
+                      'active:scale-95',
+                      'bg-white/20 backdrop-blur-sm text-white hover:bg-white/30'
+                    )}
                   >
-                    <MoreVertical className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {onEdit && (
-                    <DropdownMenuItem onClick={() => onEdit(item.id)}>
-                      <Edit className="w-4 h-4 mr-2" />
-                      Редактировать
-                    </DropdownMenuItem>
-                  )}
-                  {onDelete && (
-                    <DropdownMenuItem
-                      onClick={() => onDelete(item.id)}
-                      className="text-red-500"
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Удалить
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-
-          {/* Link and price */}
-          <div className="flex items-center gap-2 mt-2 flex-wrap">
-            {item.price && (
-              <Badge
-                variant="secondary"
-                className="bg-burgundy/10 text-burgundy"
-              >
-                {formatPrice(item.price)}
-              </Badge>
-            )}
-            {item.link && (
-              <a
-                href={item.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="text-xs text-burgundy hover:underline flex items-center gap-1"
-              >
-                <ExternalLink className="w-3 h-3" />
-                Ссылка
-              </a>
-            )}
-          </div>
-
-          {/* Booking status / actions */}
-          {!isOwner && (
-            <div className="mt-3">
-              {item.is_booked ? (
-                <div className="flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-[#8E8E93]" />
-                  <span className="text-sm text-[#8E8E93]">
-                    {isBookedByMe ? 'Вы забронировали' : 'Забронировано'}
-                  </span>
-                  {canUnbook && onUnbook && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="ml-auto"
-                      onClick={() => onUnbook(item.id)}
-                    >
-                      Отменить
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                canBook &&
-                onBook && (
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="bg-burgundy hover:bg-burgundy-light"
-                    onClick={() => onBook(item.id)}
-                  >
-                    <Gift className="w-4 h-4 mr-1" />
-                    Забронировать
-                  </Button>
+                    <Lock className="w-4 h-4" />
+                    <span>Отменить</span>
+                  </button>
                 )
-              )}
-            </div>
-          )}
+              ) : (
+                canBook && onBook && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onBook(item.id)
+                    }}
+                    className={cn(
+                      'flex items-center gap-2 px-5 py-2.5 rounded-full',
+                      'text-sm font-medium transition-all duration-200',
+                      'active:scale-95',
+                      'bg-white text-burgundy'
+                    )}
+                  >
+                    <Gift className="w-4 h-4" />
+                    <span>Забронировать</span>
+                  </button>
+                )
+              )
+            )}
 
-          {/* Owner view of booking */}
-          {isOwner && item.is_booked && (
-            <div className="mt-3 flex items-center gap-2 text-sm text-[#8E8E93]">
-              <Check className="w-4 h-4 text-green-500" />
-              <span>Кто-то забронировал этот подарок</span>
-            </div>
-          )}
+            {/* Owner view - booked indicator */}
+            {isOwner && item.is_booked && (
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm">
+                <Check className="w-4 h-4 text-white" />
+                <span className="text-sm text-white">Кто-то забронировал</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
