@@ -29,9 +29,9 @@ export function TabBar() {
           'backdrop-blur-xl'
         )}
         style={{
-          backgroundColor: 'rgba(62, 0, 12, 0.25)',
-          boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
+          backgroundColor: 'rgba(62, 0, 12, 0.15)',
+          boxShadow: '0 4px 30px rgba(0, 0, 0, 0.08)',
+          border: '1px solid rgba(255, 255, 255, 0.25)',
         }}
       >
         {tabs.map((tab) => {
@@ -58,7 +58,7 @@ export function TabBar() {
                 <Icon
                   className={cn(
                     'w-6 h-6 transition-all duration-200',
-                    isActive ? 'text-[#3E000C] stroke-[2.5]' : 'text-[#f5fffa]/80 stroke-[2]'
+                    isActive ? 'text-[#3E000C] stroke-[2.5]' : 'text-[#3E000C]/60 stroke-[2]'
                   )}
                 />
               </div>

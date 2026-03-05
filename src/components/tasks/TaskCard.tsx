@@ -70,7 +70,7 @@ export function TaskCard({
     
     setTimeout(() => {
       setIsAnimating(false)
-    }, 300)
+    }, 500)
 
     if (isCompleted && onUncomplete) {
       onUncomplete(task.id)
@@ -80,8 +80,6 @@ export function TaskCard({
   }
 
   // Handle archive/delete click
-  // If completed: archive button archives
-  // If not completed: delete button (trash icon) deletes completely
   const handleSecondaryActionClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     if (isCompleted && onArchive) {
@@ -96,9 +94,9 @@ export function TaskCard({
       onClick={() => onClick?.(task.id)}
       className={cn(
         'relative rounded-[20px] overflow-hidden',
-        'transition-all duration-300 ease-out',
+        'transition-all duration-500 ease-out',
         'cursor-pointer',
-        isHighlighted && 'ring-2 ring-burgundy'
+        isHighlighted && 'ring-2 ring-[#3E000C]'
       )}
       style={{
         boxShadow: '0 8px 20px rgba(0, 0, 0, 0.08)',
@@ -134,12 +132,15 @@ export function TaskCard({
         )}
       </div>
 
-      {/* Overlay gradient - darker when completed */}
+      {/* Overlay gradient with smooth animation */}
       <div 
-        className="absolute inset-0 transition-all duration-300"
+        className={cn(
+          'absolute inset-0 transition-all duration-700 ease-out',
+          isCompleted && 'animate-pulse-once'
+        )}
         style={{
           background: isCompleted
-            ? 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.3) 100%)'
+            ? 'linear-gradient(to top, rgba(62, 0, 12, 0.95) 0%, rgba(62, 0, 12, 0.75) 40%, rgba(62, 0, 12, 0.4) 100%)'
             : 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)'
         }}
       />
@@ -158,7 +159,7 @@ export function TaskCard({
             </span>
           )}
 
-          {/* Secondary action button - Archive (if completed) or Delete (if not completed) */}
+          {/* Secondary action button */}
           <button
             onClick={handleSecondaryActionClick}
             className={cn(
@@ -166,9 +167,7 @@ export function TaskCard({
               'flex items-center justify-center',
               'transition-all duration-200',
               'hover:scale-110 active:scale-95',
-              isCompleted
-                ? 'bg-white/20 backdrop-blur-sm'
-                : 'bg-burgundy/80 backdrop-blur-sm'
+              'bg-white/20 backdrop-blur-sm'
             )}
           >
             {isCompleted ? (
@@ -179,46 +178,60 @@ export function TaskCard({
           </button>
         </div>
 
-        {/* Bottom content */}
-        <div className="space-y-2">
-          {/* Title - strikethrough when completed */}
+        {/* Bottom content - aligned to bottom */}
+        <div className="space-y-3 mt-auto">
+          {/* Title */}
           <h3 className={cn(
-            'text-2xl font-bold text-white drop-shadow-md transition-all duration-300',
-            isCompleted && 'line-through opacity-70'
+            'text-2xl font-bold text-white drop-shadow-md transition-all duration-500',
+            isCompleted && 'opacity-90'
           )}>
             {task.title}
           </h3>
 
-          {/* Meta row - only quantity */}
-          {getQuantityDisplay() && (
-            <span className="text-sm text-white/80">
-              {getQuantityDisplay()}
-            </span>
+          {/* Description */}
+          {task.description && (
+            <p className={cn(
+              'text-sm text-white/80 line-clamp-2 transition-all duration-500',
+              isCompleted && 'text-white/70'
+            )}>
+              {task.description}
+            </p>
           )}
 
-          {/* Action button */}
-          <div className="flex justify-end pt-2">
+          {/* Meta row - quantity */}
+          {getQuantityDisplay() && (
+            <p className={cn(
+              'text-sm text-white/90 font-medium transition-all duration-500',
+              isCompleted && 'text-white/80'
+            )}>
+              {getQuantityDisplay()}
+            </p>
+          )}
+
+          {/* Action button - same size for both states */}
+          <div className="flex justify-end pt-1">
             <button
               onClick={handleActionClick}
               disabled={isAnimating}
               className={cn(
-                'flex items-center gap-2 px-5 py-2.5 rounded-full',
-                'text-sm font-medium transition-all duration-300',
+                'flex items-center justify-center gap-2',
+                'w-[140px] h-11 rounded-full',
+                'text-sm font-semibold transition-all duration-300',
                 'active:scale-95',
-                isAnimating && 'scale-110',
+                isAnimating && 'scale-105',
                 isCompleted
-                  ? 'bg-white/20 backdrop-blur-sm text-white border border-white/30'
-                  : 'bg-burgundy text-white hover:bg-burgundy-light'
+                  ? 'bg-[#f5fffa] text-[#3E000C]'
+                  : 'bg-[#3E000C] text-[#f5fffa] hover:bg-[#5C0013]'
               )}
             >
               {isCompleted ? (
                 <>
-                  <Check className="w-4 h-4" strokeWidth={2.5} />
+                  <Check className="w-5 h-5" strokeWidth={2.5} />
                   <span>Добавлено</span>
                 </>
               ) : (
                 <>
-                  <Plus className="w-4 h-4" strokeWidth={2.5} />
+                  <Plus className="w-5 h-5" strokeWidth={2.5} />
                   <span>Добавить</span>
                 </>
               )}

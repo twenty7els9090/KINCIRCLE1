@@ -415,13 +415,14 @@ export function EventsSection() {
         {/* Floating action button */}
         <button
           onClick={() => setShowEventForm(true)}
-          className="fixed bottom-28 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95"
+          className="fixed bottom-28 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 backdrop-blur-xl glass-fab"
           style={{
-            backgroundColor: '#3E000C',
-            boxShadow: '0 4px 20px rgba(62, 0, 12, 0.3)',
+            backgroundColor: 'rgba(62, 0, 12, 0.15)',
+            boxShadow: '0 4px 30px rgba(0, 0, 0, 0.08)',
+            border: '1px solid rgba(255, 255, 255, 0.25)',
           }}
         >
-          <Plus className="w-6 h-6 text-[#f5fffa]" strokeWidth={2.5} />
+          <Plus className="w-6 h-6 text-[#3E000C]" strokeWidth={2.5} />
         </button>
       </div>
 
@@ -429,7 +430,7 @@ export function EventsSection() {
       {showEventForm && (
         <div className="fixed inset-0 z-[60] bg-[#f5fffa] flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 bg-[#3E000C]" style={{ paddingTop: '53px' }}>
+          <div className="flex items-center justify-between p-4 bg-[#3E000C]" style={{ paddingTop: '57px' }}>
             <button
               onClick={() => { resetForm(); setShowEventForm(false); }}
               className="p-2 -ml-2 rounded-full bg-[#f5fffa]/10"

@@ -306,3 +306,26 @@ input:focus, textarea:focus, select:focus {
 .status-deleted {
   background: hsl(var(--destructive));
 }
+
+/* Pulse animation for completed tasks */
+@keyframes pulse-once {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.animate-pulse-once {
+  animation: pulse-once 0.7s ease-out;
+}
+
+/* Glass effect for FAB buttons */
+.glass-fab {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
