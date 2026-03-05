@@ -30,7 +30,7 @@ export function Header({ onNotificationsClick, onSettingsClick }: HeaderProps) {
       case 'events':
         return 'Мероприятия'
       case 'wishlist':
-        return 'Вишлист'
+        return 'Wishlist'
       case 'profile':
         return 'Профиль'
       default:

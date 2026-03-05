@@ -8,6 +8,7 @@ import {
   Check,
   Trash2,
   Link,
+  Pencil,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { WishlistItem } from '@/lib/supabase/database.types'
@@ -19,6 +20,7 @@ interface WishlistCardProps {
   onBook?: (itemId: string) => void
   onUnbook?: (itemId: string) => void
   onDelete?: (itemId: string) => void
+  onEdit?: (item: WishlistItem) => void
 }
 
 export function WishlistCard({
@@ -28,12 +30,23 @@ export function WishlistCard({
   onBook,
   onUnbook,
   onDelete,
+  onEdit,
 }: WishlistCardProps) {
   const [isPressed, setIsPressed] = useState(false)
 
   const isBookedByMe = item.booked_by === currentUserId
   const canBook = !isOwner && !item.is_booked
   const canUnbook = isBookedByMe
+
+  // Format price display
+  const formatPrice = (price: number | null) => {
+    if (!price) return null
+    return new Intl.NumberFormat('ru-RU', {
+      style: 'currency',
+      currency: 'RUB',
+      minimumFractionDigits: 0,
+    }).format(price)
+  }
 
   // Get gradient for background
   const getGradient = () => {
@@ -57,7 +70,7 @@ export function WishlistCard({
       )}
       style={{
         boxShadow: '0 8px 20px rgba(0, 0, 0, 0.08)',
-        height: '220px',
+        height: '240px',
       }}
     >
       {/* Background gradient */}
@@ -93,23 +106,44 @@ export function WishlistCard({
             </div>
           )}
 
-          {/* Delete button for owner */}
-          {isOwner && onDelete && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onDelete(item.id)
-              }}
-              className={cn(
-                'w-9 h-9 rounded-full',
-                'flex items-center justify-center',
-                'transition-all duration-200',
-                'hover:scale-110 active:scale-95',
-                'bg-white/20 backdrop-blur-sm'
+          {/* Action buttons for owner */}
+          {isOwner && (
+            <div className="flex gap-2">
+              {onEdit && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onEdit(item)
+                  }}
+                  className={cn(
+                    'w-9 h-9 rounded-full',
+                    'flex items-center justify-center',
+                    'transition-all duration-200',
+                    'hover:scale-110 active:scale-95',
+                    'bg-white/20 backdrop-blur-sm'
+                  )}
+                >
+                  <Pencil className="w-4 h-4 text-white" />
+                </button>
               )}
-            >
-              <Trash2 className="w-4 h-4 text-white" />
-            </button>
+              {onDelete && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDelete(item.id)
+                  }}
+                  className={cn(
+                    'w-9 h-9 rounded-full',
+                    'flex items-center justify-center',
+                    'transition-all duration-200',
+                    'hover:scale-110 active:scale-95',
+                    'bg-white/20 backdrop-blur-sm'
+                  )}
+                >
+                  <Trash2 className="w-4 h-4 text-white" />
+                </button>
+              )}
+            </div>
           )}
         </div>
 
@@ -124,6 +158,13 @@ export function WishlistCard({
           {item.description && (
             <p className="text-sm text-white/80 line-clamp-2">
               {item.description}
+            </p>
+          )}
+
+          {/* Price */}
+          {item.price && (
+            <p className="text-lg font-semibold text-white">
+              {formatPrice(item.price)}
             </p>
           )}
 

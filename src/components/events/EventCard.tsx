@@ -10,6 +10,7 @@ import {
   Clock,
   Trash2,
 } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
@@ -44,8 +45,9 @@ export function EventCard({
   )
   const userResponse = currentUserParticipant?.response || null
 
-  // Count responses
-  const goingCount = event.participants?.filter((p) => p.response === 'going').length || 0
+  // Get list of people going
+  const goingParticipants = event.participants?.filter((p) => p.response === 'going') || []
+  const goingCount = goingParticipants.length
 
   const isCreator = event.created_by === currentUserId
 
@@ -67,7 +69,7 @@ export function EventCard({
       )}
       style={{
         boxShadow: '0 8px 20px rgba(0, 0, 0, 0.08)',
-        height: '240px',
+        height: '280px',
       }}
     >
       {/* Background image/gradient */}
@@ -141,17 +143,37 @@ export function EventCard({
             </div>
           )}
 
-          {/* Going count */}
+          {/* Going participants - show avatars and names */}
           {goingCount > 0 && (
             <div className="flex items-center gap-2">
+              {/* Avatars stack */}
+              <div className="flex -space-x-2">
+                {goingParticipants.slice(0, 4).map((p) => (
+                  <Avatar key={p.id} className="w-7 h-7 border-2 border-white/20">
+                    <AvatarImage src={p.user?.avatar_url || undefined} />
+                    <AvatarFallback className="bg-burgundy text-white text-xs">
+                      {p.user?.first_name?.[0]?.toUpperCase() || '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                ))}
+                {goingCount > 4 && (
+                  <div className="w-7 h-7 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border-2 border-white/20">
+                    <span className="text-xs text-white font-medium">+{goingCount - 4}</span>
+                  </div>
+                )}
+              </div>
+              
+              {/* Names */}
               <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm">
                 <Users className="w-4 h-4 text-white" />
-                <span className="text-sm text-white">{goingCount} идёт</span>
+                <span className="text-sm text-white">
+                  {goingCount} {goingCount === 1 ? 'пойдёт' : goingCount < 5 ? 'пойдут' : 'пойдут'}
+                </span>
               </div>
             </div>
           )}
 
-          {/* Response buttons */}
+          {/* Response buttons - always show for non-past events */}
           {!isPast && currentUserId && !isCreator && (
             <div className="flex gap-2 pt-2">
               <button

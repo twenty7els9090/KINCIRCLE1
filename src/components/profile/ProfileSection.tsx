@@ -15,6 +15,7 @@ import {
   Trash2,
   RotateCcw,
   CheckCircle2,
+  AlertTriangle,
 } from 'lucide-react'
 import * as LucideIcons from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -28,12 +29,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { useUserStore, useFriendsStore, useTaskStore } from '@/store'
 import { getSupabaseClient } from '@/lib/supabase'
-import type { User as UserType, Task, TaskCategory } from '@/lib/supabase/database.types'
+import type { User as UserType, Task, TaskCategory, FamilyInvitation } from '@/lib/supabase/database.types'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 
@@ -46,6 +48,11 @@ interface FamilyMember {
   user?: UserType
 }
 
+interface FamilyInvitationWithDetails extends FamilyInvitation {
+  family: { id: string; name: string }
+  inviter: UserType
+}
+
 export function ProfileSection() {
   const { user, families, setUser, setFamilies } = useUserStore()
   const { friends, pendingRequests, setFriends, setPendingRequests, isFriend } = useFriendsStore()
@@ -55,11 +62,14 @@ export function ProfileSection() {
   const [showCreateFamily, setShowCreateFamily] = useState(false)
   const [showInviteMember, setShowInviteMember] = useState(false)
   const [showArchive, setShowArchive] = useState(false)
+  const [showDeleteFamily, setShowDeleteFamily] = useState(false)
+  const [familyToDelete, setFamilyToDelete] = useState<string | null>(null)
   const [selectedFamilyId, setSelectedFamilyId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<UserType[]>([])
   const [activeTab, setActiveTab] = useState<'profile' | 'friends' | 'family'>('profile')
   const [archivedTasks, setArchivedTasks] = useState<(Task & { category?: TaskCategory | null })[]>([])
+  const [familyInvitations, setFamilyInvitations] = useState<FamilyInvitationWithDetails[]>([])
 
   // Edit profile form
   const [profileForm, setProfileForm] = useState({
@@ -79,6 +89,8 @@ export function ProfileSection() {
       fetchFriends()
       fetchPendingRequests()
       fetchFamilies()
+      fetchFamilyInvitations()
+      fetchArchivedTasks()
       setProfileForm({
         first_name: user.first_name || '',
         last_name: user.last_name || '',
@@ -137,6 +149,29 @@ export function ProfileSection() {
       }
     } catch (error) {
       console.error('Error fetching families:', error)
+    }
+  }
+
+  const fetchFamilyInvitations = async () => {
+    if (!user) return
+
+    try {
+      const supabase = getSupabaseClient()
+      const { data, error } = await supabase
+        .from('family_invitations')
+        .select(`
+          *,
+          family:family_groups(id, name),
+          inviter:users!family_invitations_inviter_id_fkey(*)
+        `)
+        .eq('invitee_id', user.id)
+        .eq('status', 'pending')
+
+      if (!error && data) {
+        setFamilyInvitations(data as FamilyInvitationWithDetails[])
+      }
+    } catch (error) {
+      console.error('Error fetching family invitations:', error)
     }
   }
 
@@ -343,16 +378,32 @@ export function ProfileSection() {
   }
 
   const handleInviteToFamily = async (userId: string) => {
-    if (!selectedFamilyId) return
+    if (!selectedFamilyId || !user) return
 
     try {
       const supabase = getSupabaseClient()
+      
+      // Check if there's already a pending invitation
+      const { data: existing } = await supabase
+        .from('family_invitations')
+        .select('*')
+        .eq('family_id', selectedFamilyId)
+        .eq('invitee_id', userId)
+        .eq('status', 'pending')
+        .single()
+
+      if (existing) {
+        alert('Приглашение уже отправлено')
+        return
+      }
+
       const { error } = await supabase
-        .from('family_members')
+        .from('family_invitations')
         .insert({
           family_id: selectedFamilyId,
-          user_id: userId,
-          role: 'member',
+          inviter_id: user.id,
+          invitee_id: userId,
+          status: 'pending',
         })
 
       if (!error) {
@@ -360,10 +411,57 @@ export function ProfileSection() {
         setSelectedFamilyId(null)
         setSearchQuery('')
         setSearchResults([])
-        fetchFamilies()
       }
     } catch (error) {
       console.error('Error inviting to family:', error)
+    }
+  }
+
+  const handleAcceptFamilyInvitation = async (invitationId: string, familyId: string) => {
+    if (!user) return
+
+    try {
+      const supabase = getSupabaseClient()
+      
+      // Update invitation status
+      await supabase
+        .from('family_invitations')
+        .update({ 
+          status: 'accepted',
+          responded_at: new Date().toISOString()
+        })
+        .eq('id', invitationId)
+
+      // Add user to family
+      await supabase
+        .from('family_members')
+        .insert({
+          family_id: familyId,
+          user_id: user.id,
+          role: 'member',
+        })
+
+      fetchFamilies()
+      fetchFamilyInvitations()
+    } catch (error) {
+      console.error('Error accepting family invitation:', error)
+    }
+  }
+
+  const handleDeclineFamilyInvitation = async (invitationId: string) => {
+    try {
+      const supabase = getSupabaseClient()
+      await supabase
+        .from('family_invitations')
+        .update({ 
+          status: 'declined',
+          responded_at: new Date().toISOString()
+        })
+        .eq('id', invitationId)
+
+      fetchFamilyInvitations()
+    } catch (error) {
+      console.error('Error declining family invitation:', error)
     }
   }
 
@@ -379,6 +477,32 @@ export function ProfileSection() {
       fetchFamilies()
     } catch (error) {
       console.error('Error removing from family:', error)
+    }
+  }
+
+  const handleDeleteFamily = async (familyId: string) => {
+    if (!user) return
+
+    try {
+      const supabase = getSupabaseClient()
+      
+      // Remove all family members
+      await supabase
+        .from('family_members')
+        .delete()
+        .eq('family_id', familyId)
+
+      // Delete the family
+      await supabase
+        .from('family_groups')
+        .delete()
+        .eq('id', familyId)
+
+      setShowDeleteFamily(false)
+      setFamilyToDelete(null)
+      fetchFamilies()
+    } catch (error) {
+      console.error('Error deleting family:', error)
     }
   }
 
@@ -420,6 +544,11 @@ export function ProfileSection() {
   const openArchiveDialog = () => {
     setShowArchive(true)
     fetchArchivedTasks()
+  }
+
+  const openDeleteFamilyDialog = (familyId: string) => {
+    setFamilyToDelete(familyId)
+    setShowDeleteFamily(true)
   }
 
   // Check if user is already in family
@@ -467,6 +596,11 @@ export function ProfileSection() {
             >
               <Home className="w-4 h-4 mr-1" />
               Семья
+              {familyInvitations.length > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-white/20">
+                  {familyInvitations.length}
+                </span>
+              )}
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -651,6 +785,52 @@ export function ProfileSection() {
               Создать семью
             </Button>
 
+            {/* Family invitations */}
+            {familyInvitations.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-[#8E8E93]">
+                  Приглашения в семью ({familyInvitations.length})
+                </h3>
+                {familyInvitations.map((invitation) => (
+                  <div
+                    key={invitation.id}
+                    className="flex items-center gap-3 bg-white rounded-xl p-3 shadow-sm"
+                  >
+                    <Avatar className="w-10 h-10">
+                      <AvatarImage src={invitation.inviter?.avatar_url || undefined} />
+                      <AvatarFallback className="bg-burgundy text-white">
+                        {invitation.inviter?.first_name?.[0]?.toUpperCase() || '?'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p className="font-medium text-[#1C1C1E]">
+                        {invitation.inviter?.first_name}
+                      </p>
+                      <p className="text-xs text-[#8E8E93]">
+                        Приглашает в "{invitation.family?.name}"
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="bg-burgundy hover:bg-burgundy-light"
+                        onClick={() => handleAcceptFamilyInvitation(invitation.id, invitation.family_id)}
+                      >
+                        Принять
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDeclineFamilyInvitation(invitation.id)}
+                      >
+                        ✕
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Families list */}
             {families.length === 0 ? (
               <EmptyState
@@ -671,9 +851,20 @@ export function ProfileSection() {
                   >
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-semibold text-lg text-[#1C1C1E]">{family.name}</h3>
-                      <Badge className="bg-burgundy/10 text-burgundy">
-                        {family.members?.length || 0} участников
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge className="bg-burgundy/10 text-burgundy">
+                          {family.members?.length || 0} участников
+                        </Badge>
+                        {isUserAdmin && (
+                          <button
+                            onClick={() => openDeleteFamilyDialog(family.id)}
+                            className="p-1.5 rounded-full hover:bg-red-50 transition-colors"
+                            title="Удалить семью"
+                          >
+                            <Trash2 className="w-4 h-4 text-red-400" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                     
                     {/* Members list */}
@@ -916,6 +1107,32 @@ export function ProfileSection() {
               </div>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete family confirmation dialog */}
+      <Dialog open={showDeleteFamily} onOpenChange={setShowDeleteFamily}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-burgundy flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
+              Удалить семью?
+            </DialogTitle>
+            <DialogDescription>
+              Это действие нельзя отменить. Все участники будут автоматически исключены из семьи.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteFamily(false)}>
+              Отмена
+            </Button>
+            <Button
+              className="bg-red-500 hover:bg-red-600"
+              onClick={() => familyToDelete && handleDeleteFamily(familyToDelete)}
+            >
+              Удалить
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

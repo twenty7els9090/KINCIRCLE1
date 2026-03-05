@@ -6,6 +6,7 @@ import {
   Archive,
   Package,
   Plus,
+  Trash2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Task, TaskCategory, User as UserType } from '@/lib/supabase/database.types'
@@ -62,7 +63,7 @@ export function TaskCard({
     return `${task.quantity} ${unit}`
   }
 
-  // Handle action button click
+  // Handle action button click - marks complete/uncomplete
   const handleActionClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     setIsAnimating(true)
@@ -78,8 +79,10 @@ export function TaskCard({
     }
   }
 
-  // Handle archive click
-  const handleArchiveClick = (e: React.MouseEvent) => {
+  // Handle archive/delete click
+  // If completed: archive button archives
+  // If not completed: delete button (trash icon) deletes completely
+  const handleSecondaryActionClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     if (isCompleted && onArchive) {
       onArchive(task.id)
@@ -155,18 +158,24 @@ export function TaskCard({
             </span>
           )}
 
-          {/* Archive/Delete button */}
+          {/* Secondary action button - Archive (if completed) or Delete (if not completed) */}
           <button
-            onClick={handleArchiveClick}
+            onClick={handleSecondaryActionClick}
             className={cn(
               'w-9 h-9 rounded-full',
               'flex items-center justify-center',
               'transition-all duration-200',
               'hover:scale-110 active:scale-95',
-              'bg-white/20 backdrop-blur-sm'
+              isCompleted
+                ? 'bg-white/20 backdrop-blur-sm'
+                : 'bg-burgundy/80 backdrop-blur-sm'
             )}
           >
-            <Archive className="w-4 h-4 text-white" />
+            {isCompleted ? (
+              <Archive className="w-4 h-4 text-white" />
+            ) : (
+              <Trash2 className="w-4 h-4 text-white" />
+            )}
           </button>
         </div>
 

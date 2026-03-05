@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Calendar, Plus, CalendarDays, Users, Check, X, ChevronLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,9 +26,6 @@ export function EventsSection() {
   const [isLoading, setIsLoading] = useState(false)
   const [showEventForm, setShowEventForm] = useState(false)
   const [activeFilter, setActiveFilter] = useState<'upcoming' | 'past'>('upcoming')
-  const [friendsLoaded, setFriendsLoaded] = useState(false)
-  const prevFriendsLength = useRef(friends.length)
-
   // Form state
   const [formData, setFormData] = useState({
     title: '',
@@ -40,23 +37,12 @@ export function EventsSection() {
     invited_friends: [] as string[],
   })
 
-  // Track when friends are loaded
+  // Fetch events when user is ready (friends are loaded globally in page.tsx)
   useEffect(() => {
-    // Friends are considered loaded when:
-    // 1. They were empty and now have items, OR
-    // 2. They were already populated on mount
-    if (friends.length > 0 || prevFriendsLength.current > 0) {
-      setFriendsLoaded(true)
-    }
-    prevFriendsLength.current = friends.length
-  }, [friends.length])
-
-  // Fetch events when user and friends are ready
-  useEffect(() => {
-    if (user && friendsLoaded) {
+    if (user) {
       fetchEvents()
     }
-  }, [user, friendsLoaded])
+  }, [user])
 
   // Realtime subscription for events
   useEffect(() => {

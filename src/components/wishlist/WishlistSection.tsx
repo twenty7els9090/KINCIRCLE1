@@ -27,20 +27,22 @@ export function WishlistSection() {
   const [viewMode, setViewMode] = useState<'own' | 'friend'>('own')
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null)
   const [friendWishlist, setFriendWishlist] = useState<WishlistItem[]>([])
+  const [editingItem, setEditingItem] = useState<WishlistItem | null>(null)
 
   // Form state
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     link: '',
+    price: '',
   })
 
-  // Fetch user's wishlist
+  // Fetch user's wishlist when user is ready (friends are loaded globally in page.tsx)
   useEffect(() => {
-    if (user && viewMode === 'own') {
+    if (user) {
       fetchMyWishlist()
     }
-  }, [user, viewMode])
+  }, [user])
 
   // Realtime subscription for own wishlist
   useEffect(() => {
@@ -178,6 +180,7 @@ export function WishlistSection() {
           title: formData.title,
           description: formData.description || null,
           link: formData.link || null,
+          price: formData.price ? parseFloat(formData.price) : null,
         })
         .select()
         .single()
@@ -195,12 +198,52 @@ export function WishlistSection() {
     }
   }
 
+  const handleUpdateItem = async () => {
+    if (!editingItem || !formData.title) return
+
+    try {
+      const supabase = getSupabaseClient()
+      const { data, error } = await supabase
+        .from('wishlist_items')
+        .update({
+          title: formData.title,
+          description: formData.description || null,
+          link: formData.link || null,
+          price: formData.price ? parseFloat(formData.price) : null,
+        })
+        .eq('id', editingItem.id)
+        .select()
+        .single()
+
+      if (!error && data) {
+        updateWishlistItem(editingItem.id, data)
+        resetForm()
+        setEditingItem(null)
+        setShowItemForm(false)
+      }
+    } catch (error) {
+      console.error('Error updating wishlist item:', error)
+    }
+  }
+
   const resetForm = () => {
     setFormData({
       title: '',
       description: '',
       link: '',
+      price: '',
     })
+  }
+
+  const handleEditItem = (item: WishlistItem) => {
+    setEditingItem(item)
+    setFormData({
+      title: item.title,
+      description: item.description || '',
+      link: item.link || '',
+      price: item.price ? item.price.toString() : '',
+    })
+    setShowItemForm(true)
   }
 
   const handleDeleteItem = async (itemId: string) => {
@@ -284,6 +327,12 @@ export function WishlistSection() {
     fetchFriendWishlist(friendId)
   }
 
+  const handleCloseForm = () => {
+    resetForm()
+    setEditingItem(null)
+    setShowItemForm(false)
+  }
+
   const displayItems = viewMode === 'own' ? myWishlist : friendWishlist
 
   return (
@@ -300,7 +349,7 @@ export function WishlistSection() {
               className={viewMode === 'own' ? 'bg-burgundy hover:bg-burgundy-light rounded-full' : 'rounded-full'}
             >
               <Heart className="w-4 h-4 mr-1" />
-              Мой вишлист
+              Мой Wishlist
             </Button>
             {friends.length > 0 && (
               <Button
@@ -344,16 +393,16 @@ export function WishlistSection() {
             <EmptyState
               icon={Gift}
               title="Выберите друга"
-              description="Посмотрите вишлист друга, чтобы выбрать подарок"
+              description="Посмотрите Wishlist друга, чтобы выбрать подарок"
             />
           ) : displayItems.length === 0 ? (
             <EmptyState
               icon={Gift}
-              title={viewMode === 'own' ? 'Вишлист пуст' : 'Вишлист пуст'}
+              title={viewMode === 'own' ? 'Wishlist пуст' : 'Wishlist пуст'}
               description={
                 viewMode === 'own'
                   ? 'Добавьте желаемые подарки'
-                  : 'У друга пока нет желаний в вишлисте'
+                  : 'У друга пока нет желаний в Wishlist'
               }
             />
           ) : (
@@ -366,6 +415,7 @@ export function WishlistSection() {
                 onBook={handleBook}
                 onUnbook={handleUnbook}
                 onDelete={handleDeleteItem}
+                onEdit={handleEditItem}
               />
             ))
           )}
@@ -391,16 +441,18 @@ export function WishlistSection() {
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-[#F0E8E8]">
             <button
-              onClick={() => { resetForm(); setShowItemForm(false); }}
+              onClick={handleCloseForm}
               className="p-2 -ml-2 rounded-full hover:bg-[#F8F5F5] transition-colors"
             >
               <ChevronLeft className="w-6 h-6 text-[#1C1C1E]" />
             </button>
             
-            <h1 className="text-lg font-semibold text-[#1C1C1E]">Добавить желание</h1>
+            <h1 className="text-lg font-semibold text-[#1C1C1E]">
+              {editingItem ? 'Редактировать' : 'Добавить желание'}
+            </h1>
             
             <button
-              onClick={() => { resetForm(); setShowItemForm(false); }}
+              onClick={handleCloseForm}
               className="p-2 -mr-2 rounded-full hover:bg-[#F8F5F5] transition-colors"
             >
               <X className="w-6 h-6 text-[#1C1C1E]" />
@@ -416,6 +468,18 @@ export function WishlistSection() {
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="Что бы вы хотели?"
+                className="border-[#F0E8E8] focus:border-burgundy"
+              />
+            </div>
+
+            {/* Price */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-[#1C1C1E]">Цена (₽)</label>
+              <Input
+                type="number"
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                placeholder="Примерная стоимость"
                 className="border-[#F0E8E8] focus:border-burgundy"
               />
             </div>
@@ -448,11 +512,11 @@ export function WishlistSection() {
           {/* Submit button */}
           <div className="p-4 border-t border-[#F0E8E8]">
             <Button
-              onClick={handleCreateItem}
+              onClick={editingItem ? handleUpdateItem : handleCreateItem}
               disabled={!formData.title}
               className="w-full bg-burgundy hover:bg-burgundy-light text-white"
             >
-              Добавить
+              {editingItem ? 'Сохранить' : 'Добавить'}
             </Button>
           </div>
         </div>

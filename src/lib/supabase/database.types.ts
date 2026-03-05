@@ -138,6 +138,35 @@ export interface Database {
           joined_at?: string
         }
       }
+      family_invitations: {
+        Row: {
+          id: string
+          family_id: string
+          inviter_id: string
+          invitee_id: string
+          status: 'pending' | 'accepted' | 'declined'
+          created_at: string
+          responded_at: string | null
+        }
+        Insert: {
+          id?: string
+          family_id: string
+          inviter_id: string
+          invitee_id: string
+          status?: 'pending' | 'accepted' | 'declined'
+          created_at?: string
+          responded_at?: string | null
+        }
+        Update: {
+          id?: string
+          family_id?: string
+          inviter_id?: string
+          invitee_id?: string
+          status?: 'pending' | 'accepted' | 'declined'
+          created_at?: string
+          responded_at?: string | null
+        }
+      }
       task_categories: {
         Row: {
           id: string
@@ -401,6 +430,9 @@ export type FamilyGroupInsert = Database['public']['Tables']['family_groups']['I
 
 export type FamilyMember = Database['public']['Tables']['family_members']['Row']
 export type FamilyMemberInsert = Database['public']['Tables']['family_members']['Insert']
+
+export type FamilyInvitation = Database['public']['Tables']['family_invitations']['Row']
+export type FamilyInvitationInsert = Database['public']['Tables']['family_invitations']['Insert']
 
 export type TaskCategory = Database['public']['Tables']['task_categories']['Row']
 export type TaskCategoryInsert = Database['public']['Tables']['task_categories']['Insert']

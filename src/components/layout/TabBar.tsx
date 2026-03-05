@@ -13,7 +13,7 @@ interface TabItem {
 const tabs: TabItem[] = [
   { id: 'tasks', label: 'Задачи', icon: ListTodo },
   { id: 'events', label: 'События', icon: Calendar },
-  { id: 'wishlist', label: 'Вишлист', icon: Gift },
+  { id: 'wishlist', label: 'Wishlist', icon: Gift },
   { id: 'profile', label: 'Профиль', icon: User },
 ]
 
