@@ -25,11 +25,13 @@ export function TabBar() {
         className={cn(
           'max-w-[350px] mx-auto pointer-events-auto',
           'rounded-full px-2 py-2',
-          'flex items-center justify-around'
+          'flex items-center justify-around',
+          'backdrop-blur-xl'
         )}
         style={{
-          backgroundColor: '#3E000C',
-          boxShadow: '0 4px 20px rgba(62, 0, 12, 0.3)',
+          backgroundColor: 'rgba(62, 0, 12, 0.25)',
+          boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
         }}
       >
         {tabs.map((tab) => {
@@ -56,7 +58,7 @@ export function TabBar() {
                 <Icon
                   className={cn(
                     'w-6 h-6 transition-all duration-200',
-                    isActive ? 'text-[#3E000C] stroke-[2.5]' : 'text-[#f5fffa]/60 stroke-[2]'
+                    isActive ? 'text-[#3E000C] stroke-[2.5]' : 'text-[#f5fffa]/80 stroke-[2]'
                   )}
                 />
               </div>
