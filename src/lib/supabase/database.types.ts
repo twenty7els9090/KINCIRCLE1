@@ -264,6 +264,7 @@ export interface Database {
           location: string | null
           event_date: string
           invited_users: string[] | null
+          is_public: boolean
           image_url: string | null
           created_at: string
         }
@@ -275,6 +276,7 @@ export interface Database {
           location?: string | null
           event_date: string
           invited_users?: string[] | null
+          is_public?: boolean
           image_url?: string | null
           created_at?: string
         }
@@ -286,6 +288,7 @@ export interface Database {
           location?: string | null
           event_date?: string
           invited_users?: string[] | null
+          is_public?: boolean
           image_url?: string | null
           created_at?: string
         }

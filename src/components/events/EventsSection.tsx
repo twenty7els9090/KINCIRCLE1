@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Calendar, Plus, CalendarDays, Users, Check, X, ChevronLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -267,21 +266,38 @@ export function EventsSection() {
       const existingParticipant = event.participants?.find(p => p.user_id === user.id)
       const updatedParticipants = existingParticipant
         ? event.participants?.map(p => p.user_id === user.id ? { ...p, response } : p)
-        : [...(event.participants || []), { event_id: eventId, user_id: user.id, response, user: user } as any]
+        : [...(event.participants || []), { 
+            event_id: eventId, 
+            user_id: user.id, 
+            response, 
+            user: {
+              id: user.id,
+              first_name: user.first_name,
+              last_name: user.last_name,
+              avatar_url: user.avatar_url,
+              username: user.username,
+            } as any
+          }]
       
-      updateEvent(eventId, { ...event, participants: updatedParticipants })
+      updateEvent(eventId, { ...event, participants: updatedParticipants as any })
     }
 
     try {
       const supabase = getSupabaseClient()
-      await supabase
+      const { error } = await supabase
         .from('event_participants')
         .upsert({
           event_id: eventId,
           user_id: user.id,
           response,
           updated_at: new Date().toISOString(),
+        }, { 
+          onConflict: 'event_id,user_id' 
         })
+      
+      if (error) {
+        console.error('Error responding to event:', error)
+      }
     } catch (error) {
       console.error('Error responding to event:', error)
     }
@@ -330,31 +346,60 @@ export function EventsSection() {
   return (
     <>
       {/* Main content */}
-      <div className="flex-1 flex flex-col">
+      <div 
+        className="flex-1 flex flex-col"
+        style={{ background: 'linear-gradient(180deg, #FDF5F7 0%, #FFFFFF 100%)' }}
+      >
         {/* Filter tabs */}
         <div className="px-4 py-3">
           <div className="flex gap-2">
-            <Button
-              variant={activeFilter === 'upcoming' ? 'default' : 'outline'}
-              size="sm"
+            <button
               onClick={() => setActiveFilter('upcoming')}
-              className={activeFilter === 'upcoming' ? 'bg-burgundy hover:bg-burgundy-light rounded-full' : 'rounded-full'}
+              className={cn(
+                'px-4 py-2 rounded-full text-sm font-medium transition-all duration-200',
+              )}
+              style={{
+                background: activeFilter === 'upcoming' 
+                  ? 'linear-gradient(135deg, #8B1E3F 0%, #A93B5C 100%)'
+                  : '#F8E8EC',
+                color: activeFilter === 'upcoming' ? '#FFFFFF' : '#8B1E3F',
+                boxShadow: activeFilter === 'upcoming' 
+                  ? '0 4px 12px rgba(139, 30, 63, 0.25)' 
+                  : 'none',
+              }}
             >
               Предстоящие
               {upcomingEvents.length > 0 && (
-                <span className="ml-1.5 px-1.5 py-0.5 text-xs rounded-full bg-white/20">
+                <span 
+                  className="ml-1.5 px-1.5 py-0.5 text-xs rounded-full"
+                  style={{ 
+                    backgroundColor: activeFilter === 'upcoming' 
+                      ? 'rgba(255,255,255,0.2)' 
+                      : '#8B1E3F',
+                    color: '#FFFFFF'
+                  }}
+                >
                   {upcomingEvents.length}
                 </span>
               )}
-            </Button>
-            <Button
-              variant={activeFilter === 'past' ? 'default' : 'outline'}
-              size="sm"
+            </button>
+            <button
               onClick={() => setActiveFilter('past')}
-              className={activeFilter === 'past' ? 'bg-burgundy hover:bg-burgundy-light rounded-full' : 'rounded-full'}
+              className={cn(
+                'px-4 py-2 rounded-full text-sm font-medium transition-all duration-200',
+              )}
+              style={{
+                background: activeFilter === 'past' 
+                  ? 'linear-gradient(135deg, #8B1E3F 0%, #A93B5C 100%)'
+                  : '#F8E8EC',
+                color: activeFilter === 'past' ? '#FFFFFF' : '#8B1E3F',
+                boxShadow: activeFilter === 'past' 
+                  ? '0 4px 12px rgba(139, 30, 63, 0.25)' 
+                  : 'none',
+              }}
             >
               Прошедшие
-            </Button>
+            </button>
           </div>
         </div>
 
@@ -362,7 +407,10 @@ export function EventsSection() {
         <div className="flex-1 overflow-y-auto px-4 pb-32 space-y-4">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-burgundy"></div>
+              <div 
+                className="w-8 h-8 rounded-full animate-spin"
+                style={{ border: '2px solid #F0D0D9', borderTopColor: '#8B1E3F' }}
+              />
             </div>
           ) : displayEvents.length === 0 ? (
             <EmptyState
@@ -390,9 +438,10 @@ export function EventsSection() {
         {/* Floating action button */}
         <button
           onClick={() => setShowEventForm(true)}
-          className="fixed bottom-28 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 bg-burgundy"
+          className="fixed bottom-28 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95"
           style={{
-            boxShadow: '0 4px 20px rgba(139, 30, 63, 0.3)'
+            background: 'linear-gradient(135deg, #8B1E3F 0%, #A93B5C 100%)',
+            boxShadow: '0 6px 24px rgba(139, 30, 63, 0.4)',
           }}
         >
           <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
@@ -401,23 +450,33 @@ export function EventsSection() {
 
       {/* Full screen event form */}
       {showEventForm && (
-        <div className="fixed inset-0 z-50 bg-white flex flex-col">
+        <div 
+          className="fixed inset-0 z-[60] flex flex-col"
+          style={{ background: 'linear-gradient(180deg, #FDF5F7 0%, #FFFFFF 100%)' }}
+        >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-[#F0E8E8]">
+          <div 
+            className="flex items-center justify-between p-4"
+            style={{
+              background: 'linear-gradient(135deg, #8B1E3F 0%, #A93B5C 100%)',
+            }}
+          >
             <button
               onClick={() => { resetForm(); setShowEventForm(false); }}
-              className="p-2 -ml-2 rounded-full hover:bg-[#F8F5F5] transition-colors"
+              className="p-2 -ml-2 rounded-full transition-colors"
+              style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)' }}
             >
-              <ChevronLeft className="w-6 h-6 text-[#1C1C1E]" />
+              <ChevronLeft className="w-6 h-6 text-white" />
             </button>
             
-            <h1 className="text-lg font-semibold text-[#1C1C1E]">Новое мероприятие</h1>
+            <h1 className="text-lg font-semibold text-white">Новое мероприятие</h1>
             
             <button
               onClick={() => { resetForm(); setShowEventForm(false); }}
-              className="p-2 -mr-2 rounded-full hover:bg-[#F8F5F5] transition-colors"
+              className="p-2 -mr-2 rounded-full transition-colors"
+              style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)' }}
             >
-              <X className="w-6 h-6 text-[#1C1C1E]" />
+              <X className="w-6 h-6 text-white" />
             </button>
           </div>
 
@@ -430,7 +489,7 @@ export function EventsSection() {
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="День рождения, Встреча..."
-                className="border-[#F0E8E8] focus:border-burgundy"
+                className="border-[#F0D0D9] focus:border-[#8B1E3F] bg-white rounded-xl py-3"
               />
             </div>
 
@@ -442,7 +501,7 @@ export function EventsSection() {
                   type="date"
                   value={formData.event_date}
                   onChange={(e) => setFormData({ ...formData, event_date: e.target.value })}
-                  className="border-[#F0E8E8] focus:border-burgundy"
+                  className="border-[#F0D0D9] focus:border-[#8B1E3F] bg-white rounded-xl py-3"
                 />
               </div>
               <div className="space-y-2">
@@ -451,7 +510,7 @@ export function EventsSection() {
                   type="time"
                   value={formData.event_time}
                   onChange={(e) => setFormData({ ...formData, event_time: e.target.value })}
-                  className="border-[#F0E8E8] focus:border-burgundy"
+                  className="border-[#F0D0D9] focus:border-[#8B1E3F] bg-white rounded-xl py-3"
                 />
               </div>
             </div>
@@ -463,7 +522,7 @@ export function EventsSection() {
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder="Адрес или название места"
-                className="border-[#F0E8E8] focus:border-burgundy"
+                className="border-[#F0D0D9] focus:border-[#8B1E3F] bg-white rounded-xl py-3"
               />
             </div>
 
@@ -475,7 +534,7 @@ export function EventsSection() {
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Детали мероприятия"
                 rows={2}
-                className="border-[#F0E8E8] focus:border-burgundy resize-none"
+                className="border-[#F0D0D9] focus:border-[#8B1E3F] resize-none bg-white rounded-xl"
               />
             </div>
 
@@ -488,20 +547,22 @@ export function EventsSection() {
                 <button
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, invite_all: true, invited_friends: [] }))}
-                  className={cn(
-                    'w-full flex items-center gap-3 p-3 rounded-xl border transition-all',
-                    formData.invite_all 
-                      ? 'border-burgundy bg-burgundy/5' 
-                      : 'border-[#F0E8E8] hover:border-[#D4C4C4]'
-                  )}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl transition-all"
+                  style={{
+                    backgroundColor: formData.invite_all ? '#FDF5F7' : '#FFFFFF',
+                    border: `2px solid ${formData.invite_all ? '#8B1E3F' : '#F0D0D9'}`,
+                  }}
                 >
-                  <div className={cn(
-                    'w-5 h-5 rounded-full border-2 flex items-center justify-center',
-                    formData.invite_all ? 'border-burgundy bg-burgundy' : 'border-[#8E8E93]'
-                  )}>
+                  <div 
+                    className="w-5 h-5 rounded-full border-2 flex items-center justify-center"
+                    style={{
+                      borderColor: formData.invite_all ? '#8B1E3F' : '#C2587A',
+                      backgroundColor: formData.invite_all ? '#8B1E3F' : 'transparent',
+                    }}
+                  >
                     {formData.invite_all && <Check className="w-3 h-3 text-white" />}
                   </div>
-                  <Users className="w-5 h-5 text-[#8E8E93]" />
+                  <Users className="w-5 h-5 text-[#A93B5C]" />
                   <span className="font-medium text-[#1C1C1E]">Всех друзей</span>
                 </button>
 
@@ -509,20 +570,22 @@ export function EventsSection() {
                 <button
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, invite_all: false }))}
-                  className={cn(
-                    'w-full flex items-center gap-3 p-3 rounded-xl border transition-all',
-                    !formData.invite_all 
-                      ? 'border-burgundy bg-burgundy/5' 
-                      : 'border-[#F0E8E8] hover:border-[#D4C4C4]'
-                  )}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl transition-all"
+                  style={{
+                    backgroundColor: !formData.invite_all ? '#FDF5F7' : '#FFFFFF',
+                    border: `2px solid ${!formData.invite_all ? '#8B1E3F' : '#F0D0D9'}`,
+                  }}
                 >
-                  <div className={cn(
-                    'w-5 h-5 rounded-full border-2 flex items-center justify-center',
-                    !formData.invite_all ? 'border-burgundy bg-burgundy' : 'border-[#8E8E93]'
-                  )}>
+                  <div 
+                    className="w-5 h-5 rounded-full border-2 flex items-center justify-center"
+                    style={{
+                      borderColor: !formData.invite_all ? '#8B1E3F' : '#C2587A',
+                      backgroundColor: !formData.invite_all ? '#8B1E3F' : 'transparent',
+                    }}
+                  >
                     {!formData.invite_all && <Check className="w-3 h-3 text-white" />}
                   </div>
-                  <Users className="w-5 h-5 text-[#8E8E93]" />
+                  <Users className="w-5 h-5 text-[#A93B5C]" />
                   <span className="font-medium text-[#1C1C1E]">Выбрать конкретных</span>
                 </button>
 
@@ -536,20 +599,26 @@ export function EventsSection() {
                           key={friend.id}
                           type="button"
                           onClick={() => toggleFriendInvite(friend.id)}
-                          className={cn(
-                            'w-full flex items-center gap-3 p-2 rounded-xl transition-all',
-                            isSelected ? 'bg-burgundy/10' : 'hover:bg-[#F8F5F5]'
-                          )}
+                          className="w-full flex items-center gap-3 p-2 rounded-xl transition-all"
+                          style={{
+                            backgroundColor: isSelected ? '#FDF5F7' : 'transparent',
+                          }}
                         >
-                          <div className={cn(
-                            'w-5 h-5 rounded-full border-2 flex items-center justify-center',
-                            isSelected ? 'border-burgundy bg-burgundy' : 'border-[#E5E0E0]'
-                          )}>
+                          <div 
+                            className="w-5 h-5 rounded-full border-2 flex items-center justify-center"
+                            style={{
+                              borderColor: isSelected ? '#8B1E3F' : '#E4A8BA',
+                              backgroundColor: isSelected ? '#8B1E3F' : 'transparent',
+                            }}
+                          >
                             {isSelected && <Check className="w-3 h-3 text-white" />}
                           </div>
                           <Avatar className="w-8 h-8">
                             <AvatarImage src={friend.avatar_url || undefined} />
-                            <AvatarFallback className="bg-burgundy text-white text-xs">
+                            <AvatarFallback 
+                              className="text-xs"
+                              style={{ backgroundColor: '#F0D0D9', color: '#8B1E3F' }}
+                            >
                               {friend.first_name?.[0]?.toUpperCase() || '?'}
                             </AvatarFallback>
                           </Avatar>
@@ -561,7 +630,7 @@ export function EventsSection() {
                 )}
 
                 {!formData.invite_all && formData.invited_friends.length === 0 && (
-                  <p className="text-xs text-[#8E8E93] text-center py-2">
+                  <p className="text-xs text-[#A93B5C] text-center py-2">
                     Выберите друзей для приглашения
                   </p>
                 )}
@@ -570,14 +639,18 @@ export function EventsSection() {
           </div>
 
           {/* Submit button */}
-          <div className="p-4 border-t border-[#F0E8E8]">
-            <Button
+          <div className="p-4">
+            <button
               onClick={handleCreateEvent}
               disabled={!canSubmit}
-              className="w-full bg-burgundy hover:bg-burgundy-light text-white"
+              className="w-full py-4 rounded-2xl font-semibold text-white transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{
+                background: 'linear-gradient(135deg, #8B1E3F 0%, #A93B5C 100%)',
+                boxShadow: '0 4px 16px rgba(139, 30, 63, 0.3)',
+              }}
             >
               Создать
-            </Button>
+            </button>
           </div>
         </div>
       )}

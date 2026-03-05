@@ -25,14 +25,12 @@ export function TabBar() {
       <nav
         className={cn(
           'max-w-[350px] mx-auto pointer-events-auto',
-          'rounded-full px-2 py-2',
+          'rounded-2xl px-2 py-2',
           'flex items-center justify-around'
         )}
         style={{
-          backgroundColor: 'rgba(255, 255, 255, 0.85)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.03), 0 4px 20px rgba(0, 0, 0, 0.05)',
+          background: 'linear-gradient(135deg, #8B1E3F 0%, #A93B5C 50%, #C2587A 100%)',
+          boxShadow: '0 8px 32px rgba(139, 30, 63, 0.4)',
         }}
       >
         {tabs.map((tab) => {
@@ -44,25 +42,26 @@ export function TabBar() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'flex items-center justify-center',
-                'p-3 rounded-full',
-                'transition-all duration-200 ease-out',
-                isActive ? 'scale-110' : 'scale-100'
+                'flex flex-col items-center justify-center',
+                'px-4 py-2 rounded-xl',
+                'transition-all duration-300 ease-out',
+                isActive ? 'bg-white/20 scale-105' : 'hover:bg-white/10 scale-100'
               )}
             >
-              <div
+              <Icon
                 className={cn(
-                  'p-2.5 rounded-full transition-all duration-200',
-                  isActive && 'bg-burgundy'
+                  'w-6 h-6 transition-all duration-300',
+                  isActive ? 'text-white stroke-[2.5]' : 'text-white/60 stroke-[2]'
+                )}
+              />
+              <span
+                className={cn(
+                  'text-[10px] mt-1 font-medium transition-all duration-300',
+                  isActive ? 'text-white' : 'text-white/50'
                 )}
               >
-                <Icon
-                  className={cn(
-                    'w-6 h-6 transition-all duration-200',
-                    isActive ? 'text-white stroke-[2.5]' : 'text-[#8E8E93] stroke-[2]'
-                  )}
-                />
-              </div>
+                {tab.label}
+              </span>
             </button>
           )
         })}

@@ -164,7 +164,7 @@ export function TasksSection() {
           family_id: currentFamilyId,
           created_by: user.id,
           title: taskData.title,
-          description: taskData.description,
+          description: taskData.description || null,
           type: taskData.type,
           category_id: taskData.category_id,
           quantity: taskData.quantity,
@@ -285,7 +285,10 @@ export function TasksSection() {
 
   if (!currentFamilyId) {
     return (
-      <div className="flex-1 flex items-center justify-center p-4">
+      <div 
+        className="flex-1 flex items-center justify-center p-4"
+        style={{ background: 'linear-gradient(180deg, #FDF5F7 0%, #FFFFFF 100%)' }}
+      >
         <EmptyState
           icon={Package}
           title="Нет семьи"
@@ -296,12 +299,18 @@ export function TasksSection() {
   }
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div 
+      className="flex-1 flex flex-col"
+      style={{ background: 'linear-gradient(180deg, #FDF5F7 0%, #FFFFFF 100%)' }}
+    >
       {/* Task list */}
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-32 space-y-4">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-burgundy"></div>
+            <div 
+              className="w-8 h-8 rounded-full animate-spin"
+              style={{ border: '2px solid #F0D0D9', borderTopColor: '#8B1E3F' }}
+            />
           </div>
         ) : tasks.length === 0 ? (
           <EmptyState
@@ -327,9 +336,10 @@ export function TasksSection() {
       {/* Floating action button */}
       <button
         onClick={() => setShowTaskForm(true)}
-        className="fixed bottom-28 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 bg-burgundy"
+        className="fixed bottom-28 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95"
         style={{
-          boxShadow: '0 4px 20px rgba(139, 30, 63, 0.3)'
+          background: 'linear-gradient(135deg, #8B1E3F 0%, #A93B5C 100%)',
+          boxShadow: '0 6px 24px rgba(139, 30, 63, 0.4)',
         }}
       >
         <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
