@@ -147,6 +147,7 @@ CREATE TABLE IF NOT EXISTS events (
   location TEXT,
   event_date TIMESTAMPTZ NOT NULL,
   invited_users UUID[],
+  is_public BOOLEAN DEFAULT TRUE,
   image_url TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -408,6 +409,14 @@ CREATE POLICY "Users can update family invitations" ON family_invitations
 -- Enable Realtime for specific tables
 -- Run these in Supabase Dashboard > Database > Replication
 -- or use the following commands:
+
+-- Add is_public column to events if it doesn't exist (for existing databases)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'events' AND column_name = 'is_public') THEN
+    ALTER TABLE events ADD COLUMN is_public BOOLEAN DEFAULT TRUE;
+  END IF;
+END $$;
 
 ALTER PUBLICATION supabase_realtime ADD TABLE tasks;
 ALTER PUBLICATION supabase_realtime ADD TABLE events;
