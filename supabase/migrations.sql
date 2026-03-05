@@ -209,6 +209,19 @@ CREATE TABLE IF NOT EXISTS notifications (
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(read);
 
+-- Create task_items table for predefined products
+CREATE TABLE IF NOT EXISTS task_items (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  category_id UUID NOT NULL REFERENCES task_categories(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  image_url TEXT,
+  unit TEXT DEFAULT 'шт',
+  "order" INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_task_items_category ON task_items(category_id);
+
 -- Insert default task categories
 INSERT INTO task_categories (name, icon, type, "order") VALUES
   -- Shopping categories
@@ -231,6 +244,291 @@ INSERT INTO task_categories (name, icon, type, "order") VALUES
   -- Other
   ('Другое', 'MoreHorizontal', 'other', 16)
 ON CONFLICT DO NOTHING;
+
+-- Insert predefined task items by category
+-- Note: category_id will be dynamically resolved, these are placeholder references
+-- Run after categories are inserted
+
+-- Helper function to get category ID by name
+CREATE OR REPLACE FUNCTION get_category_id(cat_name TEXT)
+RETURNS UUID AS $$
+DECLARE
+  cat_id UUID;
+BEGIN
+  SELECT id INTO cat_id FROM task_categories WHERE name = cat_name LIMIT 1;
+  RETURN cat_id;
+END;
+$$ LANGUAGE plpgsql;
+
+-- МОЛОЧНОЕ
+INSERT INTO task_items (category_id, name, unit, "order") VALUES
+  (get_category_id('Молочное'), 'Молоко', 'л', 1),
+  (get_category_id('Молочное'), 'Сметана', 'шт', 2),
+  (get_category_id('Молочное'), 'Творог', 'шт', 3),
+  (get_category_id('Молочное'), 'Кефир', 'л', 4),
+  (get_category_id('Молочное'), 'Ряженка', 'л', 5),
+  (get_category_id('Молочное'), 'Йогурт', 'шт', 6),
+  (get_category_id('Молочное'), 'Сливки', 'шт', 7),
+  (get_category_id('Молочное'), 'Сливочное масло', 'шт', 8),
+  (get_category_id('Молочное'), 'Сыр', 'шт', 9),
+  (get_category_id('Молочное'), 'Яйца', 'шт', 10),
+  (get_category_id('Молочное'), 'Сырки', 'шт', 11),
+  (get_category_id('Молочное'), 'Твороженный сыр', 'шт', 12),
+  (get_category_id('Молочное'), 'Плавленный сыр', 'шт', 13)
+ON CONFLICT DO NOTHING;
+
+-- МЯСО И РЫБА
+INSERT INTO task_items (category_id, name, unit, "order") VALUES
+  (get_category_id('Мясо и рыба'), 'Курица', 'кг', 1),
+  (get_category_id('Мясо и рыба'), 'Говядина', 'кг', 2),
+  (get_category_id('Мясо и рыба'), 'Свинина', 'кг', 3),
+  (get_category_id('Мясо и рыба'), 'Баранина', 'кг', 4),
+  (get_category_id('Мясо и рыба'), 'Индейка', 'кг', 5),
+  (get_category_id('Мясо и рыба'), 'Утка', 'кг', 6),
+  (get_category_id('Мясо и рыба'), 'Фарш', 'кг', 7),
+  (get_category_id('Мясо и рыба'), 'Колбаса', 'шт', 8),
+  (get_category_id('Мясо и рыба'), 'Сосиски', 'шт', 9),
+  (get_category_id('Мясо и рыба'), 'Сардельки', 'шт', 10),
+  (get_category_id('Мясо и рыба'), 'Ветчина', 'шт', 11),
+  (get_category_id('Мясо и рыба'), 'Бекон', 'шт', 12),
+  (get_category_id('Мясо и рыба'), 'Рыба свежая', 'кг', 13),
+  (get_category_id('Мясо и рыба'), 'Рыба замороженная', 'шт', 14),
+  (get_category_id('Мясо и рыба'), 'Креветки', 'шт', 15),
+  (get_category_id('Мясо и рыба'), 'Крабовое мясо', 'шт', 16),
+  (get_category_id('Мясо и рыба'), 'Селедка', 'шт', 17),
+  (get_category_id('Мясо и рыба'), 'Семга', 'кг', 18),
+  (get_category_id('Мясо и рыба'), 'Форель', 'кг', 19)
+ON CONFLICT DO NOTHING;
+
+-- БАКАЛЕЯ
+INSERT INTO task_items (category_id, name, unit, "order") VALUES
+  (get_category_id('Бакалея'), 'Мука', 'кг', 1),
+  (get_category_id('Бакалея'), 'Сахар', 'кг', 2),
+  (get_category_id('Бакалея'), 'Соль', 'шт', 3),
+  (get_category_id('Бакалея'), 'Рис', 'кг', 4),
+  (get_category_id('Бакалея'), 'Гречка', 'кг', 5),
+  (get_category_id('Бакалея'), 'Макароны', 'шт', 6),
+  (get_category_id('Бакалея'), 'Масло подсолнечное', 'шт', 7),
+  (get_category_id('Бакалея'), 'Масло оливковое', 'шт', 8),
+  (get_category_id('Бакалея'), 'Масло льна', 'шт', 9),
+  (get_category_id('Бакалея'), 'Уксус', 'шт', 10),
+  (get_category_id('Бакалея'), 'Соевый соус', 'шт', 11),
+  (get_category_id('Бакалея'), 'Майонез', 'шт', 12),
+  (get_category_id('Бакалея'), 'Кетчуп', 'шт', 13),
+  (get_category_id('Бакалея'), 'Горчица', 'шт', 14),
+  (get_category_id('Бакалея'), 'Хрен', 'шт', 15),
+  (get_category_id('Бакалея'), 'Специи', 'шт', 16),
+  (get_category_id('Бакалея'), 'Перец', 'шт', 17),
+  (get_category_id('Бакалея'), 'Ванилин', 'шт', 18),
+  (get_category_id('Бакалея'), 'Разрыхлитель', 'шт', 19),
+  (get_category_id('Бакалея'), 'Дрожжи', 'шт', 20),
+  (get_category_id('Бакалея'), 'Овсянка', 'кг', 21),
+  (get_category_id('Бакалея'), 'Манка', 'кг', 22),
+  (get_category_id('Бакалея'), 'Пшено', 'кг', 23),
+  (get_category_id('Бакалея'), 'Перловка', 'кг', 24),
+  (get_category_id('Бакалея'), 'Кукурузная крупа', 'кг', 25),
+  (get_category_id('Бакалея'), 'Чечевица', 'кг', 26),
+  (get_category_id('Бакалея'), 'Какао', 'шт', 27),
+  (get_category_id('Бакалея'), 'Фасоль', 'кг', 28),
+  (get_category_id('Бакалея'), 'Кукуруза консервированная', 'шт', 29),
+  (get_category_id('Бакалея'), 'Горох', 'кг', 30)
+ON CONFLICT DO NOTHING;
+
+-- ОВОЩИ И ФРУКТЫ
+INSERT INTO task_items (category_id, name, unit, "order") VALUES
+  (get_category_id('Овощи и фрукты'), 'Картофель', 'кг', 1),
+  (get_category_id('Овощи и фрукты'), 'Лук', 'кг', 2),
+  (get_category_id('Овощи и фрукты'), 'Морковь', 'кг', 3),
+  (get_category_id('Овощи и фрукты'), 'Чеснок', 'шт', 4),
+  (get_category_id('Овощи и фрукты'), 'Капуста', 'шт', 5),
+  (get_category_id('Овощи и фрукты'), 'Свекла', 'кг', 6),
+  (get_category_id('Овощи и фрукты'), 'Огурцы', 'кг', 7),
+  (get_category_id('Овощи и фрукты'), 'Помидоры', 'кг', 8),
+  (get_category_id('Овощи и фрукты'), 'Перец болгарский', 'кг', 9),
+  (get_category_id('Овощи и фрукты'), 'Баклажаны', 'кг', 10),
+  (get_category_id('Овощи и фрукты'), 'Кабачки', 'кг', 11),
+  (get_category_id('Овощи и фрукты'), 'Тыква', 'кг', 12),
+  (get_category_id('Овощи и фрукты'), 'Зелень', 'шт', 13),
+  (get_category_id('Овощи и фрукты'), 'Салат', 'шт', 14),
+  (get_category_id('Овощи и фрукты'), 'Укроп', 'шт', 15),
+  (get_category_id('Овощи и фрукты'), 'Петрушка', 'шт', 16),
+  (get_category_id('Овощи и фрукты'), 'Кинза', 'шт', 17),
+  (get_category_id('Овощи и фрукты'), 'Базилик', 'шт', 18),
+  (get_category_id('Овощи и фрукты'), 'Яблоки', 'кг', 19),
+  (get_category_id('Овощи и фрукты'), 'Груши', 'кг', 20),
+  (get_category_id('Овощи и фрукты'), 'Бананы', 'кг', 21),
+  (get_category_id('Овощи и фрукты'), 'Апельсины', 'кг', 22),
+  (get_category_id('Овощи и фрукты'), 'Лимоны', 'кг', 23),
+  (get_category_id('Овощи и фрукты'), 'Мандарины', 'кг', 24),
+  (get_category_id('Овощи и фрукты'), 'Грейпфрут', 'шт', 25),
+  (get_category_id('Овощи и фрукты'), 'Виноград', 'кг', 26),
+  (get_category_id('Овощи и фрукты'), 'Персики', 'кг', 27),
+  (get_category_id('Овощи и фрукты'), 'Абрикосы', 'кг', 28),
+  (get_category_id('Овощи и фрукты'), 'Сливы', 'кг', 29),
+  (get_category_id('Овощи и фрукты'), 'Вишня', 'кг', 30),
+  (get_category_id('Овощи и фрукты'), 'Черешня', 'кг', 31),
+  (get_category_id('Овощи и фрукты'), 'Клубника', 'кг', 32),
+  (get_category_id('Овощи и фрукты'), 'Малина', 'кг', 33),
+  (get_category_id('Овощи и фрукты'), 'Ежевика', 'кг', 34),
+  (get_category_id('Овощи и фрукты'), 'Крыжовник', 'кг', 35),
+  (get_category_id('Овощи и фрукты'), 'Смородина', 'кг', 36),
+  (get_category_id('Овощи и фрукты'), 'Земляника', 'кг', 37),
+  (get_category_id('Овощи и фрукты'), 'Арбуз', 'шт', 38),
+  (get_category_id('Овощи и фрукты'), 'Дыня', 'шт', 39),
+  (get_category_id('Овощи и фрукты'), 'Киви', 'шт', 40),
+  (get_category_id('Овощи и фрукты'), 'Ананас', 'шт', 41),
+  (get_category_id('Овощи и фрукты'), 'Авокадо', 'шт', 42),
+  (get_category_id('Овощи и фрукты'), 'Гранат', 'шт', 43),
+  (get_category_id('Овощи и фрукты'), 'Хурма', 'кг', 44),
+  (get_category_id('Овощи и фрукты'), 'Кукуруза', 'шт', 45)
+ON CONFLICT DO NOTHING;
+
+-- НАПИТКИ
+INSERT INTO task_items (category_id, name, unit, "order") VALUES
+  (get_category_id('Напитки'), 'Чай', 'шт', 1),
+  (get_category_id('Напитки'), 'Кофе', 'шт', 2),
+  (get_category_id('Напитки'), 'Сок', 'л', 3),
+  (get_category_id('Напитки'), 'Вода минеральная', 'л', 4),
+  (get_category_id('Напитки'), 'Вода питьевая', 'л', 5),
+  (get_category_id('Напитки'), 'Газировка', 'л', 6),
+  (get_category_id('Напитки'), 'Лимонад', 'л', 7),
+  (get_category_id('Напитки'), 'Квас', 'л', 8),
+  (get_category_id('Напитки'), 'Компот', 'л', 9),
+  (get_category_id('Напитки'), 'Морс', 'л', 10)
+ON CONFLICT DO NOTHING;
+
+-- ХЛЕБ И ВЫПЕЧКА
+INSERT INTO task_items (category_id, name, unit, "order") VALUES
+  (get_category_id('Хлеб и выпечка'), 'Хлеб белый', 'шт', 1),
+  (get_category_id('Хлеб и выпечка'), 'Хлеб черный', 'шт', 2),
+  (get_category_id('Хлеб и выпечка'), 'Батон', 'шт', 3),
+  (get_category_id('Хлеб и выпечка'), 'Багет', 'шт', 4),
+  (get_category_id('Хлеб и выпечка'), 'Лаваш', 'шт', 5),
+  (get_category_id('Хлеб и выпечка'), 'Булочки', 'шт', 6),
+  (get_category_id('Хлеб и выпечка'), 'Круассаны', 'шт', 7),
+  (get_category_id('Хлеб и выпечка'), 'Пирожки', 'шт', 8),
+  (get_category_id('Хлеб и выпечка'), 'Сушки', 'шт', 9),
+  (get_category_id('Хлеб и выпечка'), 'Пряники', 'шт', 10),
+  (get_category_id('Хлеб и выпечка'), 'Сухари', 'шт', 11)
+ON CONFLICT DO NOTHING;
+
+-- СЛАДОСТИ
+INSERT INTO task_items (category_id, name, unit, "order") VALUES
+  (get_category_id('Сладости'), 'Шоколад', 'шт', 1),
+  (get_category_id('Сладости'), 'Конфеты', 'кг', 2),
+  (get_category_id('Сладости'), 'Печенье', 'шт', 3),
+  (get_category_id('Сладости'), 'Торт', 'шт', 4),
+  (get_category_id('Сладости'), 'Пирожное', 'шт', 5),
+  (get_category_id('Сладости'), 'Мороженое', 'шт', 6),
+  (get_category_id('Сладости'), 'Вафли', 'шт', 7),
+  (get_category_id('Сладости'), 'Зефир', 'шт', 8),
+  (get_category_id('Сладости'), 'Пастила', 'шт', 9),
+  (get_category_id('Сладости'), 'Марципан', 'шт', 10),
+  (get_category_id('Сладости'), 'Мед', 'шт', 11),
+  (get_category_id('Сладости'), 'Варенье', 'шт', 12),
+  (get_category_id('Сладости'), 'Сгущенка', 'шт', 13),
+  (get_category_id('Сладости'), 'Сахарная пудра', 'шт', 14)
+ON CONFLICT DO NOTHING;
+
+-- МАРКЕТПЛЕЙСЫ
+INSERT INTO task_items (category_id, name, unit, "order") VALUES
+  (get_category_id('Маркетплейсы'), 'Wildberries', 'шт', 1),
+  (get_category_id('Маркетплейсы'), 'Ozon', 'шт', 2),
+  (get_category_id('Маркетплейсы'), 'Яндекс Маркет', 'шт', 3),
+  (get_category_id('Маркетплейсы'), 'AliExpress', 'шт', 4),
+  (get_category_id('Маркетплейсы'), 'Amazon', 'шт', 5)
+ON CONFLICT DO NOTHING;
+
+-- АПТЕКА
+INSERT INTO task_items (category_id, name, unit, "order") VALUES
+  (get_category_id('Аптека'), 'Лекарства', 'шт', 1),
+  (get_category_id('Аптека'), 'Витамины', 'шт', 2),
+  (get_category_id('Аптека'), 'Бинты', 'шт', 3),
+  (get_category_id('Аптека'), 'Пластырь', 'шт', 4),
+  (get_category_id('Аптека'), 'Вата', 'шт', 5),
+  (get_category_id('Аптека'), 'Маски', 'шт', 6),
+  (get_category_id('Аптека'), 'Перчатки медицинские', 'шт', 7),
+  (get_category_id('Аптека'), 'Шприцы', 'шт', 8)
+ON CONFLICT DO NOTHING;
+
+-- БЫТОВАЯ ХИМИЯ
+INSERT INTO task_items (category_id, name, unit, "order") VALUES
+  (get_category_id('Бытовая химия'), 'Порошок', 'шт', 1),
+  (get_category_id('Бытовая химия'), 'Гель для стирки', 'шт', 2),
+  (get_category_id('Бытовая химия'), 'Кондиционер для белья', 'шт', 3),
+  (get_category_id('Бытовая химия'), 'Средство для мытья посуды', 'шт', 4),
+  (get_category_id('Бытовая химия'), 'Средство для окон', 'шт', 5),
+  (get_category_id('Бытовая химия'), 'Средство для пола', 'шт', 6),
+  (get_category_id('Бытовая химия'), 'Средство для ванной', 'шт', 7),
+  (get_category_id('Бытовая химия'), 'Средство для унитаза', 'шт', 8),
+  (get_category_id('Бытовая химия'), 'Отбеливатель', 'шт', 9),
+  (get_category_id('Бытовая химия'), 'Пятновыводитель', 'шт', 10),
+  (get_category_id('Бытовая химия'), 'Губки', 'шт', 11),
+  (get_category_id('Бытовая химия'), 'Тряпки', 'шт', 12),
+  (get_category_id('Бытовая химия'), 'Мешки для мусора', 'шт', 13),
+  (get_category_id('Бытовая химия'), 'Прочее', 'шт', 14)
+ON CONFLICT DO NOTHING;
+
+-- УБОРКА
+INSERT INTO task_items (category_id, name, unit, "order") VALUES
+  (get_category_id('Уборка'), 'Помыть полы', 'шт', 1),
+  (get_category_id('Уборка'), 'Протереть пыль', 'шт', 2),
+  (get_category_id('Уборка'), 'Помыть окна', 'шт', 3),
+  (get_category_id('Уборка'), 'Пропылесосить', 'шт', 4),
+  (get_category_id('Уборка'), 'Убрать в ванной', 'шт', 5),
+  (get_category_id('Уборка'), 'Убрать на кухне', 'шт', 6),
+  (get_category_id('Уборка'), 'Разобрать шкаф', 'шт', 7),
+  (get_category_id('Уборка'), 'Вынести мусор', 'шт', 8),
+  (get_category_id('Уборка'), 'Постирать вещи', 'шт', 9)
+ON CONFLICT DO NOTHING;
+
+-- СТИРКА
+INSERT INTO task_items (category_id, name, unit, "order") VALUES
+  (get_category_id('Стирка'), 'Постирать одежду', 'шт', 1),
+  (get_category_id('Стирка'), 'Постирать постельное', 'шт', 2),
+  (get_category_id('Стирка'), 'Постирать полотенца', 'шт', 3),
+  (get_category_id('Стирка'), 'Погладить', 'шт', 4),
+  (get_category_id('Стирка'), 'Отдать в химчистку', 'шт', 5)
+ON CONFLICT DO NOTHING;
+
+-- РЕМОНТ
+INSERT INTO task_items (category_id, name, unit, "order") VALUES
+  (get_category_id('Ремонт'), 'Починить кран', 'шт', 1),
+  (get_category_id('Ремонт'), 'Починить розетку', 'шт', 2),
+  (get_category_id('Ремонт'), 'Повесить полку', 'шт', 3),
+  (get_category_id('Ремонт'), 'Поменять лампочку', 'шт', 4),
+  (get_category_id('Ремонт'), 'Заклеить обои', 'шт', 5),
+  (get_category_id('Ремонт'), 'Починить дверь', 'шт', 6),
+  (get_category_id('Ремонт'), 'Покрасить', 'шт', 7)
+ON CONFLICT DO NOTHING;
+
+-- САД
+INSERT INTO task_items (category_id, name, unit, "order") VALUES
+  (get_category_id('Сад'), 'Полить цветы', 'шт', 1),
+  (get_category_id('Сад'), 'Посадить растения', 'шт', 2),
+  (get_category_id('Сад'), 'Подстричь газон', 'шт', 3),
+  (get_category_id('Сад'), 'Убрать листья', 'шт', 4),
+  (get_category_id('Сад'), 'Удобрить', 'шт', 5),
+  (get_category_id('Сад'), 'Прополка', 'шт', 6)
+ON CONFLICT DO NOTHING;
+
+-- ГОТОВКА
+INSERT INTO task_items (category_id, name, unit, "order") VALUES
+  (get_category_id('Готовка'), 'Приготовить завтрак', 'шт', 1),
+  (get_category_id('Готовка'), 'Приготовить обед', 'шт', 2),
+  (get_category_id('Готовка'), 'Приготовить ужин', 'шт', 3),
+  (get_category_id('Готовка'), 'Испечь пирог', 'шт', 4),
+  (get_category_id('Готовка'), 'Сделать заготовки', 'шт', 5)
+ON CONFLICT DO NOTHING;
+
+-- RLS Policies for task_items
+ALTER TABLE task_items ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can read task items" ON task_items
+  FOR SELECT USING (true);
+
+-- Add realtime for task_items
+ALTER PUBLICATION supabase_realtime ADD TABLE task_items;
 
 -- Create updated_at trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
