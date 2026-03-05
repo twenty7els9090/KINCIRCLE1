@@ -55,6 +55,217 @@ function DynamicIcon({ name, className }: { name: string; className?: string }) 
   return Icon ? <Icon className={className} /> : <Package className={className} />
 }
 
+// Simple icon for items
+function ItemIcon({ name, className }: { name: string; className?: string }) {
+  // Map item names to icons
+  const iconMap: Record<string, string> = {
+    'Молоко': 'Milk',
+    'Сметана': 'Milk',
+    'Творог': 'Milk',
+    'Кефир': 'Milk',
+    'Ряженка': 'Milk',
+    'Йогурт': 'Milk',
+    'Сливки': 'Milk',
+    'Сливочное масло': 'Milk',
+    'Сыр': 'Cheese',
+    'Яйца': 'Egg',
+    'Сырки': 'Milk',
+    'Твороженный сыр': 'Cheese',
+    'Плавленный сыр': 'Cheese',
+    'Курица': 'Drumstick',
+    'Говядина': 'Beef',
+    'Свинина': 'PiggyBank',
+    'Баранина': 'Sheep',
+    'Индейка': 'Turkey',
+    'Утка': 'Bird',
+    'Фарш': 'Beef',
+    'Колбаса': 'Sandwich',
+    'Сосиски': 'Sandwich',
+    'Сардельки': 'Sandwich',
+    'Ветчина': 'Sandwich',
+    'Бекон': 'Sandwich',
+    'Рыба свежая': 'Fish',
+    'Рыба замороженная': 'Fish',
+    'Креветки': 'Shrimp',
+    'Крабовое мясо': 'Shell',
+    'Селедка': 'Fish',
+    'Семга': 'Fish',
+    'Форель': 'Fish',
+    'Мука': 'Wheat',
+    'Сахар': 'Cube',
+    'Соль': 'Salt',
+    'Рис': 'Wheat',
+    'Гречка': 'Wheat',
+    'Макароны': 'Wheat',
+    'Масло подсолнечное': 'Droplet',
+    'Масло оливковое': 'Droplet',
+    'Масло льна': 'Droplet',
+    'Уксус': 'Droplet',
+    'Соевый соус': 'Droplet',
+    'Майонез': 'Droplet',
+    'Кетчуп': 'Droplet',
+    'Горчица': 'Droplet',
+    'Хрен': 'Droplet',
+    'Специи': 'Sparkles',
+    'Перец': 'Sparkles',
+    'Ванилин': 'Sparkles',
+    'Разрыхлитель': 'Sparkles',
+    'Дрожжи': 'Sparkles',
+    'Овсянка': 'Wheat',
+    'Манка': 'Wheat',
+    'Пшено': 'Wheat',
+    'Перловка': 'Wheat',
+    'Кукурузная крупа': 'Wheat',
+    'Чечевица': 'Circle',
+    'Какао': 'Coffee',
+    'Фасоль': 'Circle',
+    'Кукуруза консервированная': 'Circle',
+    'Горох': 'Circle',
+    'Картофель': 'Circle',
+    'Лук': 'Circle',
+    'Морковь': 'Carrot',
+    'Чеснок': 'Circle',
+    'Капуста': 'Circle',
+    'Свекла': 'Circle',
+    'Огурцы': 'Circle',
+    'Помидоры': 'Tomato',
+    'Перец болгарский': 'Pepper',
+    'Баклажаны': 'Circle',
+    'Кабачки': 'Circle',
+    'Тыква': 'Pumpkin',
+    'Зелень': 'Leaf',
+    'Салат': 'Salad',
+    'Укроп': 'Leaf',
+    'Петрушка': 'Leaf',
+    'Кинза': 'Leaf',
+    'Базилик': 'Leaf',
+    'Яблоки': 'Apple',
+    'Груши': 'Apple',
+    'Бананы': 'Banana',
+    'Апельсины': 'Orange',
+    'Лимоны': 'Lemon',
+    'Мандарины': 'Orange',
+    'Грейпфрут': 'Citrus',
+    'Виноград': 'Grape',
+    'Персики': 'Peach',
+    'Абрикосы': 'Apple',
+    'Сливы': 'Apple',
+    'Вишня': 'Cherry',
+    'Черешня': 'Cherry',
+    'Клубника': 'Strawberry',
+    'Малина': 'Berry',
+    'Ежевика': 'Berry',
+    'Крыжовник': 'Berry',
+    'Смородина': 'Berry',
+    'Земляника': 'Strawberry',
+    'Арбуз': 'Watermelon',
+    'Дыня': 'Melon',
+    'Киви': 'Apple',
+    'Ананас': 'Apple',
+    'Авокадо': 'Apple',
+    'Гранат': 'Apple',
+    'Хурма': 'Apple',
+    'Кукуруза': 'Wheat',
+    'Чай': 'Coffee',
+    'Кофе': 'Coffee',
+    'Сок': 'Cup',
+    'Вода минеральная': 'Cup',
+    'Вода питьевая': 'Cup',
+    'Газировка': 'Cup',
+    'Лимонад': 'Cup',
+    'Квас': 'Cup',
+    'Компот': 'Cup',
+    'Морс': 'Cup',
+    'Хлеб белый': 'Croissant',
+    'Хлеб черный': 'Croissant',
+    'Батон': 'Croissant',
+    'Багет': 'Croissant',
+    'Лаваш': 'Croissant',
+    'Булочки': 'Cookie',
+    'Круассаны': 'Croissant',
+    'Пирожки': 'Cookie',
+    'Сушки': 'Cookie',
+    'Пряники': 'Cookie',
+    'Сухари': 'Cookie',
+    'Шоколад': 'Candy',
+    'Конфеты': 'Candy',
+    'Печенье': 'Cookie',
+    'Торт': 'Cake',
+    'Пирожное': 'Cake',
+    'Мороженое': 'IceCream',
+    'Вафли': 'Cookie',
+    'Зефир': 'Candy',
+    'Пастила': 'Candy',
+    'Марципан': 'Candy',
+    'Мед': 'Honey',
+    'Варенье': 'Jar',
+    'Сгущенка': 'Jar',
+    'Сахарная пудра': 'Sparkles',
+    'Wildberries': 'ShoppingBag',
+    'Ozon': 'ShoppingBag',
+    'Яндекс Маркет': 'ShoppingBag',
+    'AliExpress': 'ShoppingBag',
+    'Amazon': 'ShoppingBag',
+    'Лекарства': 'Pill',
+    'Витамины': 'Pill',
+    'Бинты': 'Bandage',
+    'Пластырь': 'Bandage',
+    'Вата': 'Circle',
+    'Маски': 'Shield',
+    'Перчатки медицинские': 'Hand',
+    'Шприцы': 'Syringe',
+    'Порошок': 'Sparkles',
+    'Гель для стирки': 'Droplet',
+    'Кондиционер для белья': 'Droplet',
+    'Средство для мытья посуды': 'Droplet',
+    'Средство для окон': 'SprayCan',
+    'Средство для пола': 'SprayCan',
+    'Средство для ванной': 'SprayCan',
+    'Средство для унитаза': 'SprayCan',
+    'Отбеливатель': 'Droplet',
+    'Пятновыводитель': 'Droplet',
+    'Губки': 'Square',
+    'Тряпки': 'Square',
+    'Мешки для мусора': 'Trash',
+    'Прочее': 'Package',
+    'Помыть полы': 'Sparkles',
+    'Протереть пыль': 'Sparkles',
+    'Помыть окна': 'Sparkles',
+    'Пропылесосить': 'Sparkles',
+    'Убрать в ванной': 'Bath',
+    'Убрать на кухне': 'ChefHat',
+    'Разобрать шкаф': 'DoorOpen',
+    'Вынести мусор': 'Trash',
+    'Постирать вещи': 'Shirt',
+    'Постирать одежду': 'Shirt',
+    'Постирать постельное': 'Bed',
+    'Постирать полотенца': 'Towel',
+    'Погладить': 'Iron',
+    'Отдать в химчистку': 'Shirt',
+    'Починить кран': 'Wrench',
+    'Починить розетку': 'Plug',
+    'Повесить полку': 'Hammer',
+    'Поменять лампочку': 'Lightbulb',
+    'Заклеить обои': 'Paintbrush',
+    'Починить дверь': 'DoorClosed',
+    'Покрасить': 'Paintbrush',
+    'Полить цветы': 'Flower',
+    'Посадить растения': 'Flower',
+    'Подстричь газон': 'Trees',
+    'Убрать листья': 'Leaf',
+    'Удобрить': 'Flower',
+    'Прополка': 'Flower',
+    'Приготовить завтрак': 'ChefHat',
+    'Приготовить обед': 'ChefHat',
+    'Приготовить ужин': 'ChefHat',
+    'Испечь пирог': 'Cake',
+    'Сделать заготовки': 'Jar',
+  }
+  
+  const iconName = iconMap[name] || 'Package'
+  return <DynamicIcon name={iconName} className={className} />
+}
+
 export function TaskForm({
   open,
   onOpenChange,
@@ -66,6 +277,7 @@ export function TaskForm({
   const [taskType, setTaskType] = useState<'shopping' | 'home' | 'other' | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [selectedItem, setSelectedItem] = useState<TaskItem | null>(null)
+  const [isCustomItem, setIsCustomItem] = useState(false)
   const [items, setItems] = useState<TaskItem[]>([])
   const [itemsLoading, setItemsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -114,10 +326,6 @@ export function TaskForm({
     }
   }
 
-  const handleNext = () => {
-    setStep(step + 1)
-  }
-
   const handleBack = () => {
     if (step > 1) {
       setStep(step - 1)
@@ -128,6 +336,7 @@ export function TaskForm({
     setTaskType(type)
     setSelectedCategory('')
     setSelectedItem(null)
+    setIsCustomItem(false)
     setItems([])
     setSearchQuery('')
     
@@ -137,6 +346,7 @@ export function TaskForm({
       if (otherCategory) {
         setSelectedCategory(otherCategory.id)
       }
+      setIsCustomItem(true)
       setStep(2) // Go directly to details
     } else {
       setStep(2)
@@ -145,28 +355,61 @@ export function TaskForm({
 
   const handleCategorySelect = (categoryId: string) => {
     setSelectedCategory(categoryId)
+    // Auto navigate to items selection
+    setStep(3)
   }
 
   const handleItemSelect = (item: TaskItem) => {
     setSelectedItem(item)
+    setIsCustomItem(false)
     setFormData({
       ...formData,
       title: item.name,
       unit: item.unit || 'шт',
     })
-    if (item.image_url) {
-      setImageUrl(item.image_url)
+    // For shopping, go to details, for home create directly
+    if (taskType === 'shopping') {
+      setStep(4)
+    } else {
+      // For home - create immediately
+      handleSubmitWithData({
+        title: item.name,
+        type: 'home',
+        category_id: selectedCategory,
+      })
     }
-    setStep(4) // Go to details
   }
 
   const handleCustomItem = () => {
     setSelectedItem(null)
+    setIsCustomItem(true)
     setFormData({
       ...formData,
       title: '',
     })
-    setStep(4) // Go to details
+    // For shopping, go to details with photo option
+    if (taskType === 'shopping') {
+      setStep(4)
+    } else {
+      setStep(4)
+    }
+  }
+
+  const handleSubmitWithData = (data: Partial<TaskFormData>) => {
+    if (!data.title || !selectedCategory || !taskType) return
+
+    onSubmit({
+      title: data.title,
+      description: formData.description || undefined,
+      type: taskType,
+      category_id: selectedCategory,
+      quantity: formData.quantity ? parseFloat(formData.quantity) : undefined,
+      unit: taskType === 'shopping' ? formData.unit : undefined,
+      image_url: isCustomItem ? imageUrl || undefined : undefined,
+    })
+
+    resetForm()
+    onOpenChange(false)
   }
 
   const handleSubmit = () => {
@@ -179,7 +422,7 @@ export function TaskForm({
       category_id: selectedCategory,
       quantity: formData.quantity ? parseFloat(formData.quantity) : undefined,
       unit: taskType === 'shopping' ? formData.unit : undefined,
-      image_url: imageUrl || undefined,
+      image_url: isCustomItem ? imageUrl || undefined : undefined,
     })
 
     resetForm()
@@ -191,6 +434,7 @@ export function TaskForm({
     setTaskType(null)
     setSelectedCategory('')
     setSelectedItem(null)
+    setIsCustomItem(false)
     setItems([])
     setSearchQuery('')
     setImageUrl('')
@@ -219,16 +463,8 @@ export function TaskForm({
   // Calculate steps for progress indicator
   const getTotalSteps = () => {
     if (!taskType) return 4
-    if (taskType === 'other') return 2 // Type -> Details
-    return 4 // Type -> Category -> Search -> Details
-  }
-
-  const getCurrentStep = () => {
-    if (!taskType) return 1
-    if (taskType === 'other') {
-      return step === 2 ? 2 : 1
-    }
-    return step
+    if (taskType === 'other') return 2
+    return 4
   }
 
   if (!open) return null
@@ -256,8 +492,8 @@ export function TaskForm({
                 'h-1 rounded-full transition-all duration-300',
               )}
               style={{
-                width: s === getCurrentStep() ? 24 : 8,
-                backgroundColor: s === getCurrentStep() ? '#3E000C' : '#3E000C20',
+                width: s === step ? 24 : 8,
+                backgroundColor: s === step ? '#3E000C' : '#3E000C20',
               }}
             />
           ))}
@@ -334,17 +570,13 @@ export function TaskForm({
                     }}
                   >
                     <div 
-                      className="w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden"
+                      className="w-20 h-20 rounded-2xl flex items-center justify-center"
                       style={{ backgroundColor: isSelected ? '#f5fffa' : '#3E000C05' }}
                     >
-                      {category.image_url ? (
-                        <img src={category.image_url} alt={category.name} className="w-14 h-14 object-contain" />
-                      ) : (
-                        <DynamicIcon
-                          name={category.icon || 'Package'}
-                          className={cn('w-10 h-10', isSelected ? 'text-[#3E000C]' : 'text-[#3E000C]/60')}
-                        />
-                      )}
+                      <DynamicIcon
+                        name={category.icon || 'Package'}
+                        className={cn('w-10 h-10', isSelected ? 'text-[#3E000C]' : 'text-[#3E000C]/60')}
+                      />
                     </div>
                     <span 
                       className="text-sm font-semibold text-center"
@@ -356,15 +588,6 @@ export function TaskForm({
                 )
               })}
             </div>
-
-            {selectedCategory && (
-              <Button
-                onClick={handleNext}
-                className="w-full bg-[#3E000C] hover:bg-[#3E000C]/90 text-[#f5fffa] h-14 rounded-xl font-semibold text-base"
-              >
-                Далее
-              </Button>
-            )}
           </div>
         )}
 
@@ -397,6 +620,38 @@ export function TaskForm({
                   rows={3}
                   className="border-[#3E000C]/20 focus:border-[#3E000C] resize-none bg-white rounded-xl"
                 />
+              </div>
+
+              {/* Photo upload - only for "Другое" */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-[#3E000C]">Фото (опционально)</label>
+                {imageUrl ? (
+                  <div className="relative">
+                    <img
+                      src={imageUrl}
+                      alt="Task"
+                      className="w-full h-40 rounded-2xl object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setImageUrl('')}
+                      className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center bg-[#3E000C]/80 text-[#f5fffa]"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full h-32 rounded-2xl cursor-pointer border-2 border-dashed border-[#3E000C]/20 bg-white">
+                    <Camera className="w-8 h-8 text-[#3E000C]/40 mb-1" />
+                    <span className="text-xs text-[#3E000C]/60">Добавить фото</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageUpload}
+                    />
+                  </label>
+                )}
               </div>
             </div>
 
@@ -447,12 +702,8 @@ export function TaskForm({
                       'bg-white border border-[#3E000C]/5 hover:border-[#3E000C]/20'
                     )}
                   >
-                    <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-[#3E000C]/5 overflow-hidden">
-                      {item.image_url ? (
-                        <img src={item.image_url} alt={item.name} className="w-12 h-12 object-contain" />
-                      ) : (
-                        <Package className="w-7 h-7 text-[#3E000C]/30" />
-                      )}
+                    <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-[#3E000C]/5">
+                      <ItemIcon name={item.name} className="w-7 h-7 text-[#3E000C]/60" />
                     </div>
                     <span className="text-xs text-[#3E000C] text-center line-clamp-2 font-medium leading-tight">
                       {item.name}
@@ -462,7 +713,7 @@ export function TaskForm({
               </div>
             )}
 
-            {/* Другое button - always at bottom */}
+            {/* Другое button */}
             <button
               onClick={handleCustomItem}
               className={cn(
@@ -480,7 +731,7 @@ export function TaskForm({
           </div>
         )}
 
-        {/* Step 4: Details for shopping */}
+        {/* Step 4: Details for shopping (only for "Другое") */}
         {step === 4 && taskType === 'shopping' && (
           <div className="space-y-6 pt-4">
             <div className="text-center">
@@ -502,7 +753,7 @@ export function TaskForm({
                 />
               </div>
 
-              {/* Quantity - only for shopping */}
+              {/* Quantity */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-[#3E000C]">Количество</label>
                 <div className="flex gap-2">
@@ -548,37 +799,39 @@ export function TaskForm({
                 />
               </div>
 
-              {/* Photo upload */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-[#3E000C]">Фото (опционально)</label>
-                {imageUrl ? (
-                  <div className="relative">
-                    <img
-                      src={imageUrl}
-                      alt="Task"
-                      className="w-full h-40 rounded-2xl object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setImageUrl('')}
-                      className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center bg-[#3E000C]/80 text-[#f5fffa]"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <label className="flex flex-col items-center justify-center w-full h-32 rounded-2xl cursor-pointer border-2 border-dashed border-[#3E000C]/20 bg-white">
-                    <Camera className="w-8 h-8 text-[#3E000C]/40 mb-1" />
-                    <span className="text-xs text-[#3E000C]/60">Добавить фото</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleImageUpload}
-                    />
-                  </label>
-                )}
-              </div>
+              {/* Photo upload - only for custom items */}
+              {isCustomItem && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-[#3E000C]">Фото (опционально)</label>
+                  {imageUrl ? (
+                    <div className="relative">
+                      <img
+                        src={imageUrl}
+                        alt="Task"
+                        className="w-full h-40 rounded-2xl object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setImageUrl('')}
+                        className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center bg-[#3E000C]/80 text-[#f5fffa]"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center w-full h-32 rounded-2xl cursor-pointer border-2 border-dashed border-[#3E000C]/20 bg-white">
+                      <Camera className="w-8 h-8 text-[#3E000C]/40 mb-1" />
+                      <span className="text-xs text-[#3E000C]/60">Добавить фото</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageUpload}
+                      />
+                    </label>
+                  )}
+                </div>
+              )}
             </div>
 
             <Button
@@ -591,7 +844,7 @@ export function TaskForm({
           </div>
         )}
 
-        {/* Step 4: Details for home */}
+        {/* Step 4: Details for home (only for "Другое") */}
         {step === 4 && taskType === 'home' && (
           <div className="space-y-6 pt-4">
             <div className="text-center">
@@ -622,6 +875,40 @@ export function TaskForm({
                   className="border-[#3E000C]/20 focus:border-[#3E000C] resize-none bg-white rounded-xl"
                 />
               </div>
+
+              {/* Photo upload - only for custom items */}
+              {isCustomItem && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-[#3E000C]">Фото (опционально)</label>
+                  {imageUrl ? (
+                    <div className="relative">
+                      <img
+                        src={imageUrl}
+                        alt="Task"
+                        className="w-full h-40 rounded-2xl object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setImageUrl('')}
+                        className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center bg-[#3E000C]/80 text-[#f5fffa]"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center w-full h-32 rounded-2xl cursor-pointer border-2 border-dashed border-[#3E000C]/20 bg-white">
+                      <Camera className="w-8 h-8 text-[#3E000C]/40 mb-1" />
+                      <span className="text-xs text-[#3E000C]/60">Добавить фото</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageUpload}
+                      />
+                    </label>
+                  )}
+                </div>
+              )}
             </div>
 
             <Button

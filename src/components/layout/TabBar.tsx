@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 
 interface TabItem {
   id: TabId
-  icon: React.ComponentType<{ className?: string; fill?: string; stroke?: string; strokeWidth?: number }>
+  icon: React.ComponentType<{ className?: string }>
 }
 
 const tabs: TabItem[] = [
@@ -56,10 +56,13 @@ export function TabBar() {
                 )}
               >
                 <Icon
-                  className={cn('w-6 h-6 transition-all duration-200')}
-                  fill={isActive ? '#3E000C' : '#FFFFFF'}
-                  stroke="#3E000C"
-                  strokeWidth={isActive ? 0 : 1.5}
+                  className={cn(
+                    'w-6 h-6 transition-all duration-200',
+                    isActive 
+                      ? 'text-[#3E000C]' 
+                      : 'text-white'
+                  )}
+                  strokeWidth={isActive ? 2.5 : 2}
                 />
               </div>
             </button>

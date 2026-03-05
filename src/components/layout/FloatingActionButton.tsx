@@ -40,10 +40,8 @@ export function FloatingActionButton({ onClick, disabled }: FloatingActionButton
       }}
     >
       <Plus 
-        className="w-6 h-6" 
-        fill="#FFFFFF" 
-        stroke="#3E000C" 
-        strokeWidth={1.5}
+        className="w-6 h-6 text-white" 
+        strokeWidth={2}
       />
     </button>
   )
@@ -122,10 +120,8 @@ export function ExtendedFloatingActionButton({
         }}
       >
         <Plus 
-          className="w-6 h-6 transition-transform duration-200" 
-          fill="#FFFFFF" 
-          stroke="#3E000C" 
-          strokeWidth={1.5}
+          className="w-6 h-6 text-white transition-transform duration-200" 
+          strokeWidth={2}
         />
       </button>
     </div>
