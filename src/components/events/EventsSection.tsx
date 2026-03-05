@@ -1,20 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Calendar, Plus, CalendarDays, Users, Check } from 'lucide-react'
+import { Calendar, Plus, CalendarDays, Users, Check, X, ChevronLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog'
+import { cn } from '@/lib/utils'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { EventCard } from './EventCard'
 import { useEventsStore, useUserStore, useFriendsStore } from '@/store'
@@ -63,7 +55,7 @@ export function EventsSection() {
       // Get friend IDs
       const friendIds = friends.map(f => f.id)
       
-      // Get all events - created by user, invited user, or created by friends
+      // Get all events
       const { data, error } = await supabase
         .from('events')
         .select(`
@@ -77,20 +69,10 @@ export function EventsSection() {
         .order('event_date', { ascending: true })
 
       if (!error && data) {
-        // Filter events that user should see:
-        // 1. Created by user
-        // 2. User is in invited_users (private event)
-        // 3. Created by a friend AND is_public = true (public event for all friends)
         const visibleEvents = (data as EventWithParticipants[]).filter(event => {
-          // User created it
           if (event.created_by === user.id) return true
-          
-          // User is explicitly invited (private event)
           if (event.invited_users?.includes(user.id)) return true
-          
-          // Created by a friend and is_public = true (visible to all friends)
           if (friendIds.includes(event.created_by) && event.is_public === true) return true
-          
           return false
         })
         
@@ -112,8 +94,6 @@ export function EventsSection() {
         ? `${formData.event_date}T${formData.event_time}:00`
         : `${formData.event_date}T12:00:00`
 
-      // If invite_all (is_public = true), all friends can see the event
-      // Otherwise (is_public = false), only selected friends in invited_users can see it
       const isPublic = formData.invite_all
       const invitedUsers = formData.invite_all ? null : formData.invited_friends
 
@@ -140,21 +120,24 @@ export function EventsSection() {
 
       if (!error && data) {
         addEvent(data as EventWithParticipants)
-        // Reset form
-        setFormData({
-          title: '',
-          description: '',
-          location: '',
-          event_date: '',
-          event_time: '',
-          invite_all: true,
-          invited_friends: [],
-        })
+        resetForm()
         setShowEventForm(false)
       }
     } catch (error) {
       console.error('Error creating event:', error)
     }
+  }
+
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      description: '',
+      location: '',
+      event_date: '',
+      event_time: '',
+      invite_all: true,
+      invited_friends: [],
+    })
   }
 
   const handleRespond = async (eventId: string, response: 'going' | 'not_going') => {
@@ -217,149 +200,177 @@ export function EventsSection() {
 
   const displayEvents = activeFilter === 'upcoming' ? upcomingEvents : pastEvents
 
+  const canSubmit = formData.title && formData.event_date && 
+    (formData.invite_all || formData.invited_friends.length > 0 || friends.length === 0)
+
   return (
-    <div className="flex-1 flex flex-col">
-      {/* Filter tabs */}
-      <div className="px-4 py-3">
-        <div className="flex gap-2">
-          <Button
-            variant={activeFilter === 'upcoming' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setActiveFilter('upcoming')}
-            className={activeFilter === 'upcoming' ? 'bg-burgundy hover:bg-burgundy-light rounded-full' : 'rounded-full'}
-          >
-            Предстоящие
-            {upcomingEvents.length > 0 && (
-              <span className="ml-1.5 px-1.5 py-0.5 text-xs rounded-full bg-white/20">
-                {upcomingEvents.length}
-              </span>
-            )}
-          </Button>
-          <Button
-            variant={activeFilter === 'past' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setActiveFilter('past')}
-            className={activeFilter === 'past' ? 'bg-burgundy hover:bg-burgundy-light rounded-full' : 'rounded-full'}
-          >
-            Прошедшие
-          </Button>
+    <>
+      {/* Main content */}
+      <div className="flex-1 flex flex-col">
+        {/* Filter tabs */}
+        <div className="px-4 py-3">
+          <div className="flex gap-2">
+            <Button
+              variant={activeFilter === 'upcoming' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveFilter('upcoming')}
+              className={activeFilter === 'upcoming' ? 'bg-burgundy hover:bg-burgundy-light rounded-full' : 'rounded-full'}
+            >
+              Предстоящие
+              {upcomingEvents.length > 0 && (
+                <span className="ml-1.5 px-1.5 py-0.5 text-xs rounded-full bg-white/20">
+                  {upcomingEvents.length}
+                </span>
+              )}
+            </Button>
+            <Button
+              variant={activeFilter === 'past' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setActiveFilter('past')}
+              className={activeFilter === 'past' ? 'bg-burgundy hover:bg-burgundy-light rounded-full' : 'rounded-full'}
+            >
+              Прошедшие
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {/* Events list */}
-      <div className="flex-1 overflow-y-auto px-4 pb-32 space-y-4">
-        {displayEvents.length === 0 ? (
-          <EmptyState
-            icon={CalendarDays}
-            title="Нет мероприятий"
-            description={
-              activeFilter === 'upcoming'
-                ? 'Создайте мероприятие, чтобы пригласить друзей'
-                : 'Прошедших мероприятий нет'
-            }
-          />
-        ) : (
-          displayEvents.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              currentUserId={user?.id}
-              onRespond={handleRespond}
-              onDelete={handleDeleteEvent}
+        {/* Events list */}
+        <div className="flex-1 overflow-y-auto px-4 pb-32 space-y-4">
+          {displayEvents.length === 0 ? (
+            <EmptyState
+              icon={CalendarDays}
+              title="Нет мероприятий"
+              description={
+                activeFilter === 'upcoming'
+                  ? 'Создайте мероприятие, чтобы пригласить друзей'
+                  : 'Прошедших мероприятий нет'
+              }
             />
-          ))
-        )}
+          ) : (
+            displayEvents.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                currentUserId={user?.id}
+                onRespond={handleRespond}
+                onDelete={handleDeleteEvent}
+              />
+            ))
+          )}
+        </div>
+
+        {/* Floating action button */}
+        <button
+          onClick={() => setShowEventForm(true)}
+          className="fixed bottom-28 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 bg-burgundy"
+          style={{
+            boxShadow: '0 4px 20px rgba(139, 30, 63, 0.3)'
+          }}
+        >
+          <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
+        </button>
       </div>
 
-      {/* Floating action button */}
-      <button
-        onClick={() => setShowEventForm(true)}
-        className="fixed bottom-28 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 bg-burgundy"
-        style={{
-          boxShadow: '0 4px 20px rgba(139, 30, 63, 0.3)'
-        }}
-      >
-        <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
-      </button>
+      {/* Full screen event form */}
+      {showEventForm && (
+        <div className="fixed inset-0 z-50 bg-white flex flex-col">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-[#F0E8E8]">
+            <button
+              onClick={() => { resetForm(); setShowEventForm(false); }}
+              className="p-2 -ml-2 rounded-full hover:bg-[#F8F5F5] transition-colors"
+            >
+              <ChevronLeft className="w-6 h-6 text-[#1C1C1E]" />
+            </button>
+            
+            <h1 className="text-lg font-semibold text-[#1C1C1E]">Новое мероприятие</h1>
+            
+            <button
+              onClick={() => { resetForm(); setShowEventForm(false); }}
+              className="p-2 -mr-2 rounded-full hover:bg-[#F8F5F5] transition-colors"
+            >
+              <X className="w-6 h-6 text-[#1C1C1E]" />
+            </button>
+          </div>
 
-      {/* Event form modal */}
-      <Dialog open={showEventForm} onOpenChange={setShowEventForm}>
-        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-burgundy">Новое мероприятие</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
+          {/* Form content */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {/* Title */}
             <div className="space-y-2">
-              <Label htmlFor="title">Название *</Label>
+              <label className="text-sm font-medium text-[#1C1C1E]">Название</label>
               <Input
-                id="title"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="День рождения, Встреча..."
+                className="border-[#F0E8E8] focus:border-burgundy"
               />
             </div>
 
+            {/* Date and time */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="date">Дата *</Label>
+                <label className="text-sm font-medium text-[#1C1C1E]">Дата</label>
                 <Input
-                  id="date"
                   type="date"
                   value={formData.event_date}
                   onChange={(e) => setFormData({ ...formData, event_date: e.target.value })}
+                  className="border-[#F0E8E8] focus:border-burgundy"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="time">Время</Label>
+                <label className="text-sm font-medium text-[#1C1C1E]">Время</label>
                 <Input
-                  id="time"
                   type="time"
                   value={formData.event_time}
                   onChange={(e) => setFormData({ ...formData, event_time: e.target.value })}
+                  className="border-[#F0E8E8] focus:border-burgundy"
                 />
               </div>
             </div>
 
+            {/* Location */}
             <div className="space-y-2">
-              <Label htmlFor="location">Место</Label>
+              <label className="text-sm font-medium text-[#1C1C1E]">Место</label>
               <Input
-                id="location"
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder="Адрес или название места"
+                className="border-[#F0E8E8] focus:border-burgundy"
               />
             </div>
 
+            {/* Description */}
             <div className="space-y-2">
-              <Label htmlFor="description">Описание</Label>
+              <label className="text-sm font-medium text-[#1C1C1E]">Описание</label>
               <Textarea
-                id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Детали мероприятия"
                 rows={2}
+                className="border-[#F0E8E8] focus:border-burgundy resize-none"
               />
             </div>
 
             {/* Guest selection */}
             {friends.length > 0 && (
               <div className="space-y-3">
-                <Label>Кого пригласить?</Label>
+                <label className="text-sm font-medium text-[#1C1C1E]">Кого пригласить?</label>
                 
                 {/* All friends option */}
                 <button
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, invite_all: true, invited_friends: [] }))}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
+                  className={cn(
+                    'w-full flex items-center gap-3 p-3 rounded-xl border transition-all',
                     formData.invite_all 
                       ? 'border-burgundy bg-burgundy/5' 
-                      : 'border-[#F0E8E8] hover:border-burgundy/50'
-                  }`}
+                      : 'border-[#F0E8E8] hover:border-[#D4C4C4]'
+                  )}
                 >
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                  <div className={cn(
+                    'w-5 h-5 rounded-full border-2 flex items-center justify-center',
                     formData.invite_all ? 'border-burgundy bg-burgundy' : 'border-[#8E8E93]'
-                  }`}>
+                  )}>
                     {formData.invite_all && <Check className="w-3 h-3 text-white" />}
                   </div>
                   <Users className="w-5 h-5 text-[#8E8E93]" />
@@ -370,15 +381,17 @@ export function EventsSection() {
                 <button
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, invite_all: false }))}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all ${
+                  className={cn(
+                    'w-full flex items-center gap-3 p-3 rounded-xl border transition-all',
                     !formData.invite_all 
                       ? 'border-burgundy bg-burgundy/5' 
-                      : 'border-[#F0E8E8] hover:border-burgundy/50'
-                  }`}
+                      : 'border-[#F0E8E8] hover:border-[#D4C4C4]'
+                  )}
                 >
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                  <div className={cn(
+                    'w-5 h-5 rounded-full border-2 flex items-center justify-center',
                     !formData.invite_all ? 'border-burgundy bg-burgundy' : 'border-[#8E8E93]'
-                  }`}>
+                  )}>
                     {!formData.invite_all && <Check className="w-3 h-3 text-white" />}
                   </div>
                   <Users className="w-5 h-5 text-[#8E8E93]" />
@@ -387,7 +400,7 @@ export function EventsSection() {
 
                 {/* Friend selection list */}
                 {!formData.invite_all && (
-                  <div className="space-y-2 max-h-48 overflow-y-auto pl-2">
+                  <div className="space-y-1 max-h-48 overflow-y-auto">
                     {friends.map((friend) => {
                       const isSelected = formData.invited_friends.includes(friend.id)
                       return (
@@ -395,13 +408,15 @@ export function EventsSection() {
                           key={friend.id}
                           type="button"
                           onClick={() => toggleFriendInvite(friend.id)}
-                          className={`w-full flex items-center gap-3 p-2 rounded-xl transition-all ${
+                          className={cn(
+                            'w-full flex items-center gap-3 p-2 rounded-xl transition-all',
                             isSelected ? 'bg-burgundy/10' : 'hover:bg-[#F8F5F5]'
-                          }`}
+                          )}
                         >
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          <div className={cn(
+                            'w-5 h-5 rounded-full border-2 flex items-center justify-center',
                             isSelected ? 'border-burgundy bg-burgundy' : 'border-[#E5E0E0]'
-                          }`}>
+                          )}>
                             {isSelected && <Check className="w-3 h-3 text-white" />}
                           </div>
                           <Avatar className="w-8 h-8">
@@ -426,20 +441,18 @@ export function EventsSection() {
             )}
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEventForm(false)}>
-              Отмена
-            </Button>
+          {/* Submit button */}
+          <div className="p-4 border-t border-[#F0E8E8]">
             <Button
               onClick={handleCreateEvent}
-              disabled={!formData.title || !formData.event_date || (!formData.invite_all && formData.invited_friends.length === 0 && friends.length > 0)}
-              style={{ backgroundColor: '#8B1E3F', color: 'white' }}
+              disabled={!canSubmit}
+              className="w-full bg-burgundy hover:bg-burgundy-light text-white"
             >
               Создать
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }

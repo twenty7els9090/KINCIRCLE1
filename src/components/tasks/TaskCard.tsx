@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import {
   Check,
-  Trash2,
+  Archive,
   Package,
   Plus,
 } from 'lucide-react'
@@ -78,8 +78,8 @@ export function TaskCard({
     }
   }
 
-  // Handle delete/archive click
-  const handleDeleteOrArchive = (e: React.MouseEvent) => {
+  // Handle archive click
+  const handleArchiveClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     if (isCompleted && onArchive) {
       onArchive(task.id)
@@ -95,8 +95,7 @@ export function TaskCard({
         'relative rounded-[20px] overflow-hidden',
         'transition-all duration-300 ease-out',
         'cursor-pointer',
-        isHighlighted && 'ring-2 ring-burgundy',
-        isCompleted && 'opacity-85'
+        isHighlighted && 'ring-2 ring-burgundy'
       )}
       style={{
         boxShadow: '0 8px 20px rgba(0, 0, 0, 0.08)',
@@ -107,13 +106,19 @@ export function TaskCard({
       <div
         className={cn(
           'absolute inset-0',
-          !task.image_url && getGradientClass()
+          !task.image_url && !task.category?.image_url && getGradientClass()
         )}
       >
         {task.image_url ? (
           <img
             src={task.image_url}
             alt={task.title}
+            className="w-full h-full object-cover"
+          />
+        ) : task.category?.image_url ? (
+          <img
+            src={task.category.image_url}
+            alt={task.category.name}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -126,11 +131,13 @@ export function TaskCard({
         )}
       </div>
 
-      {/* Overlay gradient for text readability */}
+      {/* Overlay gradient - darker when completed */}
       <div 
-        className="absolute inset-0"
+        className="absolute inset-0 transition-all duration-300"
         style={{
-          background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)'
+          background: isCompleted
+            ? 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.3) 100%)'
+            : 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)'
         }}
       />
 
@@ -148,9 +155,9 @@ export function TaskCard({
             </span>
           )}
 
-          {/* Delete/Archive button */}
+          {/* Archive/Delete button */}
           <button
-            onClick={handleDeleteOrArchive}
+            onClick={handleArchiveClick}
             className={cn(
               'w-9 h-9 rounded-full',
               'flex items-center justify-center',
@@ -159,14 +166,17 @@ export function TaskCard({
               'bg-white/20 backdrop-blur-sm'
             )}
           >
-            <Trash2 className="w-4 h-4 text-white" />
+            <Archive className="w-4 h-4 text-white" />
           </button>
         </div>
 
         {/* Bottom content */}
         <div className="space-y-2">
-          {/* Title */}
-          <h3 className="text-2xl font-bold text-white drop-shadow-md">
+          {/* Title - strikethrough when completed */}
+          <h3 className={cn(
+            'text-2xl font-bold text-white drop-shadow-md transition-all duration-300',
+            isCompleted && 'line-through opacity-70'
+          )}>
             {task.title}
           </h3>
 
@@ -188,7 +198,7 @@ export function TaskCard({
                 'active:scale-95',
                 isAnimating && 'scale-110',
                 isCompleted
-                  ? 'bg-white text-burgundy'
+                  ? 'bg-white/20 backdrop-blur-sm text-white border border-white/30'
                   : 'bg-burgundy text-white hover:bg-burgundy-light'
               )}
             >

@@ -1,17 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Camera, X, ChevronRight, ChevronLeft, ShoppingBag, Home, Sparkles, Check } from 'lucide-react'
+import { Camera, X, ChevronRight, ChevronLeft, Package } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import type { TaskCategory, User } from '@/lib/supabase/database.types'
 import * as LucideIcons from 'lucide-react'
@@ -41,30 +34,24 @@ const taskTypes = [
   { 
     value: 'shopping' as const, 
     label: 'Покупки', 
-    icon: ShoppingBag, 
     description: 'Продукты, вещи, товары',
-    gradient: 'from-blue-400 to-blue-600'
   },
   { 
     value: 'home' as const, 
     label: 'Дом', 
-    icon: Home, 
     description: 'Уборка, ремонт, сад',
-    gradient: 'from-green-400 to-green-600'
   },
   { 
     value: 'other' as const, 
     label: 'Другое', 
-    icon: Sparkles, 
     description: 'Всё остальное',
-    gradient: 'from-purple-400 to-purple-600'
   },
 ]
 
 // Dynamic icon component
 function DynamicIcon({ name, className }: { name: string; className?: string }) {
   const Icon = (LucideIcons as Record<string, React.ComponentType<{ className?: string }>>)[name]
-  return Icon ? <Icon className={className} /> : <Sparkles className={className} />
+  return Icon ? <Icon className={className} /> : <Package className={className} />
 }
 
 export function TaskForm({
@@ -104,7 +91,7 @@ export function TaskForm({
 
   const handleTypeSelect = (type: 'shopping' | 'home' | 'other') => {
     setTaskType(type)
-    setSelectedCategory('') // Reset category when type changes
+    setSelectedCategory('')
     setStep(2)
   }
 
@@ -125,7 +112,6 @@ export function TaskForm({
       image_url: imageUrl || undefined,
     })
 
-    // Reset all
     resetForm()
     onOpenChange(false)
   }
@@ -155,185 +141,150 @@ export function TaskForm({
     setImageUrl(url)
   }
 
-  // Check if can proceed
-  const canProceed = () => {
-    switch (step) {
-      case 1:
-        return taskType !== null
-      case 2:
-        return selectedCategory !== ''
-      case 3:
-        return formData.title.trim() !== ''
-      case 4:
-        return true
-      default:
-        return false
-    }
-  }
-
   const selectedCategoryData = categories.find(c => c.id === selectedCategory)
 
+  if (!open) return null
+
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-hidden p-0">
-        <DialogHeader className="p-6 pb-0">
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-burgundy text-lg">
-              Новая задача
-            </DialogTitle>
-            {/* Step indicator */}
-            <div className="flex items-center gap-1">
-              {[1, 2, 3, 4].map((s) => (
-                <div
-                  key={s}
+    <div className="fixed inset-0 z-50 bg-white flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-[#F0E8E8]">
+        {step > 1 ? (
+          <button
+            onClick={handleBack}
+            className="p-2 -ml-2 rounded-full hover:bg-[#F8F5F5] transition-colors"
+          >
+            <ChevronLeft className="w-6 h-6 text-[#1C1C1E]" />
+          </button>
+        ) : (
+          <div className="w-10" />
+        )}
+        
+        <div className="flex items-center gap-1">
+          {[1, 2, 3, 4].map((s) => (
+            <div
+              key={s}
+              className={cn(
+                'h-1 rounded-full transition-all duration-300',
+                s === step ? 'w-6 bg-burgundy' : 'w-1 bg-[#E5E0E0]'
+              )}
+            />
+          ))}
+        </div>
+
+        <button
+          onClick={handleClose}
+          className="p-2 -mr-2 rounded-full hover:bg-[#F8F5F5] transition-colors"
+        >
+          <X className="w-6 h-6 text-[#1C1C1E]" />
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {/* Step 1: Task Type */}
+        {step === 1 && (
+          <div className="space-y-6 pt-4">
+            <div className="text-center">
+              <h2 className="text-2xl font-semibold text-[#1C1C1E]">Что добавляем?</h2>
+              <p className="text-sm text-[#8E8E93] mt-1">Выберите тип задачи</p>
+            </div>
+
+            <div className="space-y-2">
+              {taskTypes.map((type) => (
+                <button
+                  key={type.value}
+                  onClick={() => handleTypeSelect(type.value)}
                   className={cn(
-                    'w-2 h-2 rounded-full transition-all',
-                    s === step ? 'w-6 bg-burgundy' : 'bg-[#E5E0E0]'
+                    'w-full flex items-center justify-between p-4 rounded-2xl',
+                    'border transition-all duration-200',
+                    'hover:border-[#D4C4C4] active:scale-[0.98]',
+                    'border-[#F0E8E8]'
                   )}
-                />
+                >
+                  <div className="text-left">
+                    <p className="font-medium text-[#1C1C1E]">{type.label}</p>
+                    <p className="text-sm text-[#8E8E93]">{type.description}</p>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-[#8E8E93]" />
+                </button>
               ))}
             </div>
           </div>
-        </DialogHeader>
+        )}
 
-        <div className="p-6 min-h-[400px]">
-          {/* Step 1: Task Type */}
-          {step === 1 && (
-            <div className="space-y-4">
-              <div className="text-center mb-6">
-                <h2 className="text-xl font-semibold text-[#1C1C1E]">Что добавляем?</h2>
-                <p className="text-sm text-[#8E8E93] mt-1">Выберите тип задачи</p>
-              </div>
-
-              <div className="space-y-3">
-                {taskTypes.map((type) => {
-                  const Icon = type.icon
-                  const isSelected = taskType === type.value
-                  return (
-                    <button
-                      key={type.value}
-                      onClick={() => handleTypeSelect(type.value)}
-                      className={cn(
-                        'w-full flex items-center gap-4 p-4 rounded-2xl',
-                        'border-2 transition-all duration-200',
-                        'hover:scale-[1.02] active:scale-[0.98]',
-                        isSelected
-                          ? 'border-burgundy bg-burgundy/5'
-                          : 'border-[#F0E8E8] hover:border-burgundy/50'
-                      )}
-                    >
-                      <div className={cn(
-                        'w-14 h-14 rounded-xl flex items-center justify-center',
-                        'bg-gradient-to-br',
-                        type.gradient
-                      )}>
-                        <Icon className="w-7 h-7 text-white" />
-                      </div>
-                      <div className="flex-1 text-left">
-                        <p className="font-semibold text-[#1C1C1E]">{type.label}</p>
-                        <p className="text-sm text-[#8E8E93]">{type.description}</p>
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-[#8E8E93]" />
-                    </button>
-                  )
-                })}
-              </div>
+        {/* Step 2: Category */}
+        {step === 2 && (
+          <div className="space-y-6 pt-4">
+            <div className="text-center">
+              <h2 className="text-2xl font-semibold text-[#1C1C1E]">Категория</h2>
+              <p className="text-sm text-[#8E8E93] mt-1">Уточните, что именно</p>
             </div>
-          )}
 
-          {/* Step 2: Category */}
-          {step === 2 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 mb-4">
-                <button
-                  onClick={handleBack}
-                  className="p-2 rounded-full hover:bg-[#F8F5F5] transition-colors"
-                >
-                  <ChevronLeft className="w-5 h-5 text-[#8E8E93]" />
-                </button>
-                <div>
-                  <h2 className="text-xl font-semibold text-[#1C1C1E]">Категория</h2>
-                  <p className="text-sm text-[#8E8E93]">Уточните, что именно</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 max-h-[320px] overflow-y-auto pb-2">
-                {filteredCategories.map((category) => {
-                  const isSelected = selectedCategory === category.id
-                  return (
-                    <button
-                      key={category.id}
-                      onClick={() => handleCategorySelect(category.id)}
-                      className={cn(
-                        'flex flex-col items-center gap-2 p-4 rounded-2xl',
-                        'border-2 transition-all duration-200',
-                        'hover:scale-[1.02] active:scale-[0.98]',
-                        isSelected
-                          ? 'border-burgundy bg-burgundy/5'
-                          : 'border-[#F0E8E8] hover:border-burgundy/50'
-                      )}
-                    >
-                      <div className={cn(
-                        'w-12 h-12 rounded-xl flex items-center justify-center',
-                        isSelected ? 'bg-burgundy/10' : 'bg-[#F8F5F5]'
-                      )}>
-                        <DynamicIcon
-                          name={category.icon || 'Package'}
-                          className={cn('w-6 h-6', isSelected ? 'text-burgundy' : 'text-[#8E8E93]')}
-                        />
-                      </div>
-                      <span className={cn(
-                        'text-sm font-medium text-center',
-                        isSelected ? 'text-burgundy' : 'text-[#1C1C1E]'
-                      )}>
-                        {category.name}
-                      </span>
-                      {isSelected && (
-                        <div className="absolute top-2 right-2">
-                          <Check className="w-4 h-4 text-burgundy" />
-                        </div>
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-
-              {selectedCategory && (
-                <Button
-                  onClick={handleNext}
-                  className="w-full bg-burgundy hover:bg-burgundy-light text-white"
-                >
-                  Далее
-                </Button>
-              )}
+            <div className="grid grid-cols-3 gap-2">
+              {filteredCategories.map((category) => {
+                const isSelected = selectedCategory === category.id
+                return (
+                  <button
+                    key={category.id}
+                    onClick={() => handleCategorySelect(category.id)}
+                    className={cn(
+                      'flex flex-col items-center gap-2 p-3 rounded-2xl',
+                      'border transition-all duration-200',
+                      'hover:border-[#D4C4C4] active:scale-[0.98]',
+                      isSelected
+                        ? 'border-burgundy bg-burgundy/5'
+                        : 'border-[#F0E8E8]'
+                    )}
+                  >
+                    <div className={cn(
+                      'w-12 h-12 rounded-xl flex items-center justify-center',
+                      isSelected ? 'bg-burgundy/10' : 'bg-[#F8F5F5]'
+                    )}>
+                      <DynamicIcon
+                        name={category.icon || 'Package'}
+                        className={cn('w-6 h-6', isSelected ? 'text-burgundy' : 'text-[#8E8E93]')}
+                      />
+                    </div>
+                    <span className={cn(
+                      'text-xs font-medium text-center',
+                      isSelected ? 'text-burgundy' : 'text-[#1C1C1E]'
+                    )}>
+                      {category.name}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
-          )}
 
-          {/* Step 3: Details */}
-          {step === 3 && (
+            {selectedCategory && (
+              <Button
+                onClick={handleNext}
+                className="w-full bg-burgundy hover:bg-burgundy-light text-white"
+              >
+                Далее
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Step 3: Details */}
+        {step === 3 && (
+          <div className="space-y-6 pt-4">
+            <div className="text-center">
+              <h2 className="text-2xl font-semibold text-[#1C1C1E]">Детали</h2>
+              <p className="text-sm text-[#8E8E93] mt-1">
+                {selectedCategoryData?.name}
+              </p>
+            </div>
+
             <div className="space-y-4">
-              <div className="flex items-center gap-3 mb-4">
-                <button
-                  onClick={handleBack}
-                  className="p-2 rounded-full hover:bg-[#F8F5F5] transition-colors"
-                >
-                  <ChevronLeft className="w-5 h-5 text-[#8E8E93]" />
-                </button>
-                <div>
-                  <h2 className="text-xl font-semibold text-[#1C1C1E]">Детали</h2>
-                  <p className="text-sm text-[#8E8E93]">
-                    {selectedCategoryData?.name} • {taskTypes.find(t => t.value === taskType)?.label}
-                  </p>
-                </div>
-              </div>
-
               {/* Title */}
               <div className="space-y-2">
-                <Label htmlFor="title">
-                  {taskType === 'shopping' ? 'Что купить? *' : 'Название *'}
-                </Label>
+                <label className="text-sm font-medium text-[#1C1C1E]">
+                  {taskType === 'shopping' ? 'Что купить?' : 'Название'}
+                </label>
                 <Input
-                  id="title"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder={
@@ -341,36 +292,34 @@ export function TaskForm({
                       ? 'Например: Молоко, Хлеб...'
                       : 'Название задачи'
                   }
-                  className="text-base"
+                  className="text-base border-[#F0E8E8] focus:border-burgundy"
                 />
               </div>
 
-              {/* Quantity and unit - only for shopping */}
+              {/* Quantity - only for shopping */}
               {taskType === 'shopping' && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-2">
-                    <Label>Количество</Label>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-[#1C1C1E]">Количество</label>
+                  <div className="flex gap-2">
                     <Input
                       type="number"
                       step="0.1"
                       value={formData.quantity}
                       onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                       placeholder="1"
+                      className="flex-1 border-[#F0E8E8] focus:border-burgundy"
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Единица</Label>
-                    <div className="flex flex-wrap gap-1">
-                      {units.map((u) => (
+                    <div className="flex gap-1 flex-wrap">
+                      {units.slice(0, 4).map((u) => (
                         <button
                           key={u}
                           type="button"
                           onClick={() => setFormData({ ...formData, unit: u })}
                           className={cn(
-                            'px-3 py-2 rounded-lg text-sm transition-all',
+                            'px-3 py-2 rounded-lg text-sm transition-all border',
                             formData.unit === u
-                              ? 'bg-burgundy text-white'
-                              : 'bg-[#F8F5F5] text-[#1C1C1E] hover:bg-[#F0E8E8]'
+                              ? 'bg-[#1C1C1E] text-white border-[#1C1C1E]'
+                              : 'bg-white text-[#1C1C1E] border-[#F0E8E8] hover:border-[#D4C4C4]'
                           )}
                         >
                           {u}
@@ -383,93 +332,88 @@ export function TaskForm({
 
               {/* Description */}
               <div className="space-y-2">
-                <Label htmlFor="description">Описание (опц.)</Label>
+                <label className="text-sm font-medium text-[#1C1C1E]">Описание</label>
                 <Textarea
-                  id="description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Добавьте детали..."
                   rows={2}
+                  className="border-[#F0E8E8] focus:border-burgundy resize-none"
                 />
               </div>
+            </div>
 
+            <Button
+              onClick={handleNext}
+              disabled={!formData.title.trim()}
+              className="w-full bg-burgundy hover:bg-burgundy-light text-white"
+            >
+              Далее
+            </Button>
+          </div>
+        )}
+
+        {/* Step 4: Photo */}
+        {step === 4 && (
+          <div className="space-y-6 pt-4">
+            <div className="text-center">
+              <h2 className="text-2xl font-semibold text-[#1C1C1E]">Фото</h2>
+              <p className="text-sm text-[#8E8E93] mt-1">
+                {taskType === 'other' ? 'Добавьте изображение' : 'Опционально'}
+              </p>
+            </div>
+
+            {/* Image upload */}
+            <div className="space-y-3">
+              {imageUrl ? (
+                <div className="relative">
+                  <img
+                    src={imageUrl}
+                    alt="Task"
+                    className="w-full h-64 rounded-2xl object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setImageUrl('')}
+                    className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center w-full h-64 rounded-2xl border-2 border-dashed border-[#E5E0E0] cursor-pointer hover:border-[#D4C4C4] transition-colors bg-[#FAFAFA]">
+                  <Camera className="w-10 h-10 text-[#8E8E93] mb-2" />
+                  <span className="text-sm text-[#8E8E93]">Нажмите для загрузки</span>
+                  <span className="text-xs text-[#8E8E93] mt-1">или пропустите</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageUpload}
+                  />
+                </label>
+              )}
+            </div>
+
+            <div className="flex gap-3">
               <Button
-                onClick={handleNext}
-                disabled={!formData.title.trim()}
-                className="w-full bg-burgundy hover:bg-burgundy-light text-white"
+                variant="outline"
+                onClick={handleSubmit}
+                className="flex-1 border-[#F0E8E8]"
               >
-                Далее
+                Пропустить
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={isLoading}
+                className="flex-1 bg-burgundy hover:bg-burgundy-light text-white"
+              >
+                {isLoading ? 'Создание...' : 'Создать'}
               </Button>
             </div>
-          )}
-
-          {/* Step 4: Photo */}
-          {step === 4 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 mb-4">
-                <button
-                  onClick={handleBack}
-                  className="p-2 rounded-full hover:bg-[#F8F5F5] transition-colors"
-                >
-                  <ChevronLeft className="w-5 h-5 text-[#8E8E93]" />
-                </button>
-                <div>
-                  <h2 className="text-xl font-semibold text-[#1C1C1E]">Фото</h2>
-                  <p className="text-sm text-[#8E8E93]">Добавьте изображение (опционально)</p>
-                </div>
-              </div>
-
-              {/* Image upload */}
-              <div className="space-y-3">
-                {imageUrl ? (
-                  <div className="relative inline-block">
-                    <img
-                      src={imageUrl}
-                      alt="Task"
-                      className="w-full h-48 rounded-2xl object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setImageUrl('')}
-                      className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <label className="flex flex-col items-center justify-center w-full h-48 rounded-2xl border-2 border-dashed border-[#E5E0E0] cursor-pointer hover:border-burgundy transition-colors bg-[#FAFAFA]">
-                    <Camera className="w-10 h-10 text-[#8E8E93] mb-2" />
-                    <span className="text-sm text-[#8E8E93]">Нажмите для загрузки</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleImageUpload}
-                    />
-                  </label>
-                )}
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={handleSubmit}
-                  className="flex-1"
-                >
-                  Без фото
-                </Button>
-                <Button
-                  onClick={handleSubmit}
-                  disabled={isLoading}
-                  className="flex-1 bg-burgundy hover:bg-burgundy-light text-white"
-                >
-                  {isLoading ? 'Создание...' : 'Создать задачу'}
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
