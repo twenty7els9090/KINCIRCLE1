@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Calendar, Plus, CalendarDays, Users, Check, X, ChevronLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,6 +26,10 @@ export function EventsSection() {
   const [isLoading, setIsLoading] = useState(false)
   const [showEventForm, setShowEventForm] = useState(false)
   const [activeFilter, setActiveFilter] = useState<'upcoming' | 'past'>('upcoming')
+  
+  // Use ref to prevent double subscriptions
+  const realtimeRef = useRef(false)
+
   // Form state
   const [formData, setFormData] = useState({
     title: '',
@@ -37,21 +41,22 @@ export function EventsSection() {
     invited_friends: [] as string[],
   })
 
-  // Fetch events when user is ready (friends are loaded globally in page.tsx)
+  // Fetch events when user is ready
   useEffect(() => {
     if (user) {
       fetchEvents()
     }
   }, [user])
 
-  // Realtime subscription for events
+  // Realtime subscription - only once
   useEffect(() => {
-    if (!user) return
+    if (!user || realtimeRef.current) return
 
     const supabase = getSupabaseClient()
-    const friendIds = friends.map(f => f.id)
-    
-    const channel = supabase
+    realtimeRef.current = true
+
+    // Events changes
+    const eventsChannel = supabase
       .channel('events-changes')
       .on(
         'postgres_changes',
@@ -66,32 +71,33 @@ export function EventsSection() {
           const oldData = payload.old as any
 
           if (eventType === 'INSERT') {
-            // Check if this event is visible to user
+            const friendIds = useFriendsStore.getState().friends.map(f => f.id)
             const isCreator = newData.created_by === user.id
             const isInvited = newData.invited_users?.includes(user.id)
             const isFriendEvent = friendIds.includes(newData.created_by) && newData.is_public === true
             
             if (isCreator || isInvited || isFriendEvent) {
-              // Fetch complete event with relations
-              const { data } = await supabase
-                .from('events')
-                .select(`
-                  *,
-                  creator:users!events_created_by_fkey(*),
-                  participants:event_participants(
+              const exists = useEventsStore.getState().events.some(e => e.id === newData.id)
+              if (!exists) {
+                const { data } = await supabase
+                  .from('events')
+                  .select(`
                     *,
-                    user:users(*)
-                  )
-                `)
-                .eq('id', newData.id)
-                .single()
-              
-              if (data && !events.some(e => e.id === data.id)) {
-                addEvent(data as EventWithParticipants)
+                    creator:users!events_created_by_fkey(*),
+                    participants:event_participants(
+                      *,
+                      user:users(*)
+                    )
+                  `)
+                  .eq('id', newData.id)
+                  .single()
+                
+                if (data) {
+                  addEvent(data as EventWithParticipants)
+                }
               }
             }
           } else if (eventType === 'UPDATE') {
-            // Fetch updated event with relations
             const { data } = await supabase
               .from('events')
               .select(`
@@ -113,22 +119,10 @@ export function EventsSection() {
           }
         }
       )
-      .subscribe((status) => {
-        console.log('Events realtime status:', status)
-      })
+      .subscribe()
 
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [user, friends, events, addEvent, updateEvent, removeEvent])
-
-  // Realtime for event_participants
-  useEffect(() => {
-    if (!user) return
-
-    const supabase = getSupabaseClient()
-    
-    const channel = supabase
+    // Event participants changes
+    const participantsChannel = supabase
       .channel('event-participants-changes')
       .on(
         'postgres_changes',
@@ -142,7 +136,6 @@ export function EventsSection() {
           const newData = payload.new as any
 
           if (eventType === 'INSERT' || eventType === 'UPDATE') {
-            // Fetch the event to update participants
             const { data } = await supabase
               .from('events')
               .select(`
@@ -165,9 +158,11 @@ export function EventsSection() {
       .subscribe()
 
     return () => {
-      supabase.removeChannel(channel)
+      supabase.removeChannel(eventsChannel)
+      supabase.removeChannel(participantsChannel)
+      realtimeRef.current = false
     }
-  }, [user, updateEvent])
+  }, [user])
 
   const fetchEvents = async () => {
     if (!user) return
@@ -175,14 +170,8 @@ export function EventsSection() {
 
     try {
       const supabase = getSupabaseClient()
+      const friendIds = useFriendsStore.getState().friends.map(f => f.id)
       
-      // Get friend IDs - use current friends value
-      const currentFriends = useFriendsStore.getState().friends
-      const friendIds = currentFriends.map(f => f.id)
-      
-      console.log('Fetching events with friends:', friendIds.length)
-      
-      // Get all events
       const { data, error } = await supabase
         .from('events')
         .select(`
@@ -203,7 +192,6 @@ export function EventsSection() {
           return false
         })
         
-        console.log('Visible events:', visibleEvents.length)
         setEvents(visibleEvents)
       }
     } catch (error) {
@@ -247,7 +235,6 @@ export function EventsSection() {
         .single()
 
       if (!error && data) {
-        // Realtime will handle this, but add locally for instant feedback
         if (!events.some(e => e.id === data.id)) {
           addEvent(data as EventWithParticipants)
         }
@@ -274,9 +261,20 @@ export function EventsSection() {
   const handleRespond = async (eventId: string, response: 'going' | 'not_going') => {
     if (!user) return
 
+    // Optimistic update FIRST
+    const event = events.find(e => e.id === eventId)
+    if (event) {
+      const existingParticipant = event.participants?.find(p => p.user_id === user.id)
+      const updatedParticipants = existingParticipant
+        ? event.participants?.map(p => p.user_id === user.id ? { ...p, response } : p)
+        : [...(event.participants || []), { event_id: eventId, user_id: user.id, response, user: user } as any]
+      
+      updateEvent(eventId, { ...event, participants: updatedParticipants })
+    }
+
     try {
       const supabase = getSupabaseClient()
-      const { error } = await supabase
+      await supabase
         .from('event_participants')
         .upsert({
           event_id: eventId,
@@ -284,25 +282,15 @@ export function EventsSection() {
           response,
           updated_at: new Date().toISOString(),
         })
-
-      if (!error) {
-        // Optimistic update - realtime will confirm
-        const event = events.find(e => e.id === eventId)
-        if (event) {
-          const existingParticipant = event.participants?.find(p => p.user_id === user.id)
-          const updatedParticipants = existingParticipant
-            ? event.participants?.map(p => p.user_id === user.id ? { ...p, response } : p)
-            : [...(event.participants || []), { event_id: eventId, user_id: user.id, response, user: user } as any]
-          
-          updateEvent(eventId, { ...event, participants: updatedParticipants })
-        }
-      }
     } catch (error) {
       console.error('Error responding to event:', error)
     }
   }
 
   const handleDeleteEvent = async (eventId: string) => {
+    // Optimistic update FIRST
+    removeEvent(eventId)
+
     try {
       const supabase = getSupabaseClient()
       
@@ -311,14 +299,10 @@ export function EventsSection() {
         .delete()
         .eq('event_id', eventId)
 
-      const { error } = await supabase
+      await supabase
         .from('events')
         .delete()
         .eq('id', eventId)
-
-      if (!error) {
-        removeEvent(eventId)
-      }
     } catch (error) {
       console.error('Error deleting event:', error)
     }

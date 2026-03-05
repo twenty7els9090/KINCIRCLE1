@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Package, Plus } from 'lucide-react'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { TaskCard } from './TaskCard'
@@ -15,6 +15,9 @@ export function TasksSection() {
   const [isLoading, setIsLoading] = useState(false)
   const [showTaskForm, setShowTaskForm] = useState(false)
   const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null)
+  
+  // Use ref to track if realtime is already subscribed
+  const realtimeRef = useRef(false)
 
   const currentFamily = families.find((f) => f.id === currentFamilyId)
 
@@ -26,11 +29,12 @@ export function TasksSection() {
     }
   }, [currentFamilyId])
 
-  // Realtime subscription for tasks
+  // Realtime subscription for tasks - only once per family
   useEffect(() => {
-    if (!currentFamilyId) return
+    if (!currentFamilyId || realtimeRef.current) return
 
     const supabase = getSupabaseClient()
+    realtimeRef.current = true
     
     const channel = supabase
       .channel(`tasks-${currentFamilyId}`)
@@ -48,30 +52,10 @@ export function TasksSection() {
           const oldData = payload.old as any
 
           if (eventType === 'INSERT') {
-            // Fetch complete task with relations
-            const { data } = await supabase
-              .from('tasks')
-              .select(`
-                *,
-                category:task_categories(*),
-                creator:users!tasks_created_by_fkey(*)
-              `)
-              .eq('id', newData.id)
-              .single()
-            
-            if (data && !tasks.some(t => t.id === data.id)) {
-              addTask(data as Task)
-              setHighlightedTaskId(data.id)
-              setTimeout(() => setHighlightedTaskId(null), 2000)
-            }
-          } else if (eventType === 'UPDATE') {
-            const newStatus = newData.status
-            
-            // If archived/deleted, remove from list
-            if (newStatus === 'archived' || newStatus === 'deleted') {
-              removeTask(newData.id)
-            } else {
-              // Fetch updated task with relations
+            // Check if already in store
+            const exists = useTaskStore.getState().tasks.some(t => t.id === newData.id)
+            if (!exists) {
+              // Fetch complete task with relations
               const { data } = await supabase
                 .from('tasks')
                 .select(`
@@ -83,7 +67,34 @@ export function TasksSection() {
                 .single()
               
               if (data) {
-                updateTask(newData.id, data as Task)
+                addTask(data as Task)
+                setHighlightedTaskId(data.id)
+                setTimeout(() => setHighlightedTaskId(null), 2000)
+              }
+            }
+          } else if (eventType === 'UPDATE') {
+            const newStatus = newData.status
+            
+            // If archived/deleted, remove from list
+            if (newStatus === 'archived' || newStatus === 'deleted') {
+              removeTask(newData.id)
+            } else {
+              // Only fetch if not already updated optimistically
+              const currentTask = useTaskStore.getState().tasks.find(t => t.id === newData.id)
+              if (currentTask?.status !== newStatus || currentTask?.updated_at !== newData.updated_at) {
+                const { data } = await supabase
+                  .from('tasks')
+                  .select(`
+                    *,
+                    category:task_categories(*),
+                    creator:users!tasks_created_by_fkey(*)
+                  `)
+                  .eq('id', newData.id)
+                  .single()
+                
+                if (data) {
+                  updateTask(newData.id, data as Task)
+                }
               }
             }
           } else if (eventType === 'DELETE') {
@@ -91,14 +102,13 @@ export function TasksSection() {
           }
         }
       )
-      .subscribe((status) => {
-        console.log('Tasks realtime status:', status)
-      })
+      .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
+      realtimeRef.current = false
     }
-  }, [currentFamilyId, tasks, addTask, updateTask, removeTask])
+  }, [currentFamilyId])
 
   const fetchTasks = async () => {
     if (!currentFamilyId) return
@@ -170,7 +180,7 @@ export function TasksSection() {
         .single()
 
       if (!error && data) {
-        // Realtime will handle the update, but add locally for instant feedback
+        // Add locally for instant feedback (realtime might be slower)
         if (!tasks.some(t => t.id === data.id)) {
           addTask(data as Task)
           setHighlightedTaskId(data.id)
@@ -183,9 +193,16 @@ export function TasksSection() {
   }
 
   const handleCompleteTask = async (taskId: string) => {
+    // Optimistic update FIRST
+    updateTask(taskId, {
+      status: 'completed',
+      completed_by: user?.id || null,
+      completed_at: new Date().toISOString(),
+    } as any)
+
     try {
       const supabase = getSupabaseClient()
-      const { error } = await supabase
+      await supabase
         .from('tasks')
         .update({
           status: 'completed',
@@ -193,24 +210,28 @@ export function TasksSection() {
           completed_at: new Date().toISOString(),
         })
         .eq('id', taskId)
-
-      if (!error) {
-        // Optimistic update
-        updateTask(taskId, {
-          status: 'completed',
-          completed_by: user?.id || null,
-          completed_at: new Date().toISOString(),
-        } as any)
-      }
     } catch (error) {
       console.error('Error completing task:', error)
+      // Revert on error
+      updateTask(taskId, {
+        status: 'active',
+        completed_by: null,
+        completed_at: null,
+      } as any)
     }
   }
 
   const handleUncompleteTask = async (taskId: string) => {
+    // Optimistic update FIRST
+    updateTask(taskId, {
+      status: 'active',
+      completed_by: null,
+      completed_at: null,
+    } as any)
+
     try {
       const supabase = getSupabaseClient()
-      const { error } = await supabase
+      await supabase
         .from('tasks')
         .update({
           status: 'active',
@@ -218,49 +239,45 @@ export function TasksSection() {
           completed_at: null,
         })
         .eq('id', taskId)
-
-      if (!error) {
-        updateTask(taskId, {
-          status: 'active',
-          completed_by: null,
-          completed_at: null,
-        } as any)
-      }
     } catch (error) {
       console.error('Error uncompleting task:', error)
+      // Revert on error
+      updateTask(taskId, {
+        status: 'completed',
+        completed_by: user?.id || null,
+        completed_at: new Date().toISOString(),
+      } as any)
     }
   }
 
   const handleArchiveTask = async (taskId: string) => {
+    // Optimistic update FIRST
+    removeTask(taskId)
+
     try {
       const supabase = getSupabaseClient()
-      const { error } = await supabase
+      await supabase
         .from('tasks')
         .update({
           status: 'archived',
           archived_at: new Date().toISOString(),
         })
         .eq('id', taskId)
-
-      if (!error) {
-        removeTask(taskId)
-      }
     } catch (error) {
       console.error('Error archiving task:', error)
     }
   }
 
   const handleDeleteTask = async (taskId: string) => {
+    // Optimistic update FIRST
+    removeTask(taskId)
+
     try {
       const supabase = getSupabaseClient()
-      const { error } = await supabase
+      await supabase
         .from('tasks')
         .update({ status: 'deleted' })
         .eq('id', taskId)
-
-      if (!error) {
-        removeTask(taskId)
-      }
     } catch (error) {
       console.error('Error deleting task:', error)
     }
@@ -282,7 +299,11 @@ export function TasksSection() {
     <div className="flex-1 flex flex-col">
       {/* Task list */}
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-32 space-y-4">
-        {tasks.length === 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-burgundy"></div>
+          </div>
+        ) : tasks.length === 0 ? (
           <EmptyState
             icon={Package}
             title="Нет задач"
