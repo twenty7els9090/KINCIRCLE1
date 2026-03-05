@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Package, Plus } from 'lucide-react'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { TaskCard } from './TaskCard'
@@ -10,7 +10,7 @@ import { getSupabaseClient } from '@/lib/supabase'
 import type { Task } from '@/lib/supabase/database.types'
 
 export function TasksSection() {
-  const { tasks, categories, setTasks, setCategories } = useTaskStore()
+  const { tasks, categories, setTasks, setCategories, addTask, updateTask, removeTask } = useTaskStore()
   const { currentFamilyId, families, user } = useUserStore()
   const [isLoading, setIsLoading] = useState(false)
   const [showTaskForm, setShowTaskForm] = useState(false)
@@ -25,6 +25,80 @@ export function TasksSection() {
       fetchCategories()
     }
   }, [currentFamilyId])
+
+  // Realtime subscription for tasks
+  useEffect(() => {
+    if (!currentFamilyId) return
+
+    const supabase = getSupabaseClient()
+    
+    const channel = supabase
+      .channel(`tasks-${currentFamilyId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks',
+          filter: `family_id=eq.${currentFamilyId}`,
+        },
+        async (payload) => {
+          const eventType = payload.eventType
+          const newData = payload.new as any
+          const oldData = payload.old as any
+
+          if (eventType === 'INSERT') {
+            // Fetch complete task with relations
+            const { data } = await supabase
+              .from('tasks')
+              .select(`
+                *,
+                category:task_categories(*),
+                creator:users!tasks_created_by_fkey(*)
+              `)
+              .eq('id', newData.id)
+              .single()
+            
+            if (data && !tasks.some(t => t.id === data.id)) {
+              addTask(data as Task)
+              setHighlightedTaskId(data.id)
+              setTimeout(() => setHighlightedTaskId(null), 2000)
+            }
+          } else if (eventType === 'UPDATE') {
+            const newStatus = newData.status
+            
+            // If archived/deleted, remove from list
+            if (newStatus === 'archived' || newStatus === 'deleted') {
+              removeTask(newData.id)
+            } else {
+              // Fetch updated task with relations
+              const { data } = await supabase
+                .from('tasks')
+                .select(`
+                  *,
+                  category:task_categories(*),
+                  creator:users!tasks_created_by_fkey(*)
+                `)
+                .eq('id', newData.id)
+                .single()
+              
+              if (data) {
+                updateTask(newData.id, data as Task)
+              }
+            }
+          } else if (eventType === 'DELETE') {
+            removeTask(oldData.id)
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('Tasks realtime status:', status)
+      })
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [currentFamilyId, tasks, addTask, updateTask, removeTask])
 
   const fetchTasks = async () => {
     if (!currentFamilyId) return
@@ -96,9 +170,12 @@ export function TasksSection() {
         .single()
 
       if (!error && data) {
-        setTasks([data as Task, ...tasks])
-        setHighlightedTaskId(data.id)
-        setTimeout(() => setHighlightedTaskId(null), 2000)
+        // Realtime will handle the update, but add locally for instant feedback
+        if (!tasks.some(t => t.id === data.id)) {
+          addTask(data as Task)
+          setHighlightedTaskId(data.id)
+          setTimeout(() => setHighlightedTaskId(null), 2000)
+        }
       }
     } catch (error) {
       console.error('Error creating task:', error)
@@ -118,13 +195,12 @@ export function TasksSection() {
         .eq('id', taskId)
 
       if (!error) {
-        setTasks(
-          tasks.map((t) =>
-            t.id === taskId
-              ? { ...t, status: 'completed', completed_by: user?.id || null, completed_at: new Date().toISOString() }
-              : t
-          )
-        )
+        // Optimistic update
+        updateTask(taskId, {
+          status: 'completed',
+          completed_by: user?.id || null,
+          completed_at: new Date().toISOString(),
+        } as any)
       }
     } catch (error) {
       console.error('Error completing task:', error)
@@ -144,20 +220,17 @@ export function TasksSection() {
         .eq('id', taskId)
 
       if (!error) {
-        setTasks(
-          tasks.map((t) =>
-            t.id === taskId
-              ? { ...t, status: 'active' as const, completed_by: null, completed_at: null }
-              : t
-          )
-        )
+        updateTask(taskId, {
+          status: 'active',
+          completed_by: null,
+          completed_at: null,
+        } as any)
       }
     } catch (error) {
       console.error('Error uncompleting task:', error)
     }
   }
 
-  // Archive task from completed state
   const handleArchiveTask = async (taskId: string) => {
     try {
       const supabase = getSupabaseClient()
@@ -170,14 +243,13 @@ export function TasksSection() {
         .eq('id', taskId)
 
       if (!error) {
-        setTasks(tasks.filter((t) => t.id !== taskId))
+        removeTask(taskId)
       }
     } catch (error) {
       console.error('Error archiving task:', error)
     }
   }
 
-  // Delete task from active state
   const handleDeleteTask = async (taskId: string) => {
     try {
       const supabase = getSupabaseClient()
@@ -187,14 +259,13 @@ export function TasksSection() {
         .eq('id', taskId)
 
       if (!error) {
-        setTasks(tasks.filter((t) => t.id !== taskId))
+        removeTask(taskId)
       }
     } catch (error) {
       console.error('Error deleting task:', error)
     }
   }
 
-  // No family selected
   if (!currentFamilyId) {
     return (
       <div className="flex-1 flex items-center justify-center p-4">

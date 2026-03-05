@@ -20,7 +20,7 @@ interface EventWithParticipants extends Event {
 }
 
 export function EventsSection() {
-  const { events, setEvents, addEvent, updateParticipant } = useEventsStore()
+  const { events, setEvents, addEvent, updateEvent, removeEvent } = useEventsStore()
   const { user } = useUserStore()
   const { friends } = useFriendsStore()
   const [isLoading, setIsLoading] = useState(false)
@@ -44,6 +44,131 @@ export function EventsSection() {
       fetchEvents()
     }
   }, [user, friends])
+
+  // Realtime subscription for events
+  useEffect(() => {
+    if (!user) return
+
+    const supabase = getSupabaseClient()
+    const friendIds = friends.map(f => f.id)
+    
+    const channel = supabase
+      .channel('events-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'events',
+        },
+        async (payload) => {
+          const eventType = payload.eventType
+          const newData = payload.new as any
+          const oldData = payload.old as any
+
+          if (eventType === 'INSERT') {
+            // Check if this event is visible to user
+            const isCreator = newData.created_by === user.id
+            const isInvited = newData.invited_users?.includes(user.id)
+            const isFriendEvent = friendIds.includes(newData.created_by) && newData.is_public === true
+            
+            if (isCreator || isInvited || isFriendEvent) {
+              // Fetch complete event with relations
+              const { data } = await supabase
+                .from('events')
+                .select(`
+                  *,
+                  creator:users!events_created_by_fkey(*),
+                  participants:event_participants(
+                    *,
+                    user:users(*)
+                  )
+                `)
+                .eq('id', newData.id)
+                .single()
+              
+              if (data && !events.some(e => e.id === data.id)) {
+                addEvent(data as EventWithParticipants)
+              }
+            }
+          } else if (eventType === 'UPDATE') {
+            // Fetch updated event with relations
+            const { data } = await supabase
+              .from('events')
+              .select(`
+                *,
+                creator:users!events_created_by_fkey(*),
+                participants:event_participants(
+                  *,
+                  user:users(*)
+                )
+              `)
+              .eq('id', newData.id)
+              .single()
+            
+            if (data) {
+              updateEvent(newData.id, data)
+            }
+          } else if (eventType === 'DELETE') {
+            removeEvent(oldData.id)
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('Events realtime status:', status)
+      })
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user, friends, events, addEvent, updateEvent, removeEvent])
+
+  // Realtime for event_participants
+  useEffect(() => {
+    if (!user) return
+
+    const supabase = getSupabaseClient()
+    
+    const channel = supabase
+      .channel('event-participants-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'event_participants',
+        },
+        async (payload) => {
+          const eventType = payload.eventType
+          const newData = payload.new as any
+
+          if (eventType === 'INSERT' || eventType === 'UPDATE') {
+            // Fetch the event to update participants
+            const { data } = await supabase
+              .from('events')
+              .select(`
+                *,
+                creator:users!events_created_by_fkey(*),
+                participants:event_participants(
+                  *,
+                  user:users(*)
+                )
+              `)
+              .eq('id', newData.event_id)
+              .single()
+            
+            if (data) {
+              updateEvent(newData.event_id, data)
+            }
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user, updateEvent])
 
   const fetchEvents = async () => {
     if (!user) return
@@ -119,7 +244,10 @@ export function EventsSection() {
         .single()
 
       if (!error && data) {
-        addEvent(data as EventWithParticipants)
+        // Realtime will handle this, but add locally for instant feedback
+        if (!events.some(e => e.id === data.id)) {
+          addEvent(data as EventWithParticipants)
+        }
         resetForm()
         setShowEventForm(false)
       }
@@ -155,7 +283,16 @@ export function EventsSection() {
         })
 
       if (!error) {
-        updateParticipant(eventId, user.id, response)
+        // Optimistic update - realtime will confirm
+        const event = events.find(e => e.id === eventId)
+        if (event) {
+          const existingParticipant = event.participants?.find(p => p.user_id === user.id)
+          const updatedParticipants = existingParticipant
+            ? event.participants?.map(p => p.user_id === user.id ? { ...p, response } : p)
+            : [...(event.participants || []), { event_id: eventId, user_id: user.id, response, user: user } as any]
+          
+          updateEvent(eventId, { ...event, participants: updatedParticipants })
+        }
       }
     } catch (error) {
       console.error('Error responding to event:', error)
@@ -177,7 +314,7 @@ export function EventsSection() {
         .eq('id', eventId)
 
       if (!error) {
-        setEvents(events.filter((e) => e.id !== eventId))
+        removeEvent(eventId)
       }
     } catch (error) {
       console.error('Error deleting event:', error)

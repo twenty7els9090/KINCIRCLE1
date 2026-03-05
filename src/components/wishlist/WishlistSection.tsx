@@ -13,7 +13,13 @@ import { getSupabaseClient } from '@/lib/supabase'
 import type { WishlistItem } from '@/lib/supabase/database.types'
 
 export function WishlistSection() {
-  const { myWishlist, setMyWishlist, addWishlistItem, removeWishlistItem, bookItem, unbookItem } = useWishlistStore()
+  const { 
+    myWishlist, 
+    setMyWishlist, 
+    addWishlistItem, 
+    updateWishlistItem, 
+    removeWishlistItem 
+  } = useWishlistStore()
   const { user } = useUserStore()
   const { friends } = useFriendsStore()
   const [isLoading, setIsLoading] = useState(false)
@@ -35,6 +41,88 @@ export function WishlistSection() {
       fetchMyWishlist()
     }
   }, [user, viewMode])
+
+  // Realtime subscription for own wishlist
+  useEffect(() => {
+    if (!user || viewMode !== 'own') return
+
+    const supabase = getSupabaseClient()
+    
+    const channel = supabase
+      .channel(`wishlist-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'wishlist_items',
+          filter: `user_id=eq.${user.id}`,
+        },
+        async (payload) => {
+          const eventType = payload.eventType
+          const newData = payload.new as any
+          const oldData = payload.old as any
+
+          if (eventType === 'INSERT') {
+            if (!myWishlist.some(item => item.id === newData.id)) {
+              addWishlistItem(newData as WishlistItem)
+            }
+          } else if (eventType === 'UPDATE') {
+            updateWishlistItem(newData.id, newData as WishlistItem)
+          } else if (eventType === 'DELETE') {
+            removeWishlistItem(oldData.id)
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('Wishlist realtime status:', status)
+      })
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user, viewMode, myWishlist, addWishlistItem, updateWishlistItem, removeWishlistItem])
+
+  // Realtime for friend's wishlist when viewing
+  useEffect(() => {
+    if (!selectedFriendId || viewMode !== 'friend') return
+
+    const supabase = getSupabaseClient()
+    
+    const channel = supabase
+      .channel(`wishlist-friend-${selectedFriendId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'wishlist_items',
+          filter: `user_id=eq.${selectedFriendId}`,
+        },
+        async (payload) => {
+          const eventType = payload.eventType
+          const newData = payload.new as any
+          const oldData = payload.old as any
+
+          if (eventType === 'INSERT') {
+            if (!friendWishlist.some(item => item.id === newData.id)) {
+              setFriendWishlist(prev => [newData as WishlistItem, ...prev])
+            }
+          } else if (eventType === 'UPDATE') {
+            setFriendWishlist(prev => 
+              prev.map(item => item.id === newData.id ? (newData as WishlistItem) : item)
+            )
+          } else if (eventType === 'DELETE') {
+            setFriendWishlist(prev => prev.filter(item => item.id !== oldData.id))
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [selectedFriendId, viewMode, friendWishlist])
 
   const fetchMyWishlist = async () => {
     if (!user) return
@@ -95,7 +183,10 @@ export function WishlistSection() {
         .single()
 
       if (!error && data) {
-        addWishlistItem(data)
+        // Realtime will handle this, but add locally for instant feedback
+        if (!myWishlist.some(item => item.id === data.id)) {
+          addWishlistItem(data)
+        }
         resetForm()
         setShowItemForm(false)
       }
@@ -143,7 +234,7 @@ export function WishlistSection() {
 
       if (!error) {
         if (viewMode === 'own') {
-          bookItem(itemId, user.id)
+          updateWishlistItem(itemId, { is_booked: true, booked_by: user.id } as WishlistItem)
         } else {
           setFriendWishlist(
             friendWishlist.map((i) =>
@@ -173,7 +264,7 @@ export function WishlistSection() {
 
       if (!error) {
         if (viewMode === 'own') {
-          unbookItem(itemId)
+          updateWishlistItem(itemId, { is_booked: false, booked_by: null } as WishlistItem)
         } else {
           setFriendWishlist(
             friendWishlist.map((i) =>
