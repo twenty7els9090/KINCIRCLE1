@@ -383,6 +383,10 @@ ALTER PUBLICATION supabase_realtime ADD TABLE tasks;
 ALTER PUBLICATION supabase_realtime ADD TABLE events;
 ALTER PUBLICATION supabase_realtime ADD TABLE event_participants;
 ALTER PUBLICATION supabase_realtime ADD TABLE wishlist_items;
+ALTER PUBLICATION supabase_realtime ADD TABLE friendships;
+ALTER PUBLICATION supabase_realtime ADD TABLE friend_requests;
+ALTER PUBLICATION supabase_realtime ADD TABLE family_members;
+ALTER PUBLICATION supabase_realtime ADD TABLE notifications;
 
 -- Storage buckets (run in Supabase Dashboard > Storage)
 -- Create buckets:
