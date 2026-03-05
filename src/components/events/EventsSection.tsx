@@ -336,7 +336,7 @@ export function EventsSection() {
 
   return (
     <>
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col bg-[#f5fffa]">
         {/* Filter tabs */}
         <div className="px-4 py-3">
           <div className="flex gap-2">
@@ -347,7 +347,7 @@ export function EventsSection() {
               )}
               style={{
                 backgroundColor: activeFilter === 'upcoming' ? '#3E000C' : '#FFFFFF',
-                color: activeFilter === 'upcoming' ? '#FFECD1' : '#3E000C',
+                color: activeFilter === 'upcoming' ? '#f5fffa' : '#3E000C',
                 border: activeFilter === 'upcoming' ? 'none' : '1px solid #3E000C20',
               }}
             >
@@ -356,8 +356,8 @@ export function EventsSection() {
                 <span 
                   className="ml-1.5 px-1.5 py-0.5 text-xs rounded-full"
                   style={{ 
-                    backgroundColor: activeFilter === 'upcoming' ? '#FFECD1' : '#3E000C',
-                    color: activeFilter === 'upcoming' ? '#3E000C' : '#FFECD1'
+                    backgroundColor: activeFilter === 'upcoming' ? '#f5fffa' : '#3E000C',
+                    color: activeFilter === 'upcoming' ? '#3E000C' : '#f5fffa'
                   }}
                 >
                   {upcomingEvents.length}
@@ -371,7 +371,7 @@ export function EventsSection() {
               )}
               style={{
                 backgroundColor: activeFilter === 'past' ? '#3E000C' : '#FFFFFF',
-                color: activeFilter === 'past' ? '#FFECD1' : '#3E000C',
+                color: activeFilter === 'past' ? '#f5fffa' : '#3E000C',
                 border: activeFilter === 'past' ? 'none' : '1px solid #3E000C20',
               }}
             >
@@ -421,29 +421,29 @@ export function EventsSection() {
             boxShadow: '0 4px 20px rgba(62, 0, 12, 0.3)',
           }}
         >
-          <Plus className="w-6 h-6 text-[#FFECD1]" strokeWidth={2.5} />
+          <Plus className="w-6 h-6 text-[#f5fffa]" strokeWidth={2.5} />
         </button>
       </div>
 
       {/* Event form */}
       {showEventForm && (
-        <div className="fixed inset-0 z-[60] bg-[#FFECD1] flex flex-col">
+        <div className="fixed inset-0 z-[60] bg-[#f5fffa] flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 bg-[#3E000C]">
+          <div className="flex items-center justify-between p-4 bg-[#3E000C]" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}>
             <button
               onClick={() => { resetForm(); setShowEventForm(false); }}
-              className="p-2 -ml-2 rounded-full bg-[#FFECD1]/10"
+              className="p-2 -ml-2 rounded-full bg-[#f5fffa]/10"
             >
-              <ChevronLeft className="w-6 h-6 text-[#FFECD1]" />
+              <ChevronLeft className="w-6 h-6 text-[#f5fffa]" />
             </button>
             
-            <h1 className="text-lg font-semibold text-[#FFECD1]">Новое мероприятие</h1>
+            <h1 className="text-lg font-semibold text-[#f5fffa]">Новое мероприятие</h1>
             
             <button
               onClick={() => { resetForm(); setShowEventForm(false); }}
-              className="p-2 -mr-2 rounded-full bg-[#FFECD1]/10"
+              className="p-2 -mr-2 rounded-full bg-[#f5fffa]/10"
             >
-              <X className="w-6 h-6 text-[#FFECD1]" />
+              <X className="w-6 h-6 text-[#f5fffa]" />
             </button>
           </div>
 
@@ -523,14 +523,14 @@ export function EventsSection() {
                   <div 
                     className="w-5 h-5 rounded-full border-2 flex items-center justify-center"
                     style={{
-                      borderColor: formData.invite_all ? '#FFECD1' : '#3E000C40',
-                      backgroundColor: formData.invite_all ? '#FFECD1' : 'transparent',
+                      borderColor: formData.invite_all ? '#f5fffa' : '#3E000C40',
+                      backgroundColor: formData.invite_all ? '#f5fffa' : 'transparent',
                     }}
                   >
                     {formData.invite_all && <Check className="w-3 h-3 text-[#3E000C]" />}
                   </div>
-                  <Users className="w-5 h-5" style={{ color: formData.invite_all ? '#FFECD1' : '#3E000C60' }} />
-                  <span className="font-medium" style={{ color: formData.invite_all ? '#FFECD1' : '#3E000C' }}>Всех друзей</span>
+                  <Users className="w-5 h-5" style={{ color: formData.invite_all ? '#f5fffa' : '#3E000C60' }} />
+                  <span className="font-medium" style={{ color: formData.invite_all ? '#f5fffa' : '#3E000C' }}>Всех друзей</span>
                 </button>
 
                 {/* Select specific friends */}
@@ -546,14 +546,14 @@ export function EventsSection() {
                   <div 
                     className="w-5 h-5 rounded-full border-2 flex items-center justify-center"
                     style={{
-                      borderColor: !formData.invite_all ? '#FFECD1' : '#3E000C40',
-                      backgroundColor: !formData.invite_all ? '#FFECD1' : 'transparent',
+                      borderColor: !formData.invite_all ? '#f5fffa' : '#3E000C40',
+                      backgroundColor: !formData.invite_all ? '#f5fffa' : 'transparent',
                     }}
                   >
                     {!formData.invite_all && <Check className="w-3 h-3 text-[#3E000C]" />}
                   </div>
-                  <Users className="w-5 h-5" style={{ color: !formData.invite_all ? '#FFECD1' : '#3E000C60' }} />
-                  <span className="font-medium" style={{ color: !formData.invite_all ? '#FFECD1' : '#3E000C' }}>Выбрать конкретных</span>
+                  <Users className="w-5 h-5" style={{ color: !formData.invite_all ? '#f5fffa' : '#3E000C60' }} />
+                  <span className="font-medium" style={{ color: !formData.invite_all ? '#f5fffa' : '#3E000C' }}>Выбрать конкретных</span>
                 </button>
 
                 {/* Friend selection list */}
@@ -578,11 +578,11 @@ export function EventsSection() {
                               backgroundColor: isSelected ? '#3E000C' : 'transparent',
                             }}
                           >
-                            {isSelected && <Check className="w-3 h-3 text-[#FFECD1]" />}
+                            {isSelected && <Check className="w-3 h-3 text-[#f5fffa]" />}
                           </div>
                           <Avatar className="w-8 h-8">
                             <AvatarImage src={friend.avatar_url || undefined} />
-                            <AvatarFallback className="bg-[#3E000C] text-[#FFECD1] text-xs">
+                            <AvatarFallback className="bg-[#3E000C] text-[#f5fffa] text-xs">
                               {friend.first_name?.[0]?.toUpperCase() || '?'}
                             </AvatarFallback>
                           </Avatar>
@@ -610,7 +610,7 @@ export function EventsSection() {
               className="w-full py-4 rounded-2xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
                 backgroundColor: '#3E000C',
-                color: '#FFECD1',
+                color: '#f5fffa',
               }}
             >
               Создать

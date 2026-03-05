@@ -6,15 +6,14 @@ import { cn } from '@/lib/utils'
 
 interface TabItem {
   id: TabId
-  label: string
   icon: React.ComponentType<{ className?: string }>
 }
 
 const tabs: TabItem[] = [
-  { id: 'tasks', label: 'Задачи', icon: ListTodo },
-  { id: 'events', label: 'События', icon: Calendar },
-  { id: 'wishlist', label: 'Wishlist', icon: Gift },
-  { id: 'profile', label: 'Профиль', icon: User },
+  { id: 'tasks', icon: ListTodo },
+  { id: 'events', icon: Calendar },
+  { id: 'wishlist', icon: Gift },
+  { id: 'profile', icon: User },
 ]
 
 export function TabBar() {
@@ -51,13 +50,13 @@ export function TabBar() {
               <div
                 className={cn(
                   'p-2.5 rounded-full transition-all duration-200',
-                  isActive && 'bg-[#FFECD1]'
+                  isActive && 'bg-[#f5fffa]'
                 )}
               >
                 <Icon
                   className={cn(
                     'w-6 h-6 transition-all duration-200',
-                    isActive ? 'text-[#3E000C] stroke-[2.5]' : 'text-[#FFECD1]/60 stroke-[2]'
+                    isActive ? 'text-[#3E000C] stroke-[2.5]' : 'text-[#f5fffa]/60 stroke-[2]'
                   )}
                 />
               </div>

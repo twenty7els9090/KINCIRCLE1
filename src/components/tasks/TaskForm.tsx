@@ -146,9 +146,9 @@ export function TaskForm({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[60] bg-[#FFECD1] flex flex-col">
+    <div className="fixed inset-0 z-[60] bg-[#f5fffa] flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-[#3E000C]/10">
+      <div className="flex items-center justify-between p-4 border-b border-[#3E000C]/10" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}>
         {step > 1 ? (
           <button
             onClick={handleBack}
@@ -224,7 +224,7 @@ export function TaskForm({
               <p className="text-sm text-[#3E000C]/60 mt-1">Уточните, что именно</p>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
+            <div className="flex flex-wrap gap-2">
               {filteredCategories.map((category) => {
                 const isSelected = selectedCategory === category.id
                 return (
@@ -232,28 +232,21 @@ export function TaskForm({
                     key={category.id}
                     onClick={() => handleCategorySelect(category.id)}
                     className={cn(
-                      'flex flex-col items-center gap-2 p-3 rounded-2xl',
-                      'border-2 transition-all duration-200',
+                      'flex items-center gap-2 px-4 py-2.5 rounded-full',
+                      'transition-all duration-200',
                       'hover:scale-[1.02] active:scale-[0.98]'
                     )}
                     style={{
-                      borderColor: isSelected ? '#3E000C' : '#3E000C10',
                       backgroundColor: isSelected ? '#3E000C' : '#FFFFFF',
+                      border: `2px solid ${isSelected ? '#3E000C' : '#3E000C15'}`,
+                      color: isSelected ? '#f5fffa' : '#3E000C',
                     }}
                   >
-                    <div 
-                      className="w-12 h-12 rounded-xl flex items-center justify-center"
-                      style={{ backgroundColor: isSelected ? '#FFECD1' : '#3E000C10' }}
-                    >
-                      <DynamicIcon
-                        name={category.icon || 'Package'}
-                        className={cn('w-6 h-6', isSelected ? 'text-[#3E000C]' : 'text-[#3E000C]/60')}
-                      />
-                    </div>
-                    <span 
-                      className="text-xs font-medium text-center"
-                      style={{ color: isSelected ? '#FFECD1' : '#3E000C' }}
-                    >
+                    <DynamicIcon
+                      name={category.icon || 'Package'}
+                      className={cn('w-5 h-5', isSelected ? 'text-[#f5fffa]' : 'text-[#3E000C]/70')}
+                    />
+                    <span className="text-sm font-medium">
                       {category.name}
                     </span>
                   </button>
@@ -264,7 +257,7 @@ export function TaskForm({
             {selectedCategory && (
               <Button
                 onClick={handleNext}
-                className="w-full bg-[#3E000C] hover:bg-[#3E000C]/90 text-[#FFECD1]"
+                className="w-full bg-[#3E000C] hover:bg-[#3E000C]/90 text-[#f5fffa]"
               >
                 Далее
               </Button>
@@ -324,7 +317,7 @@ export function TaskForm({
                           )}
                           style={{
                             backgroundColor: formData.unit === u ? '#3E000C' : '#FFFFFF',
-                            color: formData.unit === u ? '#FFECD1' : '#3E000C',
+                            color: formData.unit === u ? '#f5fffa' : '#3E000C',
                             borderColor: formData.unit === u ? '#3E000C' : '#3E000C20',
                           }}
                         >
@@ -352,7 +345,7 @@ export function TaskForm({
             <Button
               onClick={handleNext}
               disabled={!formData.title.trim()}
-              className="w-full bg-[#3E000C] hover:bg-[#3E000C]/90 text-[#FFECD1]"
+              className="w-full bg-[#3E000C] hover:bg-[#3E000C]/90 text-[#f5fffa]"
             >
               Далее
             </Button>
@@ -381,7 +374,7 @@ export function TaskForm({
                   <button
                     type="button"
                     onClick={() => setImageUrl('')}
-                    className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center bg-[#3E000C]/80 text-[#FFECD1]"
+                    className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center bg-[#3E000C]/80 text-[#f5fffa]"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -412,7 +405,7 @@ export function TaskForm({
               <Button
                 onClick={handleSubmit}
                 disabled={isLoading}
-                className="flex-1 bg-[#3E000C] hover:bg-[#3E000C]/90 text-[#FFECD1]"
+                className="flex-1 bg-[#3E000C] hover:bg-[#3E000C]/90 text-[#f5fffa]"
               >
                 {isLoading ? 'Создание...' : 'Создать'}
               </Button>

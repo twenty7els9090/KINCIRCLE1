@@ -330,7 +330,7 @@ export function WishlistSection() {
   return (
     <>
       {/* Main content */}
-      <div className="flex-1 flex flex-col bg-[#FFECD1]">
+      <div className="flex-1 flex flex-col bg-[#f5fffa]">
         {/* View mode switcher */}
         <div className="px-4 py-3">
           <div className="flex gap-2">
@@ -341,7 +341,7 @@ export function WishlistSection() {
               )}
               style={{
                 backgroundColor: viewMode === 'own' ? '#3E000C' : '#FFFFFF',
-                color: viewMode === 'own' ? '#FFECD1' : '#3E000C',
+                color: viewMode === 'own' ? '#f5fffa' : '#3E000C',
               }}
             >
               <Heart className="w-4 h-4" />
@@ -355,7 +355,7 @@ export function WishlistSection() {
                 )}
                 style={{
                   backgroundColor: viewMode === 'friend' ? '#3E000C' : '#FFFFFF',
-                  color: viewMode === 'friend' ? '#FFECD1' : '#3E000C',
+                  color: viewMode === 'friend' ? '#f5fffa' : '#3E000C',
                 }}
               >
                 <Gift className="w-4 h-4" />
@@ -378,7 +378,7 @@ export function WishlistSection() {
                   )}
                   style={{
                     backgroundColor: selectedFriendId === friend.id ? '#3E000C' : '#FFFFFF',
-                    color: selectedFriendId === friend.id ? '#FFECD1' : '#3E000C',
+                    color: selectedFriendId === friend.id ? '#f5fffa' : '#3E000C',
                   }}
                 >
                   <span>{friend.first_name}</span>
@@ -432,32 +432,32 @@ export function WishlistSection() {
               boxShadow: '0 4px 20px rgba(62, 0, 12, 0.3)',
             }}
           >
-            <Plus className="w-6 h-6 text-[#FFECD1]" strokeWidth={2.5} />
+            <Plus className="w-6 h-6 text-[#f5fffa]" strokeWidth={2.5} />
           </button>
         )}
       </div>
 
       {/* Full screen form */}
       {showItemForm && (
-        <div className="fixed inset-0 z-[60] flex flex-col bg-[#FFECD1]">
+        <div className="fixed inset-0 z-[60] flex flex-col bg-[#f5fffa]">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 bg-[#3E000C]">
+          <div className="flex items-center justify-between p-4 bg-[#3E000C]" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}>
             <button
               onClick={handleCloseForm}
-              className="p-2 -ml-2 rounded-full bg-[#FFECD1]/10"
+              className="p-2 -ml-2 rounded-full bg-[#f5fffa]/10"
             >
-              <ChevronLeft className="w-6 h-6 text-[#FFECD1]" />
+              <ChevronLeft className="w-6 h-6 text-[#f5fffa]" />
             </button>
             
-            <h1 className="text-lg font-semibold text-[#FFECD1]">
+            <h1 className="text-lg font-semibold text-[#f5fffa]">
               {editingItem ? 'Редактировать' : 'Добавить желание'}
             </h1>
             
             <button
               onClick={handleCloseForm}
-              className="p-2 -mr-2 rounded-full bg-[#FFECD1]/10"
+              className="p-2 -mr-2 rounded-full bg-[#f5fffa]/10"
             >
-              <X className="w-6 h-6 text-[#FFECD1]" />
+              <X className="w-6 h-6 text-[#f5fffa]" />
             </button>
           </div>
 
@@ -519,7 +519,7 @@ export function WishlistSection() {
               className="w-full py-4 rounded-2xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
                 backgroundColor: '#3E000C',
-                color: '#FFECD1',
+                color: '#f5fffa',
               }}
             >
               {editingItem ? 'Сохранить' : 'Добавить'}

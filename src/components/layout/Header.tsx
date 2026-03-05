@@ -39,7 +39,7 @@ export function Header({ onNotificationsClick, onSettingsClick }: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-40 bg-[#3E000C]">
+    <header className="sticky top-0 z-40 bg-[#f5fffa]" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       <div className="max-w-[450px] mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Left: Family selector or App name */}
@@ -47,12 +47,12 @@ export function Header({ onNotificationsClick, onSettingsClick }: HeaderProps) {
             {activeTab === 'tasks' && families.length > 0 ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#FFECD1]/10 hover:bg-[#FFECD1]/20 transition-colors">
-                    <Users className="w-4 h-4 text-[#FFECD1]" />
-                    <span className="font-medium text-[#FFECD1]">
+                  <button className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#3E000C]/10 hover:bg-[#3E000C]/20 transition-colors">
+                    <Users className="w-4 h-4 text-[#3E000C]" />
+                    <span className="font-medium text-[#3E000C]">
                       {currentFamily?.name || 'Выберите семью'}
                     </span>
-                    <ChevronDown className="w-4 h-4 text-[#FFECD1]/60" />
+                    <ChevronDown className="w-4 h-4 text-[#3E000C]/60" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-48">
@@ -62,14 +62,14 @@ export function Header({ onNotificationsClick, onSettingsClick }: HeaderProps) {
                       onClick={() => setCurrentFamily(family.id)}
                       className={cn(
                         'cursor-pointer',
-                        family.id === currentFamilyId && 'bg-[#FFECD1]'
+                        family.id === currentFamilyId && 'bg-[#3E000C]/10'
                       )}
                     >
                       <Users className="w-4 h-4 mr-2 text-[#3E000C]" />
                       {family.name}
                       {family.id === currentFamilyId && (
                         <Badge 
-                          className="ml-auto text-xs bg-[#3E000C] text-[#FFECD1]"
+                          className="ml-auto text-xs bg-[#3E000C] text-[#f5fffa]"
                         >
                           {family.members?.length || 0}
                         </Badge>
@@ -79,7 +79,7 @@ export function Header({ onNotificationsClick, onSettingsClick }: HeaderProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <h1 className="text-2xl font-bold text-[#FFECD1]">{getTabTitle()}</h1>
+              <h1 className="text-2xl font-bold text-[#3E000C]">{getTabTitle()}</h1>
             )}
           </div>
 
@@ -88,21 +88,21 @@ export function Header({ onNotificationsClick, onSettingsClick }: HeaderProps) {
             {/* Notifications */}
             <button
               onClick={onNotificationsClick}
-              className="relative p-2 rounded-xl bg-[#FFECD1]/10 hover:bg-[#FFECD1]/20 transition-colors"
+              className="relative p-2 rounded-xl bg-[#3E000C]/10 hover:bg-[#3E000C]/20 transition-colors"
             >
-              <Bell className="w-5 h-5 text-[#FFECD1]" />
+              <Bell className="w-5 h-5 text-[#3E000C]" />
               {/* Notification badge */}
-              <span className="absolute top-1 right-1 w-2 h-2 bg-[#FFECD1] rounded-full" />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-[#3E000C] rounded-full" />
             </button>
 
             {/* User avatar / Settings */}
             <button
               onClick={onSettingsClick}
-              className="flex items-center gap-2 p-1 rounded-xl hover:bg-[#FFECD1]/10 transition-colors"
+              className="flex items-center gap-2 p-1 rounded-xl hover:bg-[#3E000C]/10 transition-colors"
             >
-              <Avatar className="w-8 h-8 border-2 border-[#FFECD1]/30">
+              <Avatar className="w-8 h-8 border-2 border-[#3E000C]/30">
                 <AvatarImage src={user?.avatar_url || undefined} alt={user?.first_name || ''} />
-                <AvatarFallback className="bg-[#FFECD1] text-[#3E000C] text-sm font-medium">
+                <AvatarFallback className="bg-[#3E000C] text-[#f5fffa] text-sm font-medium">
                   {user?.first_name?.[0]?.toUpperCase() || '?'}
                 </AvatarFallback>
               </Avatar>

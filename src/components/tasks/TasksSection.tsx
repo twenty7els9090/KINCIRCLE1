@@ -271,7 +271,7 @@ export function TasksSection() {
 
   if (!currentFamilyId) {
     return (
-      <div className="flex-1 flex items-center justify-center p-4 bg-[#FFECD1]">
+      <div className="flex-1 flex items-center justify-center p-4 bg-[#f5fffa]">
         <EmptyState
           icon={Package}
           title="Нет семьи"
@@ -282,7 +282,7 @@ export function TasksSection() {
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-[#FFECD1]">
+    <div className="flex-1 flex flex-col bg-[#f5fffa]">
       {/* Task list */}
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-32 space-y-4">
         {isLoading ? (
@@ -322,7 +322,7 @@ export function TasksSection() {
           boxShadow: '0 4px 20px rgba(62, 0, 12, 0.3)',
         }}
       >
-        <Plus className="w-6 h-6 text-[#FFECD1]" strokeWidth={2.5} />
+        <Plus className="w-6 h-6 text-[#f5fffa]" strokeWidth={2.5} />
       </button>
 
       {/* Task form modal */}

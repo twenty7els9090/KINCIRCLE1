@@ -242,7 +242,7 @@ export function EventCard({
           className="max-w-sm border-0"
           style={{ 
             borderRadius: '20px',
-            backgroundColor: '#FFECD1',
+            backgroundColor: '#f5fffa',
           }}
         >
           <DialogHeader>
@@ -272,7 +272,7 @@ export function EventCard({
                       <Avatar className="w-10 h-10">
                         <AvatarImage src={p.user?.avatar_url || undefined} />
                         <AvatarFallback 
-                          style={{ backgroundColor: '#3E000C', color: '#FFECD1' }}
+                          style={{ backgroundColor: '#3E000C', color: '#f5fffa' }}
                         >
                           {p.user?.first_name?.[0]?.toUpperCase() || '?'}
                         </AvatarFallback>
@@ -313,7 +313,7 @@ export function EventCard({
                       <Avatar className="w-10 h-10">
                         <AvatarImage src={p.user?.avatar_url || undefined} />
                         <AvatarFallback 
-                          style={{ backgroundColor: '#3E000C', color: '#FFECD1' }}
+                          style={{ backgroundColor: '#3E000C', color: '#f5fffa' }}
                         >
                           {p.user?.first_name?.[0]?.toUpperCase() || '?'}
                         </AvatarFallback>
