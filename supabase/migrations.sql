@@ -79,7 +79,26 @@ CREATE TABLE IF NOT EXISTS family_members (
 CREATE INDEX IF NOT EXISTS idx_family_members_family ON family_members(family_id);
 CREATE INDEX IF NOT EXISTS idx_family_members_user ON family_members(user_id);
 
--- 6. Task categories table (fixed reference)
+-- 6. Family invitations table
+CREATE TYPE family_invitation_status AS ENUM ('pending', 'accepted', 'declined');
+
+CREATE TABLE IF NOT EXISTS family_invitations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  family_id UUID NOT NULL REFERENCES family_groups(id) ON DELETE CASCADE,
+  inviter_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  invitee_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status family_invitation_status DEFAULT 'pending',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  responded_at TIMESTAMPTZ,
+  UNIQUE(family_id, invitee_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_family_invitations_family ON family_invitations(family_id);
+CREATE INDEX IF NOT EXISTS idx_family_invitations_inviter ON family_invitations(inviter_id);
+CREATE INDEX IF NOT EXISTS idx_family_invitations_invitee ON family_invitations(invitee_id);
+CREATE INDEX IF NOT EXISTS idx_family_invitations_status ON family_invitations(status);
+
+-- 7. Task categories table (fixed reference)
 CREATE TABLE IF NOT EXISTS task_categories (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL,
@@ -91,7 +110,7 @@ CREATE TABLE IF NOT EXISTS task_categories (
 
 CREATE INDEX IF NOT EXISTS idx_task_categories_type ON task_categories(type);
 
--- 7. Tasks table
+-- 8. Tasks table
 CREATE TABLE IF NOT EXISTS tasks (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   family_id UUID NOT NULL REFERENCES family_groups(id) ON DELETE CASCADE,
@@ -245,6 +264,7 @@ ALTER TABLE event_participants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wishlist_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wishlist_bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE family_invitations ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for users
 CREATE POLICY "Users can view own profile" ON users
@@ -375,6 +395,16 @@ CREATE POLICY "Users can create notifications" ON notifications
 CREATE POLICY "Users can update notifications" ON notifications
   FOR UPDATE USING (true);
 
+-- RLS Policies for family_invitations
+CREATE POLICY "Users can view their family invitations" ON family_invitations
+  FOR SELECT USING (true);
+
+CREATE POLICY "Users can create family invitations" ON family_invitations
+  FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Users can update family invitations" ON family_invitations
+  FOR UPDATE USING (true);
+
 -- Enable Realtime for specific tables
 -- Run these in Supabase Dashboard > Database > Replication
 -- or use the following commands:
@@ -386,6 +416,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE wishlist_items;
 ALTER PUBLICATION supabase_realtime ADD TABLE friendships;
 ALTER PUBLICATION supabase_realtime ADD TABLE friend_requests;
 ALTER PUBLICATION supabase_realtime ADD TABLE family_members;
+ALTER PUBLICATION supabase_realtime ADD TABLE family_invitations;
 ALTER PUBLICATION supabase_realtime ADD TABLE notifications;
 
 -- Storage buckets (run in Supabase Dashboard > Storage)
