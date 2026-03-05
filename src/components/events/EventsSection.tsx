@@ -429,7 +429,7 @@ export function EventsSection() {
       {showEventForm && (
         <div className="fixed inset-0 z-[60] bg-[#f5fffa] flex flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 bg-[#3E000C]" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}>
+          <div className="flex items-center justify-between p-4 bg-[#3E000C]" style={{ paddingTop: '48px' }}>
             <button
               onClick={() => { resetForm(); setShowEventForm(false); }}
               className="p-2 -ml-2 rounded-full bg-[#f5fffa]/10"

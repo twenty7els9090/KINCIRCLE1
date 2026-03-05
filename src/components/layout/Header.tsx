@@ -39,7 +39,7 @@ export function Header({ onNotificationsClick, onSettingsClick }: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-40 bg-[#f5fffa]" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+    <header className="sticky top-0 z-40 bg-[#f5fffa]" style={{ paddingTop: '48px' }}>
       <div className="max-w-[450px] mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Left: Family selector or App name */}

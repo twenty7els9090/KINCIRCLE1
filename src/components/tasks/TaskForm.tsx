@@ -148,7 +148,7 @@ export function TaskForm({
   return (
     <div className="fixed inset-0 z-[60] bg-[#f5fffa] flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-[#3E000C]/10" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}>
+      <div className="flex items-center justify-between p-4 border-b border-[#3E000C]/10" style={{ paddingTop: '48px' }}>
         {step > 1 ? (
           <button
             onClick={handleBack}
