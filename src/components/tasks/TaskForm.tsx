@@ -55,215 +55,242 @@ function DynamicIcon({ name, className }: { name: string; className?: string }) 
   return Icon ? <Icon className={className} /> : <Package className={className} />
 }
 
-// Simple icon for items
-function ItemIcon({ name, className }: { name: string; className?: string }) {
-  // Map item names to icons
-  const iconMap: Record<string, string> = {
-    'Молоко': 'Milk',
-    'Сметана': 'Milk',
-    'Творог': 'Milk',
-    'Кефир': 'Milk',
-    'Ряженка': 'Milk',
-    'Йогурт': 'Milk',
-    'Сливки': 'Milk',
-    'Сливочное масло': 'Milk',
-    'Сыр': 'Cheese',
-    'Яйца': 'Egg',
-    'Сырки': 'Milk',
-    'Твороженный сыр': 'Cheese',
-    'Плавленный сыр': 'Cheese',
-    'Курица': 'Drumstick',
-    'Говядина': 'Beef',
-    'Свинина': 'PiggyBank',
-    'Баранина': 'Sheep',
-    'Индейка': 'Turkey',
-    'Утка': 'Bird',
-    'Фарш': 'Beef',
-    'Колбаса': 'Sandwich',
-    'Сосиски': 'Sandwich',
-    'Сардельки': 'Sandwich',
-    'Ветчина': 'Sandwich',
-    'Бекон': 'Sandwich',
-    'Рыба свежая': 'Fish',
-    'Рыба замороженная': 'Fish',
-    'Креветки': 'Shrimp',
-    'Крабовое мясо': 'Shell',
-    'Селедка': 'Fish',
-    'Семга': 'Fish',
-    'Форель': 'Fish',
-    'Мука': 'Wheat',
-    'Сахар': 'Cube',
-    'Соль': 'Salt',
-    'Рис': 'Wheat',
-    'Гречка': 'Wheat',
-    'Макароны': 'Wheat',
-    'Масло подсолнечное': 'Droplet',
-    'Масло оливковое': 'Droplet',
-    'Масло льна': 'Droplet',
-    'Уксус': 'Droplet',
-    'Соевый соус': 'Droplet',
-    'Майонез': 'Droplet',
-    'Кетчуп': 'Droplet',
-    'Горчица': 'Droplet',
-    'Хрен': 'Droplet',
-    'Специи': 'Sparkles',
-    'Перец': 'Sparkles',
-    'Ванилин': 'Sparkles',
-    'Разрыхлитель': 'Sparkles',
-    'Дрожжи': 'Sparkles',
-    'Овсянка': 'Wheat',
-    'Манка': 'Wheat',
-    'Пшено': 'Wheat',
-    'Перловка': 'Wheat',
-    'Кукурузная крупа': 'Wheat',
-    'Чечевица': 'Circle',
-    'Какао': 'Coffee',
-    'Фасоль': 'Circle',
-    'Кукуруза консервированная': 'Circle',
-    'Горох': 'Circle',
-    'Картофель': 'Circle',
-    'Лук': 'Circle',
-    'Морковь': 'Carrot',
-    'Чеснок': 'Circle',
-    'Капуста': 'Circle',
-    'Свекла': 'Circle',
-    'Огурцы': 'Circle',
-    'Помидоры': 'Tomato',
-    'Перец болгарский': 'Pepper',
-    'Баклажаны': 'Circle',
-    'Кабачки': 'Circle',
-    'Тыква': 'Pumpkin',
-    'Зелень': 'Leaf',
-    'Салат': 'Salad',
-    'Укроп': 'Leaf',
-    'Петрушка': 'Leaf',
-    'Кинза': 'Leaf',
-    'Базилик': 'Leaf',
-    'Яблоки': 'Apple',
-    'Груши': 'Apple',
-    'Бананы': 'Banana',
-    'Апельсины': 'Orange',
-    'Лимоны': 'Lemon',
-    'Мандарины': 'Orange',
-    'Грейпфрут': 'Citrus',
-    'Виноград': 'Grape',
-    'Персики': 'Peach',
-    'Абрикосы': 'Apple',
-    'Сливы': 'Apple',
-    'Вишня': 'Cherry',
-    'Черешня': 'Cherry',
-    'Клубника': 'Strawberry',
-    'Малина': 'Berry',
-    'Ежевика': 'Berry',
-    'Крыжовник': 'Berry',
-    'Смородина': 'Berry',
-    'Земляника': 'Strawberry',
-    'Арбуз': 'Watermelon',
-    'Дыня': 'Melon',
-    'Киви': 'Apple',
-    'Ананас': 'Apple',
-    'Авокадо': 'Apple',
-    'Гранат': 'Apple',
-    'Хурма': 'Apple',
-    'Кукуруза': 'Wheat',
-    'Чай': 'Coffee',
-    'Кофе': 'Coffee',
-    'Сок': 'Cup',
-    'Вода минеральная': 'Cup',
-    'Вода питьевая': 'Cup',
-    'Газировка': 'Cup',
-    'Лимонад': 'Cup',
-    'Квас': 'Cup',
-    'Компот': 'Cup',
-    'Морс': 'Cup',
-    'Хлеб белый': 'Croissant',
-    'Хлеб черный': 'Croissant',
-    'Батон': 'Croissant',
-    'Багет': 'Croissant',
-    'Лаваш': 'Croissant',
-    'Булочки': 'Cookie',
-    'Круассаны': 'Croissant',
-    'Пирожки': 'Cookie',
-    'Сушки': 'Cookie',
-    'Пряники': 'Cookie',
-    'Сухари': 'Cookie',
-    'Шоколад': 'Candy',
-    'Конфеты': 'Candy',
-    'Печенье': 'Cookie',
-    'Торт': 'Cake',
-    'Пирожное': 'Cake',
-    'Мороженое': 'IceCream',
-    'Вафли': 'Cookie',
-    'Зефир': 'Candy',
-    'Пастила': 'Candy',
-    'Марципан': 'Candy',
-    'Мед': 'Honey',
-    'Варенье': 'Jar',
-    'Сгущенка': 'Jar',
-    'Сахарная пудра': 'Sparkles',
-    'Wildberries': 'ShoppingBag',
-    'Ozon': 'ShoppingBag',
-    'Яндекс Маркет': 'ShoppingBag',
-    'AliExpress': 'ShoppingBag',
-    'Amazon': 'ShoppingBag',
-    'Лекарства': 'Pill',
-    'Витамины': 'Pill',
-    'Бинты': 'Bandage',
-    'Пластырь': 'Bandage',
-    'Вата': 'Circle',
-    'Маски': 'Shield',
-    'Перчатки медицинские': 'Hand',
-    'Шприцы': 'Syringe',
-    'Порошок': 'Sparkles',
-    'Гель для стирки': 'Droplet',
-    'Кондиционер для белья': 'Droplet',
-    'Средство для мытья посуды': 'Droplet',
-    'Средство для окон': 'SprayCan',
-    'Средство для пола': 'SprayCan',
-    'Средство для ванной': 'SprayCan',
-    'Средство для унитаза': 'SprayCan',
-    'Отбеливатель': 'Droplet',
-    'Пятновыводитель': 'Droplet',
-    'Губки': 'Square',
-    'Тряпки': 'Square',
-    'Мешки для мусора': 'Trash',
-    'Прочее': 'Package',
-    'Помыть полы': 'Sparkles',
-    'Протереть пыль': 'Sparkles',
-    'Помыть окна': 'Sparkles',
-    'Пропылесосить': 'Sparkles',
-    'Убрать в ванной': 'Bath',
-    'Убрать на кухне': 'ChefHat',
-    'Разобрать шкаф': 'DoorOpen',
-    'Вынести мусор': 'Trash',
-    'Постирать вещи': 'Shirt',
-    'Постирать одежду': 'Shirt',
-    'Постирать постельное': 'Bed',
-    'Постирать полотенца': 'Towel',
-    'Погладить': 'Iron',
-    'Отдать в химчистку': 'Shirt',
-    'Починить кран': 'Wrench',
-    'Починить розетку': 'Plug',
-    'Повесить полку': 'Hammer',
-    'Поменять лампочку': 'Lightbulb',
-    'Заклеить обои': 'Paintbrush',
-    'Починить дверь': 'DoorClosed',
-    'Покрасить': 'Paintbrush',
-    'Полить цветы': 'Flower',
-    'Посадить растения': 'Flower',
-    'Подстричь газон': 'Trees',
-    'Убрать листья': 'Leaf',
-    'Удобрить': 'Flower',
-    'Прополка': 'Flower',
-    'Приготовить завтрак': 'ChefHat',
-    'Приготовить обед': 'ChefHat',
-    'Приготовить ужин': 'ChefHat',
-    'Испечь пирог': 'Cake',
-    'Сделать заготовки': 'Jar',
+// Get image URL for item by name
+function getItemImageUrl(name: string): string | null {
+  const imageMap: Record<string, string> = {
+    // МОЛОЧНОЕ
+    'Молоко': '/images/items/milk.png',
+    'Творог': '/images/items/cottage-cheese.png',
+    'Кефир': '/images/items/kefir.png',
+    'Ряженка': '/images/items/milk.png',
+    'Йогурт': '/images/items/yogurt.png',
+    'Сметана': '/images/items/milk.png',
+    'Сливки': '/images/items/milk.png',
+    'Сливочное масло': '/images/items/butter.png',
+    'Сыр': '/images/items/cheese.png',
+    'Яйца': '/images/items/eggs.png',
+    'Сырки': '/images/items/cottage-cheese.png',
+    'Твороженный сыр': '/images/items/cheese.png',
+    'Плавленный сыр': '/images/items/cheese.png',
+    // МЯСО И РЫБА
+    'Курица': '/images/items/chicken.png',
+    'Говядина': '/images/items/beef.png',
+    'Свинина': '/images/items/beef.png',
+    'Баранина': '/images/items/beef.png',
+    'Индейка': '/images/items/chicken.png',
+    'Утка': '/images/items/chicken.png',
+    'Фарш': '/images/items/beef.png',
+    'Колбаса': '/images/items/sausage.png',
+    'Сосиски': '/images/items/sausage.png',
+    'Сардельки': '/images/items/sausage.png',
+    'Ветчина': '/images/items/sausage.png',
+    'Бекон': '/images/items/sausage.png',
+    'Рыба свежая': '/images/items/fish.png',
+    'Рыба замороженная': '/images/items/fish.png',
+    'Креветки': '/images/items/shrimp.png',
+    'Крабовое мясо': '/images/items/shrimp.png',
+    'Селедка': '/images/items/fish.png',
+    'Семга': '/images/items/fish.png',
+    'Форель': '/images/items/fish.png',
+    // БАКАЛЕЯ
+    'Мука': '/images/items/flour.png',
+    'Сахар': '/images/items/sugar.png',
+    'Соль': '/images/items/sugar.png',
+    'Рис': '/images/items/rice.png',
+    'Гречка': '/images/items/buckwheat.png',
+    'Макароны': '/images/items/pasta.png',
+    'Масло подсолнечное': '/images/items/oil.png',
+    'Масло оливковое': '/images/items/oil.png',
+    'Масло льна': '/images/items/oil.png',
+    'Уксус': '/images/items/oil.png',
+    'Соевый соус': '/images/items/oil.png',
+    'Майонез': '/images/items/oil.png',
+    'Кетчуп': '/images/items/oil.png',
+    'Горчица': '/images/items/oil.png',
+    'Хрен': '/images/items/oil.png',
+    'Специи': '/images/items/flour.png',
+    'Перец': '/images/items/flour.png',
+    'Ванилин': '/images/items/flour.png',
+    'Разрыхлитель': '/images/items/flour.png',
+    'Дрожжи': '/images/items/flour.png',
+    'Овсянка': '/images/items/buckwheat.png',
+    'Манка': '/images/items/buckwheat.png',
+    'Пшено': '/images/items/buckwheat.png',
+    'Перловка': '/images/items/buckwheat.png',
+    'Кукурузная крупа': '/images/items/buckwheat.png',
+    'Чечевица': '/images/items/beans.png',
+    'Какао': '/images/items/coffee.png',
+    'Фасоль': '/images/items/beans.png',
+    'Кукуруза консервированная': '/images/items/corn.png',
+    'Горох': '/images/items/beans.png',
+    // ОВОЩИ И ФРУКТЫ
+    'Картофель': '/images/items/potato.png',
+    'Лук': '/images/items/onion.png',
+    'Морковь': '/images/items/carrot.png',
+    'Чеснок': '/images/items/onion.png',
+    'Капуста': '/images/items/vegetables.png',
+    'Свекла': '/images/items/carrot.png',
+    'Огурцы': '/images/items/cucumber.png',
+    'Помидоры': '/images/items/tomato.png',
+    'Перец болгарский': '/images/items/vegetables.png',
+    'Баклажаны': '/images/items/vegetables.png',
+    'Кабачки': '/images/items/vegetables.png',
+    'Тыква': '/images/items/vegetables.png',
+    'Зелень': '/images/items/vegetables.png',
+    'Салат': '/images/items/vegetables.png',
+    'Укроп': '/images/items/vegetables.png',
+    'Петрушка': '/images/items/vegetables.png',
+    'Кинза': '/images/items/vegetables.png',
+    'Базилик': '/images/items/vegetables.png',
+    'Яблоки': '/images/items/apple.png',
+    'Груши': '/images/items/apple.png',
+    'Бананы': '/images/items/banana.png',
+    'Апельсины': '/images/items/orange.png',
+    'Лимоны': '/images/items/orange.png',
+    'Мандарины': '/images/items/orange.png',
+    'Грейпфрут': '/images/items/orange.png',
+    'Виноград': '/images/items/grapes.png',
+    'Персики': '/images/items/apple.png',
+    'Абрикосы': '/images/items/apple.png',
+    'Сливы': '/images/items/apple.png',
+    'Вишня': '/images/items/cherry.png',
+    'Черешня': '/images/items/cherry.png',
+    'Клубника': '/images/items/strawberry.png',
+    'Малина': '/images/items/raspberry.png',
+    'Ежевика': '/images/items/raspberry.png',
+    'Крыжовник': '/images/items/raspberry.png',
+    'Смородина': '/images/items/raspberry.png',
+    'Земляника': '/images/items/strawberry.png',
+    'Арбуз': '/images/items/watermelon.png',
+    'Дыня': '/images/items/watermelon.png',
+    'Киви': '/images/items/kiwi.png',
+    'Ананас': '/images/items/pineapple.png',
+    'Авокадо': '/images/items/avocado.png',
+    'Гранат': '/images/items/apple.png',
+    'Хурма': '/images/items/apple.png',
+    'Кукуруза': '/images/items/corn.png',
+    // НАПИТКИ
+    'Чай': '/images/items/tea.png',
+    'Кофе': '/images/items/coffee.png',
+    'Сок': '/images/items/juice.png',
+    'Вода минеральная': '/images/items/juice.png',
+    'Вода питьевая': '/images/items/juice.png',
+    'Газировка': '/images/items/juice.png',
+    'Лимонад': '/images/items/juice.png',
+    'Квас': '/images/items/juice.png',
+    'Компот': '/images/items/juice.png',
+    'Морс': '/images/items/juice.png',
+    // ХЛЕБ И ВЫПЕЧКА
+    'Хлеб белый': '/images/items/bread.png',
+    'Хлеб черный': '/images/items/bread.png',
+    'Батон': '/images/items/bread.png',
+    'Багет': '/images/items/bread.png',
+    'Лаваш': '/images/items/bread.png',
+    'Булочки': '/images/items/bread.png',
+    'Круассаны': '/images/items/bread.png',
+    'Пирожки': '/images/items/bread.png',
+    'Сушки': '/images/items/bread.png',
+    'Пряники': '/images/items/bread.png',
+    'Сухари': '/images/items/bread.png',
+    // СЛАДОСТИ
+    'Шоколад': '/images/items/chocolate.png',
+    'Конфеты': '/images/items/chocolate.png',
+    'Печенье': '/images/items/chocolate.png',
+    'Торт': '/images/items/chocolate.png',
+    'Пирожное': '/images/items/chocolate.png',
+    'Мороженое': '/images/items/ice-cream.png',
+    'Вафли': '/images/items/chocolate.png',
+    'Зефир': '/images/items/chocolate.png',
+    'Пастила': '/images/items/chocolate.png',
+    'Марципан': '/images/items/chocolate.png',
+    'Мед': '/images/items/honey.png',
+    'Варенье': '/images/items/honey.png',
+    'Сгущенка': '/images/items/honey.png',
+    'Сахарная пудра': '/images/items/sugar.png',
+    // МАРКЕТПЛЕЙСЫ
+    'Wildberries': '/images/items/shopping.png',
+    'Ozon': '/images/items/shopping.png',
+    'Яндекс Маркет': '/images/items/shopping.png',
+    'AliExpress': '/images/items/shopping.png',
+    'Amazon': '/images/items/shopping.png',
+    // АПТЕКА
+    'Лекарства': '/images/items/pills.png',
+    'Витамины': '/images/items/pills.png',
+    'Бинты': '/images/items/pills.png',
+    'Пластырь': '/images/items/pills.png',
+    'Вата': '/images/items/pills.png',
+    'Маски': '/images/items/pills.png',
+    'Перчатки медицинские': '/images/items/pills.png',
+    'Шприцы': '/images/items/pills.png',
+    // БЫТОВАЯ ХИМИЯ
+    'Порошок': '/images/items/detergent.png',
+    'Гель для стирки': '/images/items/detergent.png',
+    'Кондиционер для белья': '/images/items/detergent.png',
+    'Средство для мытья посуды': '/images/items/cleaning.png',
+    'Средство для окон': '/images/items/cleaning.png',
+    'Средство для пола': '/images/items/cleaning.png',
+    'Средство для ванной': '/images/items/cleaning.png',
+    'Средство для унитаза': '/images/items/cleaning.png',
+    'Отбеливатель': '/images/items/detergent.png',
+    'Пятновыводитель': '/images/items/detergent.png',
+    'Губки': '/images/items/cleaning.png',
+    'Тряпки': '/images/items/cleaning.png',
+    'Мешки для мусора': '/images/items/cleaning.png',
+    'Прочее': '/images/items/cleaning.png',
+    // УБОРКА
+    'Помыть полы': '/images/items/cleaning.png',
+    'Протереть пыль': '/images/items/cleaning.png',
+    'Помыть окна': '/images/items/cleaning.png',
+    'Пропылесосить': '/images/items/cleaning.png',
+    'Убрать в ванной': '/images/items/cleaning.png',
+    'Убрать на кухне': '/images/items/cooking.png',
+    'Разобрать шкаф': '/images/items/cleaning.png',
+    'Вынести мусор': '/images/items/cleaning.png',
+    'Постирать вещи': '/images/items/laundry.png',
+    // СТИРКА
+    'Постирать одежду': '/images/items/laundry.png',
+    'Постирать постельное': '/images/items/laundry.png',
+    'Постирать полотенца': '/images/items/laundry.png',
+    'Погладить': '/images/items/laundry.png',
+    'Отдать в химчистку': '/images/items/laundry.png',
+    // РЕМОНТ
+    'Починить кран': '/images/items/tools.png',
+    'Починить розетку': '/images/items/tools.png',
+    'Повесить полку': '/images/items/tools.png',
+    'Поменять лампочку': '/images/items/tools.png',
+    'Заклеить обои': '/images/items/tools.png',
+    'Починить дверь': '/images/items/tools.png',
+    'Покрасить': '/images/items/tools.png',
+    // САД
+    'Полить цветы': '/images/items/garden.png',
+    'Посадить растения': '/images/items/garden.png',
+    'Подстричь газон': '/images/items/garden.png',
+    'Убрать листья': '/images/items/garden.png',
+    'Удобрить': '/images/items/garden.png',
+    'Прополка': '/images/items/garden.png',
+    // ГОТОВКА
+    'Приготовить завтрак': '/images/items/cooking.png',
+    'Приготовить обед': '/images/items/cooking.png',
+    'Приготовить ужин': '/images/items/cooking.png',
+    'Испечь пирог': '/images/items/cooking.png',
+    'Сделать заготовки': '/images/items/cooking.png',
   }
-  
-  const iconName = iconMap[name] || 'Package'
-  return <DynamicIcon name={iconName} className={className} />
+  return imageMap[name] || null
+}
+
+// Item image component
+function ItemImage({ name, className }: { name: string; className?: string }) {
+  const imageUrl = getItemImageUrl(name)
+  if (imageUrl) {
+    return (
+      <img 
+        src={imageUrl} 
+        alt={name} 
+        className={className || 'w-10 h-10 object-contain'}
+      />
+    )
+  }
+  return <Package className={className || 'w-6 h-6 text-white/30'} />
 }
 
 export function TaskForm({
@@ -470,15 +497,23 @@ export function TaskForm({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[60] bg-[#f5fffa] flex flex-col">
+    <div 
+      className="fixed inset-0 z-[60] flex flex-col"
+      style={{
+        background: 'linear-gradient(145deg, #0C0F1E 0%, #1A1F35 100%)',
+      }}
+    >
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-[#3E000C]/10" style={{ paddingTop: '64px' }}>
+      <div 
+        className="flex items-center justify-between p-4 border-b border-white/10"
+        style={{ paddingTop: '64px' }}
+      >
         {step > 1 ? (
           <button
             onClick={handleBack}
-            className="p-2 -ml-2 rounded-full hover:bg-[#3E000C]/5 transition-colors"
+            className="p-2 -ml-2 rounded-full transition-colors hover:bg-white/10"
           >
-            <ChevronLeft className="w-6 h-6 text-[#3E000C]" />
+            <ChevronLeft className="w-6 h-6 text-white" />
           </button>
         ) : (
           <div className="w-10" />
@@ -493,7 +528,7 @@ export function TaskForm({
               )}
               style={{
                 width: s === step ? 24 : 8,
-                backgroundColor: s === step ? '#3E000C' : '#3E000C20',
+                backgroundColor: s === step ? '#6C5CE7' : 'rgba(255, 255, 255, 0.2)',
               }}
             />
           ))}
@@ -501,9 +536,9 @@ export function TaskForm({
 
         <button
           onClick={handleClose}
-          className="p-2 -mr-2 rounded-full hover:bg-[#3E000C]/5 transition-colors"
+          className="p-2 -mr-2 rounded-full transition-colors hover:bg-white/10"
         >
-          <X className="w-6 h-6 text-[#3E000C]" />
+          <X className="w-6 h-6 text-white" />
         </button>
       </div>
 
@@ -513,7 +548,7 @@ export function TaskForm({
         {step === 1 && (
           <div className="space-y-6 pt-4">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-[#3E000C]">Что требуется?</h2>
+              <h2 className="text-2xl font-bold text-white">Что требуется?</h2>
             </div>
 
             <div className="space-y-3">
@@ -526,18 +561,27 @@ export function TaskForm({
                     className={cn(
                       'w-full flex items-center gap-4 p-4 rounded-2xl',
                       'transition-all duration-200',
-                      'active:scale-[0.98]',
-                      'bg-white border border-[#3E000C]/10',
-                      'hover:border-[#3E000C]/30'
+                      'active:scale-[0.98]'
                     )}
+                    style={{
+                      background: 'rgba(26, 31, 53, 0.6)',
+                      backdropFilter: 'blur(20px)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                    }}
                   >
-                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-[#3E000C]/5">
-                      <Icon className="w-7 h-7 text-[#3E000C]" />
+                    <div 
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                      style={{
+                        background: 'linear-gradient(145deg, #6C5CE7, #5F5FEF)',
+                        boxShadow: '0 4px 15px rgba(108, 92, 231, 0.3)',
+                      }}
+                    >
+                      <Icon className="w-7 h-7 text-white" />
                     </div>
                     <div className="flex-1 text-left">
-                      <span className="font-semibold text-[#3E000C] text-lg">{type.label}</span>
+                      <span className="font-semibold text-white text-lg">{type.label}</span>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-[#3E000C]/40" />
+                    <ChevronRight className="w-5 h-5 text-white/40" />
                   </button>
                 )
               })}
@@ -549,7 +593,7 @@ export function TaskForm({
         {step === 2 && (taskType === 'shopping' || taskType === 'home') && (
           <div className="space-y-5 pt-4">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-[#3E000C]">Категория</h2>
+              <h2 className="text-2xl font-bold text-white">Категория</h2>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -565,22 +609,30 @@ export function TaskForm({
                       'active:scale-[0.98]'
                     )}
                     style={{
-                      backgroundColor: isSelected ? '#3E000C' : '#FFFFFF',
-                      border: `2px solid ${isSelected ? '#3E000C' : '#3E000C10'}`,
+                      background: isSelected 
+                        ? 'linear-gradient(145deg, rgba(108, 92, 231, 0.3), rgba(95, 95, 239, 0.2))'
+                        : 'rgba(26, 31, 53, 0.5)',
+                      backdropFilter: 'blur(15px)',
+                      border: `1px solid ${isSelected ? 'rgba(108, 92, 231, 0.5)' : 'rgba(255, 255, 255, 0.1)'}`,
+                      boxShadow: isSelected ? '0 0 20px rgba(108, 92, 231, 0.2)' : 'none',
                     }}
                   >
                     <div 
                       className="w-20 h-20 rounded-2xl flex items-center justify-center"
-                      style={{ backgroundColor: isSelected ? '#f5fffa' : '#3E000C05' }}
+                      style={{
+                        background: isSelected 
+                          ? 'linear-gradient(145deg, #6C5CE7, #5F5FEF)'
+                          : 'rgba(255, 255, 255, 0.05)',
+                      }}
                     >
                       <DynamicIcon
                         name={category.icon || 'Package'}
-                        className={cn('w-10 h-10', isSelected ? 'text-[#3E000C]' : 'text-[#3E000C]/60')}
+                        className={cn('w-10 h-10', isSelected ? 'text-white' : 'text-white/50')}
                       />
                     </div>
                     <span 
                       className="text-sm font-semibold text-center"
-                      style={{ color: isSelected ? '#f5fffa' : '#3E000C' }}
+                      style={{ color: isSelected ? '#6C5CE7' : 'rgba(255, 255, 255, 0.8)' }}
                     >
                       {category.name}
                     </span>
@@ -595,36 +647,46 @@ export function TaskForm({
         {step === 2 && taskType === 'other' && (
           <div className="space-y-6 pt-4">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-[#3E000C]">Детали</h2>
+              <h2 className="text-2xl font-bold text-white">Детали</h2>
             </div>
 
             <div className="space-y-4">
               {/* Title */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#3E000C]">Название</label>
-                <Input
+                <label className="text-sm font-medium text-white/60">Название</label>
+                <input
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="Название задачи"
-                  className="text-base border-[#3E000C]/20 focus:border-[#3E000C] bg-white rounded-xl py-3"
+                  className="w-full text-base px-4 py-3 rounded-xl text-white placeholder-white/30 focus:outline-none"
+                  style={{
+                    background: 'rgba(26, 31, 53, 0.5)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                  }}
                 />
               </div>
 
               {/* Description */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#3E000C]">Описание</label>
-                <Textarea
+                <label className="text-sm font-medium text-white/60">Описание</label>
+                <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Добавьте детали..."
                   rows={3}
-                  className="border-[#3E000C]/20 focus:border-[#3E000C] resize-none bg-white rounded-xl"
+                  className="w-full text-base px-4 py-3 rounded-xl text-white placeholder-white/30 focus:outline-none resize-none"
+                  style={{
+                    background: 'rgba(26, 31, 53, 0.5)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                  }}
                 />
               </div>
 
               {/* Photo upload - only for "Другое" */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#3E000C]">Фото (опционально)</label>
+                <label className="text-sm font-medium text-white/60">Фото (опционально)</label>
                 {imageUrl ? (
                   <div className="relative">
                     <img
@@ -635,15 +697,24 @@ export function TaskForm({
                     <button
                       type="button"
                       onClick={() => setImageUrl('')}
-                      className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center bg-[#3E000C]/80 text-[#f5fffa]"
+                      className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center"
+                      style={{
+                        background: 'rgba(108, 92, 231, 0.8)',
+                      }}
                     >
-                      <X className="w-4 h-4" />
+                      <X className="w-4 h-4 text-white" />
                     </button>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center w-full h-32 rounded-2xl cursor-pointer border-2 border-dashed border-[#3E000C]/20 bg-white">
-                    <Camera className="w-8 h-8 text-[#3E000C]/40 mb-1" />
-                    <span className="text-xs text-[#3E000C]/60">Добавить фото</span>
+                  <label 
+                    className="flex flex-col items-center justify-center w-full h-32 rounded-2xl cursor-pointer"
+                    style={{
+                      background: 'rgba(26, 31, 53, 0.5)',
+                      border: '2px dashed rgba(255, 255, 255, 0.2)',
+                    }}
+                  >
+                    <Camera className="w-8 h-8 text-white/40 mb-1" />
+                    <span className="text-xs text-white/40">Добавить фото</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -655,13 +726,17 @@ export function TaskForm({
               </div>
             </div>
 
-            <Button
+            <button
               onClick={handleSubmit}
               disabled={!formData.title.trim()}
-              className="w-full bg-[#3E000C] hover:bg-[#3E000C]/90 text-[#f5fffa] h-14 rounded-xl font-semibold text-base"
+              className="w-full h-14 rounded-xl font-semibold text-base text-white transition-all duration-200 disabled:opacity-50"
+              style={{
+                background: 'linear-gradient(145deg, #6C5CE7, #5F5FEF)',
+                boxShadow: '0 8px 20px rgba(108, 92, 231, 0.4)',
+              }}
             >
               Создать
-            </Button>
+            </button>
           </div>
         )}
 
@@ -669,25 +744,37 @@ export function TaskForm({
         {step === 3 && (taskType === 'shopping' || taskType === 'home') && (
           <div className="space-y-4 pt-4">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-[#3E000C]">Выберите</h2>
-              <p className="text-sm text-[#3E000C]/60 mt-1">{selectedCategoryData?.name}</p>
+              <h2 className="text-2xl font-bold text-white">Выберите</h2>
+              <p className="text-sm text-white/50 mt-1">{selectedCategoryData?.name}</p>
             </div>
 
             {/* Search input */}
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#3E000C]/40" />
-              <Input
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+              <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Поиск..."
-                className="pl-12 h-14 bg-white border-[#3E000C]/10 rounded-xl text-base"
+                className="w-full pl-12 h-14 rounded-xl text-base text-white placeholder-white/30 focus:outline-none"
+                style={{
+                  background: 'rgba(26, 31, 53, 0.5)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                }}
               />
             </div>
 
             {/* Items grid */}
             {itemsLoading ? (
               <div className="flex justify-center py-8">
-                <div className="w-8 h-8 border-2 border-[#3E000C]/20 border-t-[#3E000C] rounded-full animate-spin" />
+                <div 
+                  className="w-8 h-8 rounded-full"
+                  style={{
+                    border: '2px solid rgba(108, 92, 231, 0.2)',
+                    borderTopColor: '#6C5CE7',
+                    animation: 'spin 1s linear infinite',
+                  }}
+                />
               </div>
             ) : (
               <div className="grid grid-cols-3 gap-2 max-h-[45vh] overflow-y-auto pb-2">
@@ -698,14 +785,20 @@ export function TaskForm({
                     className={cn(
                       'flex flex-col items-center gap-2 p-3 rounded-xl',
                       'transition-all duration-200',
-                      'active:scale-[0.95]',
-                      'bg-white border border-[#3E000C]/5 hover:border-[#3E000C]/20'
+                      'active:scale-[0.95]'
                     )}
+                    style={{
+                      background: 'rgba(26, 31, 53, 0.5)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                    }}
                   >
-                    <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-[#3E000C]/5">
-                      <ItemIcon name={item.name} className="w-7 h-7 text-[#3E000C]/60" />
+                    <div 
+                      className="w-14 h-14 rounded-xl flex items-center justify-center overflow-hidden"
+                      style={{ background: 'rgba(255, 255, 255, 0.05)' }}
+                    >
+                      <ItemImage name={item.name} className="w-10 h-10 object-contain" />
                     </div>
-                    <span className="text-xs text-[#3E000C] text-center line-clamp-2 font-medium leading-tight">
+                    <span className="text-xs text-white text-center line-clamp-2 font-medium leading-tight">
                       {item.name}
                     </span>
                   </button>
@@ -718,25 +811,26 @@ export function TaskForm({
               onClick={handleCustomItem}
               className={cn(
                 'w-full flex items-center justify-center gap-3 p-4 rounded-xl',
-                'border-2 border-dashed border-[#3E000C]/30',
-                'text-[#3E000C] font-semibold text-base',
                 'transition-all duration-200',
-                'hover:border-[#3E000C]/50 hover:bg-[#3E000C]/5',
                 'active:scale-[0.98]'
               )}
+              style={{
+                background: 'rgba(108, 92, 231, 0.1)',
+                border: '2px dashed rgba(108, 92, 231, 0.4)',
+              }}
             >
-              <Edit3 className="w-5 h-5" />
-              <span>Другое</span>
+              <Edit3 className="w-5 h-5 text-[#6C5CE7]" />
+              <span className="text-[#6C5CE7] font-semibold text-base">Другое</span>
             </button>
           </div>
         )}
 
-        {/* Step 4: Details for shopping (only for "Другое") */}
+        {/* Step 4: Details for shopping */}
         {step === 4 && taskType === 'shopping' && (
           <div className="space-y-6 pt-4">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-[#3E000C]">Детали</h2>
-              <p className="text-sm text-[#3E000C]/60 mt-1">
+              <h2 className="text-2xl font-bold text-white">Детали</h2>
+              <p className="text-sm text-white/50 mt-1">
                 {selectedCategoryData?.name}
               </p>
             </div>
@@ -744,26 +838,36 @@ export function TaskForm({
             <div className="space-y-4">
               {/* Title */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#3E000C]">Что купить?</label>
-                <Input
+                <label className="text-sm font-medium text-white/60">Что купить?</label>
+                <input
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="Например: Молоко, Хлеб..."
-                  className="text-base border-[#3E000C]/20 focus:border-[#3E000C] bg-white rounded-xl py-3"
+                  className="w-full text-base px-4 py-3 rounded-xl text-white placeholder-white/30 focus:outline-none"
+                  style={{
+                    background: 'rgba(26, 31, 53, 0.5)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                  }}
                 />
               </div>
 
               {/* Quantity */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#3E000C]">Количество</label>
+                <label className="text-sm font-medium text-white/60">Количество</label>
                 <div className="flex gap-2">
-                  <Input
+                  <input
                     type="number"
                     step="0.1"
                     value={formData.quantity}
                     onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                     placeholder="1"
-                    className="flex-1 border-[#3E000C]/20 focus:border-[#3E000C] bg-white rounded-xl py-3"
+                    className="flex-1 text-base px-4 py-3 rounded-xl text-white placeholder-white/30 focus:outline-none"
+                    style={{
+                      background: 'rgba(26, 31, 53, 0.5)',
+                      backdropFilter: 'blur(12px)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                    }}
                   />
                   <div className="flex gap-1 flex-wrap">
                     {units.slice(0, 4).map((u) => (
@@ -772,12 +876,13 @@ export function TaskForm({
                         type="button"
                         onClick={() => setFormData({ ...formData, unit: u })}
                         className={cn(
-                          'px-4 py-2 rounded-xl text-sm font-semibold transition-all border-2',
+                          'px-4 py-2 rounded-xl text-sm font-semibold transition-all',
                         )}
                         style={{
-                          backgroundColor: formData.unit === u ? '#3E000C' : '#FFFFFF',
-                          color: formData.unit === u ? '#f5fffa' : '#3E000C',
-                          borderColor: formData.unit === u ? '#3E000C' : '#3E000C20',
+                          background: formData.unit === u 
+                            ? 'linear-gradient(145deg, #6C5CE7, #5F5FEF)'
+                            : 'rgba(255, 255, 255, 0.1)',
+                          color: '#FFFFFF',
                         }}
                       >
                         {u}
@@ -789,20 +894,25 @@ export function TaskForm({
 
               {/* Description */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#3E000C]">Описание</label>
-                <Textarea
+                <label className="text-sm font-medium text-white/60">Описание</label>
+                <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Добавьте детали..."
                   rows={2}
-                  className="border-[#3E000C]/20 focus:border-[#3E000C] resize-none bg-white rounded-xl"
+                  className="w-full text-base px-4 py-3 rounded-xl text-white placeholder-white/30 focus:outline-none resize-none"
+                  style={{
+                    background: 'rgba(26, 31, 53, 0.5)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                  }}
                 />
               </div>
 
               {/* Photo upload - only for custom items */}
               {isCustomItem && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-[#3E000C]">Фото (опционально)</label>
+                  <label className="text-sm font-medium text-white/60">Фото (опционально)</label>
                   {imageUrl ? (
                     <div className="relative">
                       <img
@@ -813,15 +923,24 @@ export function TaskForm({
                       <button
                         type="button"
                         onClick={() => setImageUrl('')}
-                        className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center bg-[#3E000C]/80 text-[#f5fffa]"
+                        className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center"
+                        style={{
+                          background: 'rgba(108, 92, 231, 0.8)',
+                        }}
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-4 h-4 text-white" />
                       </button>
                     </div>
                   ) : (
-                    <label className="flex flex-col items-center justify-center w-full h-32 rounded-2xl cursor-pointer border-2 border-dashed border-[#3E000C]/20 bg-white">
-                      <Camera className="w-8 h-8 text-[#3E000C]/40 mb-1" />
-                      <span className="text-xs text-[#3E000C]/60">Добавить фото</span>
+                    <label 
+                      className="flex flex-col items-center justify-center w-full h-32 rounded-2xl cursor-pointer"
+                      style={{
+                        background: 'rgba(26, 31, 53, 0.5)',
+                        border: '2px dashed rgba(255, 255, 255, 0.2)',
+                      }}
+                    >
+                      <Camera className="w-8 h-8 text-white/40 mb-1" />
+                      <span className="text-xs text-white/40">Добавить фото</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -834,52 +953,66 @@ export function TaskForm({
               )}
             </div>
 
-            <Button
+            <button
               onClick={handleSubmit}
               disabled={!formData.title.trim() || isLoading}
-              className="w-full bg-[#3E000C] hover:bg-[#3E000C]/90 text-[#f5fffa] h-14 rounded-xl font-semibold text-base"
+              className="w-full h-14 rounded-xl font-semibold text-base text-white transition-all duration-200 disabled:opacity-50"
+              style={{
+                background: 'linear-gradient(145deg, #6C5CE7, #5F5FEF)',
+                boxShadow: '0 8px 20px rgba(108, 92, 231, 0.4)',
+              }}
             >
               {isLoading ? 'Создание...' : 'Создать'}
-            </Button>
+            </button>
           </div>
         )}
 
-        {/* Step 4: Details for home (only for "Другое") */}
+        {/* Step 4: Details for home */}
         {step === 4 && taskType === 'home' && (
           <div className="space-y-6 pt-4">
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-[#3E000C]">Детали</h2>
-              <p className="text-sm text-[#3E000C]/60 mt-1">{selectedCategoryData?.name}</p>
+              <h2 className="text-2xl font-bold text-white">Детали</h2>
+              <p className="text-sm text-white/50 mt-1">{selectedCategoryData?.name}</p>
             </div>
 
             <div className="space-y-4">
               {/* Title */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#3E000C]">Название</label>
-                <Input
+                <label className="text-sm font-medium text-white/60">Название</label>
+                <input
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="Название задачи"
-                  className="text-base border-[#3E000C]/20 focus:border-[#3E000C] bg-white rounded-xl py-3"
+                  className="w-full text-base px-4 py-3 rounded-xl text-white placeholder-white/30 focus:outline-none"
+                  style={{
+                    background: 'rgba(26, 31, 53, 0.5)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                  }}
                 />
               </div>
 
               {/* Description */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-[#3E000C]">Описание</label>
-                <Textarea
+                <label className="text-sm font-medium text-white/60">Описание</label>
+                <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Добавьте детали..."
                   rows={3}
-                  className="border-[#3E000C]/20 focus:border-[#3E000C] resize-none bg-white rounded-xl"
+                  className="w-full text-base px-4 py-3 rounded-xl text-white placeholder-white/30 focus:outline-none resize-none"
+                  style={{
+                    background: 'rgba(26, 31, 53, 0.5)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                  }}
                 />
               </div>
 
               {/* Photo upload - only for custom items */}
               {isCustomItem && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-[#3E000C]">Фото (опционально)</label>
+                  <label className="text-sm font-medium text-white/60">Фото (опционально)</label>
                   {imageUrl ? (
                     <div className="relative">
                       <img
@@ -890,15 +1023,24 @@ export function TaskForm({
                       <button
                         type="button"
                         onClick={() => setImageUrl('')}
-                        className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center bg-[#3E000C]/80 text-[#f5fffa]"
+                        className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center"
+                        style={{
+                          background: 'rgba(108, 92, 231, 0.8)',
+                        }}
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-4 h-4 text-white" />
                       </button>
                     </div>
                   ) : (
-                    <label className="flex flex-col items-center justify-center w-full h-32 rounded-2xl cursor-pointer border-2 border-dashed border-[#3E000C]/20 bg-white">
-                      <Camera className="w-8 h-8 text-[#3E000C]/40 mb-1" />
-                      <span className="text-xs text-[#3E000C]/60">Добавить фото</span>
+                    <label 
+                      className="flex flex-col items-center justify-center w-full h-32 rounded-2xl cursor-pointer"
+                      style={{
+                        background: 'rgba(26, 31, 53, 0.5)',
+                        border: '2px dashed rgba(255, 255, 255, 0.2)',
+                      }}
+                    >
+                      <Camera className="w-8 h-8 text-white/40 mb-1" />
+                      <span className="text-xs text-white/40">Добавить фото</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -911,13 +1053,17 @@ export function TaskForm({
               )}
             </div>
 
-            <Button
+            <button
               onClick={handleSubmit}
               disabled={!formData.title.trim()}
-              className="w-full bg-[#3E000C] hover:bg-[#3E000C]/90 text-[#f5fffa] h-14 rounded-xl font-semibold text-base"
+              className="w-full h-14 rounded-xl font-semibold text-base text-white transition-all duration-200 disabled:opacity-50"
+              style={{
+                background: 'linear-gradient(145deg, #6C5CE7, #5F5FEF)',
+                boxShadow: '0 8px 20px rgba(108, 92, 231, 0.4)',
+              }}
             >
               Создать
-            </Button>
+            </button>
           </div>
         )}
       </div>

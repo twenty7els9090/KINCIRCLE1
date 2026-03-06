@@ -3,10 +3,9 @@
 import { useState } from 'react'
 import {
   Check,
+  Trash2,
   Archive,
   Package,
-  Plus,
-  Trash2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Task, TaskCategory, User as UserType } from '@/lib/supabase/database.types'
@@ -41,20 +40,9 @@ export function TaskCard({
   isHighlighted,
 }: TaskCardProps) {
   const [isAnimating, setIsAnimating] = useState(false)
+  const [isExiting, setIsExiting] = useState(false)
 
   const isCompleted = task.status === 'completed'
-
-  // Get gradient class based on category type
-  const getGradientClass = () => {
-    switch (task.type) {
-      case 'shopping':
-        return 'gradient-shopping'
-      case 'home':
-        return 'gradient-home'
-      default:
-        return 'gradient-other'
-    }
-  }
 
   // Format quantity display
   const getQuantityDisplay = () => {
@@ -63,14 +51,14 @@ export function TaskCard({
     return `${task.quantity} ${unit}`
   }
 
-  // Handle action button click - marks complete/uncomplete
+  // Handle action button click
   const handleActionClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     setIsAnimating(true)
     
     setTimeout(() => {
       setIsAnimating(false)
-    }, 500)
+    }, 300)
 
     if (isCompleted && onUncomplete) {
       onUncomplete(task.id)
@@ -79,164 +67,146 @@ export function TaskCard({
     }
   }
 
-  // Handle archive/delete click
-  const handleSecondaryActionClick = (e: React.MouseEvent) => {
+  // Handle delete/archive click
+  const handleDeleteOrArchive = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (isCompleted && onArchive) {
-      onArchive(task.id)
-    } else if (!isCompleted && onDelete) {
-      onDelete(task.id)
-    }
+    setIsExiting(true)
+    
+    setTimeout(() => {
+      if (isCompleted && onArchive) {
+        onArchive(task.id)
+      } else if (!isCompleted && onDelete) {
+        onDelete(task.id)
+      }
+      setIsExiting(false)
+    }, 200)
   }
 
   return (
     <div
       onClick={() => onClick?.(task.id)}
       className={cn(
-        'relative rounded-[20px] overflow-hidden',
-        'transition-all duration-500 ease-out',
+        'relative rounded-3xl overflow-hidden',
+        'transition-all duration-300 ease-out',
         'cursor-pointer',
-        isHighlighted && 'ring-2 ring-[#3E000C]'
+        isHighlighted && 'ring-2 ring-[#6C5CE7]',
+        isExiting && 'animate-card-exit',
+        'animate-card-enter'
       )}
       style={{
-        boxShadow: '0 8px 20px rgba(0, 0, 0, 0.08)',
-        height: '340px',
+        background: 'rgba(26, 31, 53, 0.6)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        borderTop: '1px solid rgba(255, 255, 255, 0.15)',
+        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5), 0 8px 16px rgba(0, 0, 0, 0.4)',
+        marginBottom: '12px',
       }}
     >
-      {/* Background image/gradient */}
-      <div
-        className={cn(
-          'absolute inset-0',
-          !task.image_url && !task.category?.image_url && getGradientClass()
-        )}
-      >
-        {task.image_url ? (
-          <img
-            src={task.image_url}
-            alt={task.title}
-            className="w-full h-full object-cover"
-          />
-        ) : task.category?.image_url ? (
-          <img
-            src={task.category.image_url}
-            alt={task.category.name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <DynamicIcon
-              name={task.category?.icon || 'Package'}
-              className="w-20 h-20 text-white/30"
-            />
+      <div className="p-4">
+        {/* Top row - Category image + Action button */}
+        <div className="flex items-start justify-between mb-3">
+          {/* Category image with gradient */}
+          <div 
+            className="w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden"
+            style={{
+              background: 'linear-gradient(145deg, #6C5CE7, #5F5FEF)',
+              boxShadow: '0 8px 20px rgba(108, 92, 231, 0.3)',
+            }}
+          >
+            {task.image_url ? (
+              <img
+                src={task.image_url}
+                alt={task.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <DynamicIcon
+                name={task.category?.icon || 'Package'}
+                className="w-10 h-10 text-white/80"
+              />
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Overlay gradient with smooth animation */}
-      <div 
-        className={cn(
-          'absolute inset-0 transition-all duration-700 ease-out',
-          isCompleted && 'animate-pulse-once'
-        )}
-        style={{
-          background: isCompleted
-            ? 'linear-gradient(to top, rgba(62, 0, 12, 0.95) 0%, rgba(62, 0, 12, 0.75) 40%, rgba(62, 0, 12, 0.4) 100%)'
-            : 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)'
-        }}
-      />
-
-      {/* Content on top of image */}
-      <div className="absolute inset-0 flex flex-col justify-end p-4">
-        {/* Top row - badges */}
-        <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
-          {/* Category badge */}
-          {task.category && (
-            <span className={cn(
-              'px-3 py-1 rounded-full text-xs font-medium',
-              'bg-white/20 backdrop-blur-sm text-white'
-            )}>
-              {task.category.name}
-            </span>
-          )}
-
-          {/* Secondary action button */}
+          {/* Delete/Archive button */}
           <button
-            onClick={handleSecondaryActionClick}
+            onClick={handleDeleteOrArchive}
             className={cn(
               'w-9 h-9 rounded-full',
               'flex items-center justify-center',
               'transition-all duration-200',
               'hover:scale-110 active:scale-95',
-              'bg-white/20 backdrop-blur-sm'
+              'bg-white/10 backdrop-blur-sm',
+              'hover:bg-white/15'
             )}
           >
             {isCompleted ? (
-              <Archive className="w-4 h-4 text-white" />
+              <Archive className="w-4 h-4 text-white/70" />
             ) : (
-              <Trash2 className="w-4 h-4 text-white" />
+              <Trash2 className="w-4 h-4 text-white/70" />
             )}
           </button>
         </div>
 
-        {/* Bottom content - aligned to bottom */}
-        <div className="space-y-3 mt-auto">
-          {/* Title */}
-          <h3 className={cn(
-            'text-2xl font-bold text-white drop-shadow-md transition-all duration-500',
-            isCompleted && 'opacity-90'
-          )}>
-            {task.title}
-          </h3>
+        {/* Category label */}
+        {task.category && (
+          <span className="text-xs uppercase tracking-wider text-white/50 font-medium">
+            {task.category.name}
+          </span>
+        )}
 
-          {/* Description */}
-          {task.description && (
-            <p className={cn(
-              'text-sm text-white/80 line-clamp-2 transition-all duration-500',
-              isCompleted && 'text-white/70'
-            )}>
-              {task.description}
-            </p>
-          )}
+        {/* Title */}
+        <h3 className="text-xl font-bold text-white mt-1">
+          {task.title}
+        </h3>
 
-          {/* Meta row - quantity */}
-          {getQuantityDisplay() && (
-            <p className={cn(
-              'text-sm text-white/90 font-medium transition-all duration-500',
-              isCompleted && 'text-white/80'
-            )}>
-              {getQuantityDisplay()}
-            </p>
-          )}
+        {/* Description */}
+        {task.description && (
+          <p className="text-sm text-white/50 mt-0.5 line-clamp-1">
+            {task.description}
+          </p>
+        )}
 
-          {/* Action button - same size for both states */}
-          <div className="flex justify-end pt-1">
-            <button
-              onClick={handleActionClick}
-              disabled={isAnimating}
-              className={cn(
-                'flex items-center justify-center gap-2',
-                'w-[140px] h-11 rounded-full',
-                'text-sm font-semibold transition-all duration-300',
-                'active:scale-95',
-                isAnimating && 'scale-105',
-                isCompleted
-                  ? 'bg-[#f5fffa] text-[#3E000C]'
-                  : 'bg-[#3E000C] text-[#f5fffa] hover:bg-[#5C0013]'
-              )}
-            >
-              {isCompleted ? (
-                <>
-                  <Check className="w-5 h-5" strokeWidth={2.5} />
-                  <span>Добавлено</span>
-                </>
-              ) : (
-                <>
-                  <Plus className="w-5 h-5" strokeWidth={2.5} />
-                  <span>Добавить</span>
-                </>
-              )}
-            </button>
-          </div>
+        {/* Quantity */}
+        {getQuantityDisplay() && (
+          <span className="text-base font-semibold text-[#6C5CE7] mt-2 block">
+            {getQuantityDisplay()}
+          </span>
+        )}
+
+        {/* Action button */}
+        <div className="flex justify-end mt-4">
+          <button
+            onClick={handleActionClick}
+            disabled={isAnimating}
+            className={cn(
+              'flex items-center gap-2 px-6 py-2.5 rounded-full',
+              'text-sm font-medium transition-all duration-200',
+              'active:scale-[0.97]',
+              isAnimating && 'scale-105'
+            )}
+            style={{
+              background: isCompleted
+                ? 'linear-gradient(145deg, #6C5CE7, #5F5FEF)'
+                : 'rgba(108, 92, 231, 0.2)',
+              border: isCompleted
+                ? 'none'
+                : '1px solid #6C5CE7',
+              color: '#FFFFFF',
+              boxShadow: isCompleted
+                ? '0 8px 20px rgba(108, 92, 231, 0.4)'
+                : 'none',
+            }}
+          >
+            {isCompleted ? (
+              <>
+                <Check className="w-4 h-4" strokeWidth={2.5} />
+                <span>Добавлено</span>
+              </>
+            ) : (
+              <span>Добавить</span>
+            )}
+          </button>
         </div>
       </div>
     </div>

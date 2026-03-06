@@ -3,7 +3,6 @@
 import { Plus, X } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { useUIStore } from '@/store'
 
 interface FloatingActionButtonProps {
   onClick?: () => void
@@ -21,7 +20,7 @@ export function FloatingActionButton({ onClick, disabled }: FloatingActionButton
       onMouseUp={() => setIsPressed(false)}
       onMouseLeave={() => setIsPressed(false)}
       className={cn(
-        'fixed bottom-20 right-4 z-40',
+        'fixed bottom-24 right-4 z-40',
         'w-14 h-14 rounded-full',
         'flex items-center justify-center',
         'transition-all duration-200',
@@ -30,18 +29,16 @@ export function FloatingActionButton({ onClick, disabled }: FloatingActionButton
         disabled && 'opacity-50 cursor-not-allowed'
       )}
       style={{
-        backgroundColor: 'rgba(62, 0, 12, 0.15)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255, 255, 255, 0.25)',
+        background: 'linear-gradient(145deg, #6C5CE7, #5F5FEF)',
         boxShadow: isPressed
-          ? '0 2px 8px rgba(0, 0, 0, 0.1)'
-          : '0 4px 20px rgba(0, 0, 0, 0.08)',
+          ? '0 8px 20px rgba(108, 92, 231, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3)'
+          : '0 12px 30px rgba(108, 92, 231, 0.5), 0 6px 16px rgba(0, 0, 0, 0.4)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
       }}
     >
       <Plus 
         className="w-6 h-6 text-white" 
-        strokeWidth={2}
+        strokeWidth={2.5}
       />
     </button>
   )
@@ -66,7 +63,7 @@ export function ExtendedFloatingActionButton({
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <div className="fixed bottom-20 right-4 z-40 flex flex-col-reverse items-end gap-3">
+    <div className="fixed bottom-24 right-4 z-40 flex flex-col-reverse items-end gap-3">
       {/* Options */}
       {isOpen && (
         <div className="flex flex-col gap-2 animate-in slide-in-from-bottom-2 duration-200">
@@ -79,16 +76,26 @@ export function ExtendedFloatingActionButton({
               }}
               className={cn(
                 'flex items-center gap-3 px-4 py-3 rounded-xl',
-                'bg-white shadow-card border border-[#F0E8E8]',
-                'hover:bg-[#F8F5F5] transition-all duration-200',
+                'transition-all duration-200',
                 'animate-in slide-in-from-right-2 duration-200'
               )}
-              style={{ animationDelay: `${index * 50}ms` }}
+              style={{
+                background: 'rgba(26, 31, 53, 0.8)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                boxShadow: '0 8px 20px rgba(0, 0, 0, 0.4)',
+                animationDelay: `${index * 50}ms`,
+              }}
             >
-              <span className="text-sm font-medium text-[#1C1C1E]">
+              <span className="text-sm font-medium text-white">
                 {option.label}
               </span>
-              <span className="w-8 h-8 rounded-full bg-[#3E000C]/10 flex items-center justify-center">
+              <span 
+                className="w-8 h-8 rounded-full flex items-center justify-center"
+                style={{
+                  background: 'rgba(108, 92, 231, 0.2)',
+                }}
+              >
                 {option.icon}
               </span>
             </button>
@@ -110,18 +117,16 @@ export function ExtendedFloatingActionButton({
           isOpen && 'rotate-45'
         )}
         style={{
-          backgroundColor: isOpen ? 'rgba(62, 0, 12, 0.25)' : 'rgba(62, 0, 12, 0.15)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255, 255, 255, 0.25)',
+          background: 'linear-gradient(145deg, #6C5CE7, #5F5FEF)',
           boxShadow: isOpen
-            ? '0 2px 8px rgba(0, 0, 0, 0.12)'
-            : '0 4px 20px rgba(0, 0, 0, 0.08)',
+            ? '0 8px 20px rgba(108, 92, 231, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3)'
+            : '0 12px 30px rgba(108, 92, 231, 0.5), 0 6px 16px rgba(0, 0, 0, 0.4)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
         }}
       >
         <Plus 
           className="w-6 h-6 text-white transition-transform duration-200" 
-          strokeWidth={2}
+          strokeWidth={2.5}
         />
       </button>
     </div>

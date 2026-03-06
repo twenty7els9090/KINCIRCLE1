@@ -30,7 +30,7 @@ export function Header({ onNotificationsClick, onSettingsClick }: HeaderProps) {
       case 'events':
         return 'Мероприятия'
       case 'wishlist':
-        return 'Wishlist'
+        return 'Вишлист'
       case 'profile':
         return 'Профиль'
       default:
@@ -39,37 +39,66 @@ export function Header({ onNotificationsClick, onSettingsClick }: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-40 bg-[#f5fffa]" style={{ paddingTop: '64px' }}>
-      <div className="max-w-[450px] mx-auto px-4 py-3">
+    <header 
+      className="sticky top-0 z-40"
+      style={{
+        paddingTop: '64px',
+        background: 'linear-gradient(180deg, rgba(12, 15, 30, 0.95) 0%, rgba(12, 15, 30, 0.8) 100%)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+      }}
+    >
+      <div className="max-w-[450px] mx-auto px-4 pb-3">
         <div className="flex items-center justify-between">
           {/* Left: Family selector or App name */}
           <div className="flex items-center gap-2">
             {activeTab === 'tasks' && families.length > 0 ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#3E000C]/10 hover:bg-[#3E000C]/20 transition-colors">
-                    <Users className="w-4 h-4 text-[#3E000C]" />
-                    <span className="font-medium text-[#3E000C]">
+                  <button 
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+                    style={{
+                      background: 'rgba(26, 31, 53, 0.6)',
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                    }}
+                  >
+                    <Users className="w-4 h-4 text-[#6C5CE7]" />
+                    <span className="font-medium text-white">
                       {currentFamily?.name || 'Выберите семью'}
                     </span>
-                    <ChevronDown className="w-4 h-4 text-[#3E000C]/60" />
+                    <ChevronDown className="w-4 h-4 text-white/50" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48">
+                <DropdownMenuContent 
+                  align="start" 
+                  className="w-48"
+                  style={{
+                    background: 'rgba(26, 31, 53, 0.95)',
+                    backdropFilter: 'blur(20px)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                  }}
+                >
                   {families.map((family) => (
                     <DropdownMenuItem
                       key={family.id}
                       onClick={() => setCurrentFamily(family.id)}
                       className={cn(
-                        'cursor-pointer',
-                        family.id === currentFamilyId && 'bg-[#3E000C]/10'
+                        'cursor-pointer text-white hover:bg-white/10 focus:bg-white/10',
+                        family.id === currentFamilyId && 'bg-white/5'
                       )}
                     >
-                      <Users className="w-4 h-4 mr-2 text-[#3E000C]" />
+                      <Users className="w-4 h-4 mr-2 text-[#6C5CE7]" />
                       {family.name}
                       {family.id === currentFamilyId && (
                         <Badge 
-                          className="ml-auto text-xs bg-[#3E000C] text-[#f5fffa]"
+                          className="ml-auto text-xs"
+                          style={{
+                            background: 'rgba(108, 92, 231, 0.2)',
+                            color: '#6C5CE7',
+                            border: '1px solid rgba(108, 92, 231, 0.3)',
+                          }}
                         >
                           {family.members?.length || 0}
                         </Badge>
@@ -79,7 +108,17 @@ export function Header({ onNotificationsClick, onSettingsClick }: HeaderProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <h1 className="text-2xl font-bold text-[#3E000C]">{getTabTitle()}</h1>
+              <h1 
+                className="text-2xl font-bold"
+                style={{
+                  background: 'linear-gradient(135deg, #FFFFFF 0%, rgba(255, 255, 255, 0.8) 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
+              >
+                {getTabTitle()}
+              </h1>
             )}
           </div>
 
@@ -88,21 +127,42 @@ export function Header({ onNotificationsClick, onSettingsClick }: HeaderProps) {
             {/* Notifications */}
             <button
               onClick={onNotificationsClick}
-              className="relative p-2 rounded-xl bg-[#3E000C]/10 hover:bg-[#3E000C]/20 transition-colors"
+              className="relative p-2.5 rounded-full transition-all duration-200 hover:bg-white/10 active:scale-95"
+              style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+              }}
             >
-              <Bell className="w-5 h-5 text-[#3E000C]" />
+              <Bell className="w-5 h-5 text-white/70" />
               {/* Notification badge */}
-              <span className="absolute top-1 right-1 w-2 h-2 bg-[#3E000C] rounded-full" />
+              <span 
+                className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full"
+                style={{
+                  background: '#6C5CE7',
+                  boxShadow: '0 0 8px rgba(108, 92, 231, 0.6)',
+                }}
+              />
             </button>
 
             {/* User avatar / Settings */}
             <button
               onClick={onSettingsClick}
-              className="flex items-center gap-2 p-1 rounded-xl hover:bg-[#3E000C]/10 transition-colors"
+              className="flex items-center gap-2 p-1 rounded-full transition-all duration-200 hover:scale-105 active:scale-95"
             >
-              <Avatar className="w-8 h-8 border-2 border-[#3E000C]/30">
+              <Avatar 
+                className="w-9 h-9"
+                style={{
+                  boxShadow: '0 0 0 2px rgba(108, 92, 231, 0.4)',
+                }}
+              >
                 <AvatarImage src={user?.avatar_url || undefined} alt={user?.first_name || ''} />
-                <AvatarFallback className="bg-[#3E000C] text-[#f5fffa] text-sm font-medium">
+                <AvatarFallback 
+                  className="text-sm font-medium"
+                  style={{
+                    background: 'linear-gradient(145deg, #6C5CE7, #5F5FEF)',
+                    color: '#FFFFFF',
+                  }}
+                >
                   {user?.first_name?.[0]?.toUpperCase() || '?'}
                 </AvatarFallback>
               </Avatar>

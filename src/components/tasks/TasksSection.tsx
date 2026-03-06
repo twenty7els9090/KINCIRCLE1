@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Package, Plus } from 'lucide-react'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { TaskCard } from './TaskCard'
@@ -10,96 +10,19 @@ import { getSupabaseClient } from '@/lib/supabase'
 import type { Task } from '@/lib/supabase/database.types'
 
 export function TasksSection() {
-  const { tasks, categories, setTasks, setCategories, addTask, updateTask, removeTask } = useTaskStore()
+  const { tasks, categories, setTasks, setCategories } = useTaskStore()
   const { currentFamilyId, families, user } = useUserStore()
   const [isLoading, setIsLoading] = useState(false)
   const [showTaskForm, setShowTaskForm] = useState(false)
   const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null)
-  
-  const realtimeRef = useRef(false)
 
   const currentFamily = families.find((f) => f.id === currentFamilyId)
 
+  // Fetch tasks and categories
   useEffect(() => {
     if (currentFamilyId) {
       fetchTasks()
       fetchCategories()
-    }
-  }, [currentFamilyId])
-
-  useEffect(() => {
-    if (!currentFamilyId || realtimeRef.current) return
-
-    const supabase = getSupabaseClient()
-    realtimeRef.current = true
-    
-    const channel = supabase
-      .channel(`tasks-${currentFamilyId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'tasks',
-          filter: `family_id=eq.${currentFamilyId}`,
-        },
-        async (payload) => {
-          const eventType = payload.eventType
-          const newData = payload.new as any
-          const oldData = payload.old as any
-
-          if (eventType === 'INSERT') {
-            const exists = useTaskStore.getState().tasks.some(t => t.id === newData.id)
-            if (!exists) {
-              const { data } = await supabase
-                .from('tasks')
-                .select(`
-                  *,
-                  category:task_categories(*),
-                  creator:users!tasks_created_by_fkey(*)
-                `)
-                .eq('id', newData.id)
-                .single()
-              
-              if (data) {
-                addTask(data as Task)
-                setHighlightedTaskId(data.id)
-                setTimeout(() => setHighlightedTaskId(null), 2000)
-              }
-            }
-          } else if (eventType === 'UPDATE') {
-            const newStatus = newData.status
-            
-            if (newStatus === 'archived' || newStatus === 'deleted') {
-              removeTask(newData.id)
-            } else {
-              const currentTask = useTaskStore.getState().tasks.find(t => t.id === newData.id)
-              if (currentTask?.status !== newStatus || currentTask?.updated_at !== newData.updated_at) {
-                const { data } = await supabase
-                  .from('tasks')
-                  .select(`
-                    *,
-                    category:task_categories(*),
-                    creator:users!tasks_created_by_fkey(*)
-                  `)
-                  .eq('id', newData.id)
-                  .single()
-                
-                if (data) {
-                  updateTask(newData.id, data as Task)
-                }
-              }
-            }
-          } else if (eventType === 'DELETE') {
-            removeTask(oldData.id)
-          }
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-      realtimeRef.current = false
     }
   }, [currentFamilyId])
 
@@ -157,7 +80,7 @@ export function TasksSection() {
           family_id: currentFamilyId,
           created_by: user.id,
           title: taskData.title,
-          description: taskData.description || null,
+          description: taskData.description,
           type: taskData.type,
           category_id: taskData.category_id,
           quantity: taskData.quantity,
@@ -173,11 +96,9 @@ export function TasksSection() {
         .single()
 
       if (!error && data) {
-        if (!tasks.some(t => t.id === data.id)) {
-          addTask(data as Task)
-          setHighlightedTaskId(data.id)
-          setTimeout(() => setHighlightedTaskId(null), 2000)
-        }
+        setTasks([data as Task, ...tasks])
+        setHighlightedTaskId(data.id)
+        setTimeout(() => setHighlightedTaskId(null), 2000)
       }
     } catch (error) {
       console.error('Error creating task:', error)
@@ -185,15 +106,9 @@ export function TasksSection() {
   }
 
   const handleCompleteTask = async (taskId: string) => {
-    updateTask(taskId, {
-      status: 'completed',
-      completed_by: user?.id || null,
-      completed_at: new Date().toISOString(),
-    } as any)
-
     try {
       const supabase = getSupabaseClient()
-      await supabase
+      const { error } = await supabase
         .from('tasks')
         .update({
           status: 'completed',
@@ -201,26 +116,25 @@ export function TasksSection() {
           completed_at: new Date().toISOString(),
         })
         .eq('id', taskId)
+
+      if (!error) {
+        setTasks(
+          tasks.map((t) =>
+            t.id === taskId
+              ? { ...t, status: 'completed', completed_by: user?.id || null, completed_at: new Date().toISOString() }
+              : t
+          )
+        )
+      }
     } catch (error) {
       console.error('Error completing task:', error)
-      updateTask(taskId, {
-        status: 'active',
-        completed_by: null,
-        completed_at: null,
-      } as any)
     }
   }
 
   const handleUncompleteTask = async (taskId: string) => {
-    updateTask(taskId, {
-      status: 'active',
-      completed_by: null,
-      completed_at: null,
-    } as any)
-
     try {
       const supabase = getSupabaseClient()
-      await supabase
+      const { error } = await supabase
         .from('tasks')
         .update({
           status: 'active',
@@ -228,50 +142,62 @@ export function TasksSection() {
           completed_at: null,
         })
         .eq('id', taskId)
+
+      if (!error) {
+        setTasks(
+          tasks.map((t) =>
+            t.id === taskId
+              ? { ...t, status: 'active' as const, completed_by: null, completed_at: null }
+              : t
+          )
+        )
+      }
     } catch (error) {
       console.error('Error uncompleting task:', error)
-      updateTask(taskId, {
-        status: 'completed',
-        completed_by: user?.id || null,
-        completed_at: new Date().toISOString(),
-      } as any)
     }
   }
 
+  // Archive task from completed state
   const handleArchiveTask = async (taskId: string) => {
-    removeTask(taskId)
-
     try {
       const supabase = getSupabaseClient()
-      await supabase
+      const { error } = await supabase
         .from('tasks')
         .update({
           status: 'archived',
           archived_at: new Date().toISOString(),
         })
         .eq('id', taskId)
+
+      if (!error) {
+        setTasks(tasks.filter((t) => t.id !== taskId))
+      }
     } catch (error) {
       console.error('Error archiving task:', error)
     }
   }
 
+  // Delete task from active state
   const handleDeleteTask = async (taskId: string) => {
-    removeTask(taskId)
-
     try {
       const supabase = getSupabaseClient()
-      await supabase
+      const { error } = await supabase
         .from('tasks')
         .update({ status: 'deleted' })
         .eq('id', taskId)
+
+      if (!error) {
+        setTasks(tasks.filter((t) => t.id !== taskId))
+      }
     } catch (error) {
       console.error('Error deleting task:', error)
     }
   }
 
+  // No family selected
   if (!currentFamilyId) {
     return (
-      <div className="flex-1 flex items-center justify-center p-4 bg-[#f5fffa]">
+      <div className="flex-1 flex items-center justify-center p-4">
         <EmptyState
           icon={Package}
           title="Нет семьи"
@@ -282,17 +208,10 @@ export function TasksSection() {
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-[#f5fffa]">
+    <div className="flex-1 flex flex-col">
       {/* Task list */}
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-32 space-y-4">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div 
-              className="w-8 h-8 rounded-full animate-spin"
-              style={{ border: '2px solid #3E000C20', borderTopColor: '#3E000C' }}
-            />
-          </div>
-        ) : tasks.length === 0 ? (
+        {tasks.length === 0 ? (
           <EmptyState
             icon={Package}
             title="Нет задач"
@@ -316,14 +235,14 @@ export function TasksSection() {
       {/* Floating action button */}
       <button
         onClick={() => setShowTaskForm(true)}
-        className="fixed bottom-28 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 backdrop-blur-xl glass-fab"
+        className="fixed bottom-28 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95"
         style={{
-          backgroundColor: 'rgba(62, 0, 12, 0.15)',
-          boxShadow: '0 4px 30px rgba(0, 0, 0, 0.08)',
-          border: '1px solid rgba(255, 255, 255, 0.25)',
+          background: 'linear-gradient(145deg, #6C5CE7, #5F5FEF)',
+          boxShadow: '0 12px 30px rgba(108, 92, 231, 0.5), 0 6px 16px rgba(0, 0, 0, 0.4)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
         }}
       >
-        <Plus className="w-6 h-6 text-[#3E000C]" strokeWidth={2.5} />
+        <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
       </button>
 
       {/* Task form modal */}
