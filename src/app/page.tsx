@@ -83,11 +83,6 @@ export default function Home() {
           tg.ready()
         }
 
-        // Set dark theme for Telegram
-        if (tg.setHeaderColor) {
-          tg.setHeaderColor('#0C0F1E')
-        }
-
         // Get init data
         const initData = tg.initData
         const tgUser = tg.initDataUnsafe?.user
@@ -186,34 +181,17 @@ export default function Home() {
   // Loading state
   if (isLoading || !isInitialized) {
     return (
-      <div 
-        className="min-h-screen flex items-center justify-center"
-        style={{
-          background: 'linear-gradient(145deg, #0C0F1E 0%, #1A1F35 100%)',
-        }}
-      >
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="flex flex-col items-center gap-4">
-          <div 
-            className="w-12 h-12 rounded-full"
-            style={{
-              background: 'linear-gradient(145deg, #6C5CE7, #5F5FEF)',
-              boxShadow: '0 0 30px rgba(108, 92, 231, 0.4)',
-              animation: 'pulse 2s ease-in-out infinite',
-            }}
-          />
-          <p className="text-white/50">Загрузка...</p>
+          <Loader2 className="w-10 h-10 text-burgundy animate-spin" />
+          <p className="text-[#8E8E93]">Загрузка...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div 
-      className="min-h-screen flex flex-col max-w-[450px] mx-auto"
-      style={{
-        background: 'linear-gradient(145deg, #0C0F1E 0%, #1A1F35 100%)',
-      }}
-    >
+    <div className="min-h-screen bg-white flex flex-col max-w-[450px] mx-auto">
       {/* Header */}
       <Header />
 
