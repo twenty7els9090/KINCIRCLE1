@@ -1,14 +1,26 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Camera, X, ChevronRight, ChevronLeft, Package, Search, ShoppingCart, Home, MoreHorizontal, Edit3 } from 'lucide-react'
+import { useState } from 'react'
+import { Camera, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { cn } from '@/lib/utils'
-import type { TaskCategory, User, TaskItem } from '@/lib/supabase/database.types'
-import * as LucideIcons from 'lucide-react'
-import { getSupabaseClient } from '@/lib/supabase'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import type { TaskCategory, User } from '@/lib/supabase/database.types'
 
 interface TaskFormProps {
   open: boolean
@@ -32,266 +44,10 @@ export interface TaskFormData {
 const units = ['шт', 'кг', 'г', 'л', 'мл', 'уп', 'м']
 
 const taskTypes = [
-  { 
-    value: 'shopping' as const, 
-    label: 'Покупки', 
-    icon: ShoppingCart,
-  },
-  { 
-    value: 'home' as const, 
-    label: 'Дом', 
-    icon: Home,
-  },
-  { 
-    value: 'other' as const, 
-    label: 'Другое', 
-    icon: MoreHorizontal,
-  },
+  { value: 'shopping', label: '🛒 Покупки' },
+  { value: 'home', label: '🏠 Дом' },
+  { value: 'other', label: '📋 Другое' },
 ]
-
-// Dynamic icon component
-function DynamicIcon({ name, className }: { name: string; className?: string }) {
-  const Icon = (LucideIcons as Record<string, React.ComponentType<{ className?: string }>>)[name]
-  return Icon ? <Icon className={className} /> : <Package className={className} />
-}
-
-// Get image URL for item by name
-function getItemImageUrl(name: string): string | null {
-  const imageMap: Record<string, string> = {
-    // МОЛОЧНОЕ
-    'Молоко': '/images/items/milk.png',
-    'Творог': '/images/items/cottage-cheese.png',
-    'Кефир': '/images/items/kefir.png',
-    'Ряженка': '/images/items/milk.png',
-    'Йогурт': '/images/items/yogurt.png',
-    'Сметана': '/images/items/milk.png',
-    'Сливки': '/images/items/milk.png',
-    'Сливочное масло': '/images/items/butter.png',
-    'Сыр': '/images/items/cheese.png',
-    'Яйца': '/images/items/eggs.png',
-    'Сырки': '/images/items/cottage-cheese.png',
-    'Твороженный сыр': '/images/items/cheese.png',
-    'Плавленный сыр': '/images/items/cheese.png',
-    // МЯСО И РЫБА
-    'Курица': '/images/items/chicken.png',
-    'Говядина': '/images/items/beef.png',
-    'Свинина': '/images/items/beef.png',
-    'Баранина': '/images/items/beef.png',
-    'Индейка': '/images/items/chicken.png',
-    'Утка': '/images/items/chicken.png',
-    'Фарш': '/images/items/beef.png',
-    'Колбаса': '/images/items/sausage.png',
-    'Сосиски': '/images/items/sausage.png',
-    'Сардельки': '/images/items/sausage.png',
-    'Ветчина': '/images/items/sausage.png',
-    'Бекон': '/images/items/sausage.png',
-    'Рыба свежая': '/images/items/fish.png',
-    'Рыба замороженная': '/images/items/fish.png',
-    'Креветки': '/images/items/shrimp.png',
-    'Крабовое мясо': '/images/items/shrimp.png',
-    'Селедка': '/images/items/fish.png',
-    'Семга': '/images/items/fish.png',
-    'Форель': '/images/items/fish.png',
-    // БАКАЛЕЯ
-    'Мука': '/images/items/flour.png',
-    'Сахар': '/images/items/sugar.png',
-    'Соль': '/images/items/sugar.png',
-    'Рис': '/images/items/rice.png',
-    'Гречка': '/images/items/buckwheat.png',
-    'Макароны': '/images/items/pasta.png',
-    'Масло подсолнечное': '/images/items/oil.png',
-    'Масло оливковое': '/images/items/oil.png',
-    'Масло льна': '/images/items/oil.png',
-    'Уксус': '/images/items/oil.png',
-    'Соевый соус': '/images/items/oil.png',
-    'Майонез': '/images/items/oil.png',
-    'Кетчуп': '/images/items/oil.png',
-    'Горчица': '/images/items/oil.png',
-    'Хрен': '/images/items/oil.png',
-    'Специи': '/images/items/flour.png',
-    'Перец': '/images/items/flour.png',
-    'Ванилин': '/images/items/flour.png',
-    'Разрыхлитель': '/images/items/flour.png',
-    'Дрожжи': '/images/items/flour.png',
-    'Овсянка': '/images/items/buckwheat.png',
-    'Манка': '/images/items/buckwheat.png',
-    'Пшено': '/images/items/buckwheat.png',
-    'Перловка': '/images/items/buckwheat.png',
-    'Кукурузная крупа': '/images/items/buckwheat.png',
-    'Чечевица': '/images/items/beans.png',
-    'Какао': '/images/items/coffee.png',
-    'Фасоль': '/images/items/beans.png',
-    'Кукуруза консервированная': '/images/items/corn.png',
-    'Горох': '/images/items/beans.png',
-    // ОВОЩИ И ФРУКТЫ
-    'Картофель': '/images/items/potato.png',
-    'Лук': '/images/items/onion.png',
-    'Морковь': '/images/items/carrot.png',
-    'Чеснок': '/images/items/onion.png',
-    'Капуста': '/images/items/vegetables.png',
-    'Свекла': '/images/items/carrot.png',
-    'Огурцы': '/images/items/cucumber.png',
-    'Помидоры': '/images/items/tomato.png',
-    'Перец болгарский': '/images/items/vegetables.png',
-    'Баклажаны': '/images/items/vegetables.png',
-    'Кабачки': '/images/items/vegetables.png',
-    'Тыква': '/images/items/vegetables.png',
-    'Зелень': '/images/items/vegetables.png',
-    'Салат': '/images/items/vegetables.png',
-    'Укроп': '/images/items/vegetables.png',
-    'Петрушка': '/images/items/vegetables.png',
-    'Кинза': '/images/items/vegetables.png',
-    'Базилик': '/images/items/vegetables.png',
-    'Яблоки': '/images/items/apple.png',
-    'Груши': '/images/items/apple.png',
-    'Бананы': '/images/items/banana.png',
-    'Апельсины': '/images/items/orange.png',
-    'Лимоны': '/images/items/orange.png',
-    'Мандарины': '/images/items/orange.png',
-    'Грейпфрут': '/images/items/orange.png',
-    'Виноград': '/images/items/grapes.png',
-    'Персики': '/images/items/apple.png',
-    'Абрикосы': '/images/items/apple.png',
-    'Сливы': '/images/items/apple.png',
-    'Вишня': '/images/items/cherry.png',
-    'Черешня': '/images/items/cherry.png',
-    'Клубника': '/images/items/strawberry.png',
-    'Малина': '/images/items/raspberry.png',
-    'Ежевика': '/images/items/raspberry.png',
-    'Крыжовник': '/images/items/raspberry.png',
-    'Смородина': '/images/items/raspberry.png',
-    'Земляника': '/images/items/strawberry.png',
-    'Арбуз': '/images/items/watermelon.png',
-    'Дыня': '/images/items/watermelon.png',
-    'Киви': '/images/items/kiwi.png',
-    'Ананас': '/images/items/pineapple.png',
-    'Авокадо': '/images/items/avocado.png',
-    'Гранат': '/images/items/apple.png',
-    'Хурма': '/images/items/apple.png',
-    'Кукуруза': '/images/items/corn.png',
-    // НАПИТКИ
-    'Чай': '/images/items/tea.png',
-    'Кофе': '/images/items/coffee.png',
-    'Сок': '/images/items/juice.png',
-    'Вода минеральная': '/images/items/juice.png',
-    'Вода питьевая': '/images/items/juice.png',
-    'Газировка': '/images/items/juice.png',
-    'Лимонад': '/images/items/juice.png',
-    'Квас': '/images/items/juice.png',
-    'Компот': '/images/items/juice.png',
-    'Морс': '/images/items/juice.png',
-    // ХЛЕБ И ВЫПЕЧКА
-    'Хлеб белый': '/images/items/bread.png',
-    'Хлеб черный': '/images/items/bread.png',
-    'Батон': '/images/items/bread.png',
-    'Багет': '/images/items/bread.png',
-    'Лаваш': '/images/items/bread.png',
-    'Булочки': '/images/items/bread.png',
-    'Круассаны': '/images/items/bread.png',
-    'Пирожки': '/images/items/bread.png',
-    'Сушки': '/images/items/bread.png',
-    'Пряники': '/images/items/bread.png',
-    'Сухари': '/images/items/bread.png',
-    // СЛАДОСТИ
-    'Шоколад': '/images/items/chocolate.png',
-    'Конфеты': '/images/items/chocolate.png',
-    'Печенье': '/images/items/chocolate.png',
-    'Торт': '/images/items/chocolate.png',
-    'Пирожное': '/images/items/chocolate.png',
-    'Мороженое': '/images/items/ice-cream.png',
-    'Вафли': '/images/items/chocolate.png',
-    'Зефир': '/images/items/chocolate.png',
-    'Пастила': '/images/items/chocolate.png',
-    'Марципан': '/images/items/chocolate.png',
-    'Мед': '/images/items/honey.png',
-    'Варенье': '/images/items/honey.png',
-    'Сгущенка': '/images/items/honey.png',
-    'Сахарная пудра': '/images/items/sugar.png',
-    // МАРКЕТПЛЕЙСЫ
-    'Wildberries': '/images/items/shopping.png',
-    'Ozon': '/images/items/shopping.png',
-    'Яндекс Маркет': '/images/items/shopping.png',
-    'AliExpress': '/images/items/shopping.png',
-    'Amazon': '/images/items/shopping.png',
-    // АПТЕКА
-    'Лекарства': '/images/items/pills.png',
-    'Витамины': '/images/items/pills.png',
-    'Бинты': '/images/items/pills.png',
-    'Пластырь': '/images/items/pills.png',
-    'Вата': '/images/items/pills.png',
-    'Маски': '/images/items/pills.png',
-    'Перчатки медицинские': '/images/items/pills.png',
-    'Шприцы': '/images/items/pills.png',
-    // БЫТОВАЯ ХИМИЯ
-    'Порошок': '/images/items/detergent.png',
-    'Гель для стирки': '/images/items/detergent.png',
-    'Кондиционер для белья': '/images/items/detergent.png',
-    'Средство для мытья посуды': '/images/items/cleaning.png',
-    'Средство для окон': '/images/items/cleaning.png',
-    'Средство для пола': '/images/items/cleaning.png',
-    'Средство для ванной': '/images/items/cleaning.png',
-    'Средство для унитаза': '/images/items/cleaning.png',
-    'Отбеливатель': '/images/items/detergent.png',
-    'Пятновыводитель': '/images/items/detergent.png',
-    'Губки': '/images/items/cleaning.png',
-    'Тряпки': '/images/items/cleaning.png',
-    'Мешки для мусора': '/images/items/cleaning.png',
-    'Прочее': '/images/items/cleaning.png',
-    // УБОРКА
-    'Помыть полы': '/images/items/cleaning.png',
-    'Протереть пыль': '/images/items/cleaning.png',
-    'Помыть окна': '/images/items/cleaning.png',
-    'Пропылесосить': '/images/items/cleaning.png',
-    'Убрать в ванной': '/images/items/cleaning.png',
-    'Убрать на кухне': '/images/items/cooking.png',
-    'Разобрать шкаф': '/images/items/cleaning.png',
-    'Вынести мусор': '/images/items/cleaning.png',
-    'Постирать вещи': '/images/items/laundry.png',
-    // СТИРКА
-    'Постирать одежду': '/images/items/laundry.png',
-    'Постирать постельное': '/images/items/laundry.png',
-    'Постирать полотенца': '/images/items/laundry.png',
-    'Погладить': '/images/items/laundry.png',
-    'Отдать в химчистку': '/images/items/laundry.png',
-    // РЕМОНТ
-    'Починить кран': '/images/items/tools.png',
-    'Починить розетку': '/images/items/tools.png',
-    'Повесить полку': '/images/items/tools.png',
-    'Поменять лампочку': '/images/items/tools.png',
-    'Заклеить обои': '/images/items/tools.png',
-    'Починить дверь': '/images/items/tools.png',
-    'Покрасить': '/images/items/tools.png',
-    // САД
-    'Полить цветы': '/images/items/garden.png',
-    'Посадить растения': '/images/items/garden.png',
-    'Подстричь газон': '/images/items/garden.png',
-    'Убрать листья': '/images/items/garden.png',
-    'Удобрить': '/images/items/garden.png',
-    'Прополка': '/images/items/garden.png',
-    // ГОТОВКА
-    'Приготовить завтрак': '/images/items/cooking.png',
-    'Приготовить обед': '/images/items/cooking.png',
-    'Приготовить ужин': '/images/items/cooking.png',
-    'Испечь пирог': '/images/items/cooking.png',
-    'Сделать заготовки': '/images/items/cooking.png',
-  }
-  return imageMap[name] || null
-}
-
-// Item image component
-function ItemImage({ name, className }: { name: string; className?: string }) {
-  const imageUrl = getItemImageUrl(name)
-  if (imageUrl) {
-    return (
-      <img 
-        src={imageUrl} 
-        alt={name} 
-        className={className || 'w-10 h-10 object-contain'}
-      />
-    )
-  }
-  return <Package className={className || 'w-6 h-6 text-white/30'} />
-}
 
 export function TaskForm({
   open,
@@ -300,14 +56,8 @@ export function TaskForm({
   categories,
   isLoading,
 }: TaskFormProps) {
-  const [step, setStep] = useState(1)
-  const [taskType, setTaskType] = useState<'shopping' | 'home' | 'other' | null>(null)
+  const [taskType, setTaskType] = useState<'shopping' | 'home' | 'other'>('shopping')
   const [selectedCategory, setSelectedCategory] = useState<string>('')
-  const [selectedItem, setSelectedItem] = useState<TaskItem | null>(null)
-  const [isCustomItem, setIsCustomItem] = useState(false)
-  const [items, setItems] = useState<TaskItem[]>([])
-  const [itemsLoading, setItemsLoading] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
   const [imageUrl, setImageUrl] = useState<string>('')
   const [formData, setFormData] = useState({
     title: '',
@@ -317,130 +67,10 @@ export function TaskForm({
   })
 
   // Filter categories by type
-  const filteredCategories = taskType ? categories.filter((c) => c.type === taskType) : []
-
-  // Filter items by search query
-  const filteredItems = searchQuery 
-    ? items.filter(item => 
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : items
-
-  // Fetch items when category is selected
-  useEffect(() => {
-    if (selectedCategory && taskType) {
-      fetchItems(selectedCategory)
-    }
-  }, [selectedCategory])
-
-  const fetchItems = async (categoryId: string) => {
-    setItemsLoading(true)
-    try {
-      const supabase = getSupabaseClient()
-      const { data, error } = await supabase
-        .from('task_items')
-        .select('*')
-        .eq('category_id', categoryId)
-        .order('order', { ascending: true })
-      
-      if (error) throw error
-      setItems(data || [])
-    } catch (error) {
-      console.error('Error fetching items:', error)
-      setItems([])
-    } finally {
-      setItemsLoading(false)
-    }
-  }
-
-  const handleBack = () => {
-    if (step > 1) {
-      setStep(step - 1)
-    }
-  }
-
-  const handleTypeSelect = (type: 'shopping' | 'home' | 'other') => {
-    setTaskType(type)
-    setSelectedCategory('')
-    setSelectedItem(null)
-    setIsCustomItem(false)
-    setItems([])
-    setSearchQuery('')
-    
-    // For "other" type, auto-select the "Другое" category and go to details
-    if (type === 'other') {
-      const otherCategory = categories.find(c => c.type === 'other')
-      if (otherCategory) {
-        setSelectedCategory(otherCategory.id)
-      }
-      setIsCustomItem(true)
-      setStep(2) // Go directly to details
-    } else {
-      setStep(2)
-    }
-  }
-
-  const handleCategorySelect = (categoryId: string) => {
-    setSelectedCategory(categoryId)
-    // Auto navigate to items selection
-    setStep(3)
-  }
-
-  const handleItemSelect = (item: TaskItem) => {
-    setSelectedItem(item)
-    setIsCustomItem(false)
-    setFormData({
-      ...formData,
-      title: item.name,
-      unit: item.unit || 'шт',
-    })
-    // For shopping, go to details, for home create directly
-    if (taskType === 'shopping') {
-      setStep(4)
-    } else {
-      // For home - create immediately
-      handleSubmitWithData({
-        title: item.name,
-        type: 'home',
-        category_id: selectedCategory,
-      })
-    }
-  }
-
-  const handleCustomItem = () => {
-    setSelectedItem(null)
-    setIsCustomItem(true)
-    setFormData({
-      ...formData,
-      title: '',
-    })
-    // For shopping, go to details with photo option
-    if (taskType === 'shopping') {
-      setStep(4)
-    } else {
-      setStep(4)
-    }
-  }
-
-  const handleSubmitWithData = (data: Partial<TaskFormData>) => {
-    if (!data.title || !selectedCategory || !taskType) return
-
-    onSubmit({
-      title: data.title,
-      description: formData.description || undefined,
-      type: taskType,
-      category_id: selectedCategory,
-      quantity: formData.quantity ? parseFloat(formData.quantity) : undefined,
-      unit: taskType === 'shopping' ? formData.unit : undefined,
-      image_url: isCustomItem ? imageUrl || undefined : undefined,
-    })
-
-    resetForm()
-    onOpenChange(false)
-  }
+  const filteredCategories = categories.filter((c) => c.type === taskType)
 
   const handleSubmit = () => {
-    if (!formData.title || !selectedCategory || !taskType) return
+    if (!formData.title || !selectedCategory) return
 
     onSubmit({
       title: formData.title,
@@ -449,32 +79,19 @@ export function TaskForm({
       category_id: selectedCategory,
       quantity: formData.quantity ? parseFloat(formData.quantity) : undefined,
       unit: taskType === 'shopping' ? formData.unit : undefined,
-      image_url: isCustomItem ? imageUrl || undefined : undefined,
+      image_url: imageUrl || undefined,
     })
 
-    resetForm()
-    onOpenChange(false)
-  }
-
-  const resetForm = () => {
-    setStep(1)
-    setTaskType(null)
-    setSelectedCategory('')
-    setSelectedItem(null)
-    setIsCustomItem(false)
-    setItems([])
-    setSearchQuery('')
-    setImageUrl('')
+    // Reset form
     setFormData({
       title: '',
       description: '',
       quantity: '',
       unit: 'шт',
     })
-  }
-
-  const handleClose = () => {
-    resetForm()
+    setSelectedCategory('')
+    setImageUrl('')
+    setTaskType('shopping')
     onOpenChange(false)
   }
 
@@ -485,588 +102,172 @@ export function TaskForm({
     setImageUrl(url)
   }
 
-  const selectedCategoryData = categories.find(c => c.id === selectedCategory)
-
-  // Calculate steps for progress indicator
-  const getTotalSteps = () => {
-    if (!taskType) return 4
-    if (taskType === 'other') return 2
-    return 4
+  // Reset category when type changes
+  const handleTypeChange = (value: string) => {
+    setTaskType(value as 'shopping' | 'home' | 'other')
+    setSelectedCategory('') // Reset category when type changes
   }
 
-  if (!open) return null
+  const canSubmit = formData.title && selectedCategory
 
   return (
-    <div 
-      className="fixed inset-0 z-[60] flex flex-col"
-      style={{
-        background: 'linear-gradient(145deg, #0C0F1E 0%, #1A1F35 100%)',
-      }}
-    >
-      {/* Header */}
-      <div 
-        className="flex items-center justify-between p-4 border-b border-white/10"
-        style={{ paddingTop: '64px' }}
-      >
-        {step > 1 ? (
-          <button
-            onClick={handleBack}
-            className="p-2 -ml-2 rounded-full transition-colors hover:bg-white/10"
-          >
-            <ChevronLeft className="w-6 h-6 text-white" />
-          </button>
-        ) : (
-          <div className="w-10" />
-        )}
-        
-        <div className="flex items-center gap-1">
-          {Array.from({ length: getTotalSteps() }, (_, i) => i + 1).map((s) => (
-            <div
-              key={s}
-              className={cn(
-                'h-1 rounded-full transition-all duration-300',
-              )}
-              style={{
-                width: s === step ? 24 : 8,
-                backgroundColor: s === step ? '#6C5CE7' : 'rgba(255, 255, 255, 0.2)',
-              }}
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-burgundy">Новая задача</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Task type selector */}
+          <div className="space-y-2">
+            <Label>Тип задачи</Label>
+            <Select value={taskType} onValueChange={handleTypeChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {taskTypes.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Title */}
+          <div className="space-y-2">
+            <Label htmlFor="title">
+              {taskType === 'shopping' ? 'Что купить? *' : 'Название задачи *'}
+            </Label>
+            <Input
+              id="title"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              placeholder={
+                taskType === 'shopping'
+                  ? 'Например: Молоко, Хлеб...'
+                  : 'Название задачи'
+              }
             />
-          ))}
-        </div>
-
-        <button
-          onClick={handleClose}
-          className="p-2 -mr-2 rounded-full transition-colors hover:bg-white/10"
-        >
-          <X className="w-6 h-6 text-white" />
-        </button>
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {/* Step 1: Task Type */}
-        {step === 1 && (
-          <div className="space-y-6 pt-4">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-white">Что требуется?</h2>
-            </div>
-
-            <div className="space-y-3">
-              {taskTypes.map((type) => {
-                const Icon = type.icon
-                return (
-                  <button
-                    key={type.value}
-                    onClick={() => handleTypeSelect(type.value)}
-                    className={cn(
-                      'w-full flex items-center gap-4 p-4 rounded-2xl',
-                      'transition-all duration-200',
-                      'active:scale-[0.98]'
-                    )}
-                    style={{
-                      background: 'rgba(26, 31, 53, 0.6)',
-                      backdropFilter: 'blur(20px)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                    }}
-                  >
-                    <div 
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center"
-                      style={{
-                        background: 'linear-gradient(145deg, #6C5CE7, #5F5FEF)',
-                        boxShadow: '0 4px 15px rgba(108, 92, 231, 0.3)',
-                      }}
-                    >
-                      <Icon className="w-7 h-7 text-white" />
-                    </div>
-                    <div className="flex-1 text-left">
-                      <span className="font-semibold text-white text-lg">{type.label}</span>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-white/40" />
-                  </button>
-                )
-              })}
-            </div>
           </div>
-        )}
 
-        {/* Step 2: Category (for shopping and home) */}
-        {step === 2 && (taskType === 'shopping' || taskType === 'home') && (
-          <div className="space-y-5 pt-4">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-white">Категория</h2>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              {filteredCategories.map((category) => {
-                const isSelected = selectedCategory === category.id
-                return (
-                  <button
-                    key={category.id}
-                    onClick={() => handleCategorySelect(category.id)}
-                    className={cn(
-                      'flex flex-col items-center gap-3 p-5 rounded-2xl',
-                      'transition-all duration-200',
-                      'active:scale-[0.98]'
-                    )}
-                    style={{
-                      background: isSelected 
-                        ? 'linear-gradient(145deg, rgba(108, 92, 231, 0.3), rgba(95, 95, 239, 0.2))'
-                        : 'rgba(26, 31, 53, 0.5)',
-                      backdropFilter: 'blur(15px)',
-                      border: `1px solid ${isSelected ? 'rgba(108, 92, 231, 0.5)' : 'rgba(255, 255, 255, 0.1)'}`,
-                      boxShadow: isSelected ? '0 0 20px rgba(108, 92, 231, 0.2)' : 'none',
-                    }}
-                  >
-                    <div 
-                      className="w-20 h-20 rounded-2xl flex items-center justify-center"
-                      style={{
-                        background: isSelected 
-                          ? 'linear-gradient(145deg, #6C5CE7, #5F5FEF)'
-                          : 'rgba(255, 255, 255, 0.05)',
-                      }}
-                    >
-                      <DynamicIcon
-                        name={category.icon || 'Package'}
-                        className={cn('w-10 h-10', isSelected ? 'text-white' : 'text-white/50')}
-                      />
-                    </div>
-                    <span 
-                      className="text-sm font-semibold text-center"
-                      style={{ color: isSelected ? '#6C5CE7' : 'rgba(255, 255, 255, 0.8)' }}
-                    >
-                      {category.name}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Step 2 for other type - direct details */}
-        {step === 2 && taskType === 'other' && (
-          <div className="space-y-6 pt-4">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-white">Детали</h2>
-            </div>
-
-            <div className="space-y-4">
-              {/* Title */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-white/60">Название</label>
-                <input
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="Название задачи"
-                  className="w-full text-base px-4 py-3 rounded-xl text-white placeholder-white/30 focus:outline-none"
-                  style={{
-                    background: 'rgba(26, 31, 53, 0.5)',
-                    backdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                  }}
-                />
-              </div>
-
-              {/* Description */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-white/60">Описание</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Добавьте детали..."
-                  rows={3}
-                  className="w-full text-base px-4 py-3 rounded-xl text-white placeholder-white/30 focus:outline-none resize-none"
-                  style={{
-                    background: 'rgba(26, 31, 53, 0.5)',
-                    backdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                  }}
-                />
-              </div>
-
-              {/* Photo upload - only for "Другое" */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-white/60">Фото (опционально)</label>
-                {imageUrl ? (
-                  <div className="relative">
-                    <img
-                      src={imageUrl}
-                      alt="Task"
-                      className="w-full h-40 rounded-2xl object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setImageUrl('')}
-                      className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center"
-                      style={{
-                        background: 'rgba(108, 92, 231, 0.8)',
-                      }}
-                    >
-                      <X className="w-4 h-4 text-white" />
-                    </button>
+          {/* Category - REQUIRED dropdown */}
+          <div className="space-y-2">
+            <Label>Категория *</Label>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Выберите категорию" />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredCategories.length === 0 ? (
+                  <div className="px-2 py-4 text-center text-sm text-[#8E8E93]">
+                    Нет категорий для этого типа
                   </div>
                 ) : (
-                  <label 
-                    className="flex flex-col items-center justify-center w-full h-32 rounded-2xl cursor-pointer"
-                    style={{
-                      background: 'rgba(26, 31, 53, 0.5)',
-                      border: '2px dashed rgba(255, 255, 255, 0.2)',
-                    }}
-                  >
-                    <Camera className="w-8 h-8 text-white/40 mb-1" />
-                    <span className="text-xs text-white/40">Добавить фото</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleImageUpload}
-                    />
-                  </label>
+                  filteredCategories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))
                 )}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Quantity and unit - only for shopping */}
+          {taskType === 'shopping' && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Количество (опц.)</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={formData.quantity}
+                  onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+                  placeholder="1"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Единица</Label>
+                <Select value={formData.unit} onValueChange={(v) => setFormData({ ...formData, unit: v })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {units.map((u) => (
+                      <SelectItem key={u} value={u}>
+                        {u}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
+          )}
 
-            <button
-              onClick={handleSubmit}
-              disabled={!formData.title.trim()}
-              className="w-full h-14 rounded-xl font-semibold text-base text-white transition-all duration-200 disabled:opacity-50"
-              style={{
-                background: 'linear-gradient(145deg, #6C5CE7, #5F5FEF)',
-                boxShadow: '0 8px 20px rgba(108, 92, 231, 0.4)',
-              }}
-            >
-              Создать
-            </button>
+          {/* Description */}
+          <div className="space-y-2">
+            <Label htmlFor="description">Описание (опционально)</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Добавьте детали..."
+              rows={2}
+            />
           </div>
-        )}
 
-        {/* Step 3: Search Items (for shopping and home) */}
-        {step === 3 && (taskType === 'shopping' || taskType === 'home') && (
-          <div className="space-y-4 pt-4">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-white">Выберите</h2>
-              <p className="text-sm text-white/50 mt-1">{selectedCategoryData?.name}</p>
-            </div>
-
-            {/* Search input */}
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
-              <input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Поиск..."
-                className="w-full pl-12 h-14 rounded-xl text-base text-white placeholder-white/30 focus:outline-none"
-                style={{
-                  background: 'rgba(26, 31, 53, 0.5)',
-                  backdropFilter: 'blur(12px)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                }}
-              />
-            </div>
-
-            {/* Items grid */}
-            {itemsLoading ? (
-              <div className="flex justify-center py-8">
-                <div 
-                  className="w-8 h-8 rounded-full"
-                  style={{
-                    border: '2px solid rgba(108, 92, 231, 0.2)',
-                    borderTopColor: '#6C5CE7',
-                    animation: 'spin 1s linear infinite',
-                  }}
+          {/* Image upload */}
+          <div className="space-y-2">
+            <Label>Фото (опционально)</Label>
+            {imageUrl ? (
+              <div className="relative inline-block">
+                <img
+                  src={imageUrl}
+                  alt="Task"
+                  className="w-24 h-24 rounded-xl object-cover"
                 />
+                <button
+                  type="button"
+                  onClick={() => setImageUrl('')}
+                  className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-2 max-h-[45vh] overflow-y-auto pb-2">
-                {filteredItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => handleItemSelect(item)}
-                    className={cn(
-                      'flex flex-col items-center gap-2 p-3 rounded-xl',
-                      'transition-all duration-200',
-                      'active:scale-[0.95]'
-                    )}
-                    style={{
-                      background: 'rgba(26, 31, 53, 0.5)',
-                      border: '1px solid rgba(255, 255, 255, 0.08)',
-                    }}
-                  >
-                    <div 
-                      className="w-14 h-14 rounded-xl flex items-center justify-center overflow-hidden"
-                      style={{ background: 'rgba(255, 255, 255, 0.05)' }}
-                    >
-                      <ItemImage name={item.name} className="w-10 h-10 object-contain" />
-                    </div>
-                    <span className="text-xs text-white text-center line-clamp-2 font-medium leading-tight">
-                      {item.name}
-                    </span>
-                  </button>
-                ))}
-              </div>
+              <label className="flex items-center justify-center w-24 h-24 rounded-xl border-2 border-dashed border-[#E5E0E0] cursor-pointer hover:border-burgundy transition-colors">
+                <Camera className="w-6 h-6 text-[#8E8E93]" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                />
+              </label>
             )}
-
-            {/* Другое button */}
-            <button
-              onClick={handleCustomItem}
-              className={cn(
-                'w-full flex items-center justify-center gap-3 p-4 rounded-xl',
-                'transition-all duration-200',
-                'active:scale-[0.98]'
-              )}
-              style={{
-                background: 'rgba(108, 92, 231, 0.1)',
-                border: '2px dashed rgba(108, 92, 231, 0.4)',
-              }}
-            >
-              <Edit3 className="w-5 h-5 text-[#6C5CE7]" />
-              <span className="text-[#6C5CE7] font-semibold text-base">Другое</span>
-            </button>
           </div>
-        )}
+        </div>
 
-        {/* Step 4: Details for shopping */}
-        {step === 4 && taskType === 'shopping' && (
-          <div className="space-y-6 pt-4">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-white">Детали</h2>
-              <p className="text-sm text-white/50 mt-1">
-                {selectedCategoryData?.name}
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              {/* Title */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-white/60">Что купить?</label>
-                <input
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="Например: Молоко, Хлеб..."
-                  className="w-full text-base px-4 py-3 rounded-xl text-white placeholder-white/30 focus:outline-none"
-                  style={{
-                    background: 'rgba(26, 31, 53, 0.5)',
-                    backdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                  }}
-                />
-              </div>
-
-              {/* Quantity */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-white/60">Количество</label>
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={formData.quantity}
-                    onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
-                    placeholder="1"
-                    className="flex-1 text-base px-4 py-3 rounded-xl text-white placeholder-white/30 focus:outline-none"
-                    style={{
-                      background: 'rgba(26, 31, 53, 0.5)',
-                      backdropFilter: 'blur(12px)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                    }}
-                  />
-                  <div className="flex gap-1 flex-wrap">
-                    {units.slice(0, 4).map((u) => (
-                      <button
-                        key={u}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, unit: u })}
-                        className={cn(
-                          'px-4 py-2 rounded-xl text-sm font-semibold transition-all',
-                        )}
-                        style={{
-                          background: formData.unit === u 
-                            ? 'linear-gradient(145deg, #6C5CE7, #5F5FEF)'
-                            : 'rgba(255, 255, 255, 0.1)',
-                          color: '#FFFFFF',
-                        }}
-                      >
-                        {u}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Description */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-white/60">Описание</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Добавьте детали..."
-                  rows={2}
-                  className="w-full text-base px-4 py-3 rounded-xl text-white placeholder-white/30 focus:outline-none resize-none"
-                  style={{
-                    background: 'rgba(26, 31, 53, 0.5)',
-                    backdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                  }}
-                />
-              </div>
-
-              {/* Photo upload - only for custom items */}
-              {isCustomItem && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-white/60">Фото (опционально)</label>
-                  {imageUrl ? (
-                    <div className="relative">
-                      <img
-                        src={imageUrl}
-                        alt="Task"
-                        className="w-full h-40 rounded-2xl object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setImageUrl('')}
-                        className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center"
-                        style={{
-                          background: 'rgba(108, 92, 231, 0.8)',
-                        }}
-                      >
-                        <X className="w-4 h-4 text-white" />
-                      </button>
-                    </div>
-                  ) : (
-                    <label 
-                      className="flex flex-col items-center justify-center w-full h-32 rounded-2xl cursor-pointer"
-                      style={{
-                        background: 'rgba(26, 31, 53, 0.5)',
-                        border: '2px dashed rgba(255, 255, 255, 0.2)',
-                      }}
-                    >
-                      <Camera className="w-8 h-8 text-white/40 mb-1" />
-                      <span className="text-xs text-white/40">Добавить фото</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleImageUpload}
-                      />
-                    </label>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={handleSubmit}
-              disabled={!formData.title.trim() || isLoading}
-              className="w-full h-14 rounded-xl font-semibold text-base text-white transition-all duration-200 disabled:opacity-50"
-              style={{
-                background: 'linear-gradient(145deg, #6C5CE7, #5F5FEF)',
-                boxShadow: '0 8px 20px rgba(108, 92, 231, 0.4)',
-              }}
-            >
-              {isLoading ? 'Создание...' : 'Создать'}
-            </button>
-          </div>
-        )}
-
-        {/* Step 4: Details for home */}
-        {step === 4 && taskType === 'home' && (
-          <div className="space-y-6 pt-4">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-white">Детали</h2>
-              <p className="text-sm text-white/50 mt-1">{selectedCategoryData?.name}</p>
-            </div>
-
-            <div className="space-y-4">
-              {/* Title */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-white/60">Название</label>
-                <input
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="Название задачи"
-                  className="w-full text-base px-4 py-3 rounded-xl text-white placeholder-white/30 focus:outline-none"
-                  style={{
-                    background: 'rgba(26, 31, 53, 0.5)',
-                    backdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                  }}
-                />
-              </div>
-
-              {/* Description */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-white/60">Описание</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Добавьте детали..."
-                  rows={3}
-                  className="w-full text-base px-4 py-3 rounded-xl text-white placeholder-white/30 focus:outline-none resize-none"
-                  style={{
-                    background: 'rgba(26, 31, 53, 0.5)',
-                    backdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                  }}
-                />
-              </div>
-
-              {/* Photo upload - only for custom items */}
-              {isCustomItem && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-white/60">Фото (опционально)</label>
-                  {imageUrl ? (
-                    <div className="relative">
-                      <img
-                        src={imageUrl}
-                        alt="Task"
-                        className="w-full h-40 rounded-2xl object-cover"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setImageUrl('')}
-                        className="absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center"
-                        style={{
-                          background: 'rgba(108, 92, 231, 0.8)',
-                        }}
-                      >
-                        <X className="w-4 h-4 text-white" />
-                      </button>
-                    </div>
-                  ) : (
-                    <label 
-                      className="flex flex-col items-center justify-center w-full h-32 rounded-2xl cursor-pointer"
-                      style={{
-                        background: 'rgba(26, 31, 53, 0.5)',
-                        border: '2px dashed rgba(255, 255, 255, 0.2)',
-                      }}
-                    >
-                      <Camera className="w-8 h-8 text-white/40 mb-1" />
-                      <span className="text-xs text-white/40">Добавить фото</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleImageUpload}
-                      />
-                    </label>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={handleSubmit}
-              disabled={!formData.title.trim()}
-              className="w-full h-14 rounded-xl font-semibold text-base text-white transition-all duration-200 disabled:opacity-50"
-              style={{
-                background: 'linear-gradient(145deg, #6C5CE7, #5F5FEF)',
-                boxShadow: '0 8px 20px rgba(108, 92, 231, 0.4)',
-              }}
-            >
-              Создать
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
+            Отмена
+          </Button>
+          <Button
+            type="button"
+            disabled={isLoading || !canSubmit}
+            style={{ backgroundColor: '#8B1E3F', color: 'white' }}
+            onClick={handleSubmit}
+          >
+            {isLoading ? 'Создание...' : 'Создать'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

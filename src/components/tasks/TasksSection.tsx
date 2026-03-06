@@ -235,11 +235,9 @@ export function TasksSection() {
       {/* Floating action button */}
       <button
         onClick={() => setShowTaskForm(true)}
-        className="fixed bottom-28 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95"
+        className="fixed bottom-28 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 bg-burgundy"
         style={{
-          background: 'linear-gradient(145deg, #6C5CE7, #5F5FEF)',
-          boxShadow: '0 12px 30px rgba(108, 92, 231, 0.5), 0 6px 16px rgba(0, 0, 0, 0.4)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: '0 4px 20px rgba(139, 30, 63, 0.3)'
         }}
       >
         <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />

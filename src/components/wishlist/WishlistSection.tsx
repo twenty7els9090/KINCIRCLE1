@@ -1,10 +1,18 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Gift, Plus, Heart, X, ChevronLeft } from 'lucide-react'
+import { Gift, Plus, Heart } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { cn } from '@/lib/utils'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { WishlistCard } from './WishlistCard'
 import { useWishlistStore, useUserStore, useFriendsStore } from '@/store'
@@ -12,13 +20,7 @@ import { getSupabaseClient } from '@/lib/supabase'
 import type { WishlistItem } from '@/lib/supabase/database.types'
 
 export function WishlistSection() {
-  const { 
-    myWishlist, 
-    setMyWishlist, 
-    addWishlistItem, 
-    updateWishlistItem, 
-    removeWishlistItem 
-  } = useWishlistStore()
+  const { myWishlist, setMyWishlist, addWishlistItem, removeWishlistItem, bookItem, unbookItem } = useWishlistStore()
   const { user } = useUserStore()
   const { friends } = useFriendsStore()
   const [isLoading, setIsLoading] = useState(false)
@@ -26,98 +28,20 @@ export function WishlistSection() {
   const [viewMode, setViewMode] = useState<'own' | 'friend'>('own')
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null)
   const [friendWishlist, setFriendWishlist] = useState<WishlistItem[]>([])
-  const [editingItem, setEditingItem] = useState<WishlistItem | null>(null)
 
+  // Form state
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     link: '',
-    price: '',
   })
 
+  // Fetch user's wishlist
   useEffect(() => {
-    if (user) {
+    if (user && viewMode === 'own') {
       fetchMyWishlist()
     }
-  }, [user])
-
-  useEffect(() => {
-    if (!user || viewMode !== 'own') return
-
-    const supabase = getSupabaseClient()
-    
-    const channel = supabase
-      .channel(`wishlist-${user.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'wishlist_items',
-          filter: `user_id=eq.${user.id}`,
-        },
-        async (payload) => {
-          const eventType = payload.eventType
-          const newData = payload.new as any
-          const oldData = payload.old as any
-
-          if (eventType === 'INSERT') {
-            if (!myWishlist.some(item => item.id === newData.id)) {
-              addWishlistItem(newData as WishlistItem)
-            }
-          } else if (eventType === 'UPDATE') {
-            updateWishlistItem(newData.id, newData as WishlistItem)
-          } else if (eventType === 'DELETE') {
-            removeWishlistItem(oldData.id)
-          }
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [user, viewMode, myWishlist, addWishlistItem, updateWishlistItem, removeWishlistItem])
-
-  useEffect(() => {
-    if (!selectedFriendId || viewMode !== 'friend') return
-
-    const supabase = getSupabaseClient()
-    
-    const channel = supabase
-      .channel(`wishlist-friend-${selectedFriendId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'wishlist_items',
-          filter: `user_id=eq.${selectedFriendId}`,
-        },
-        async (payload) => {
-          const eventType = payload.eventType
-          const newData = payload.new as any
-          const oldData = payload.old as any
-
-          if (eventType === 'INSERT') {
-            if (!friendWishlist.some(item => item.id === newData.id)) {
-              setFriendWishlist(prev => [newData as WishlistItem, ...prev])
-            }
-          } else if (eventType === 'UPDATE') {
-            setFriendWishlist(prev => 
-              prev.map(item => item.id === newData.id ? (newData as WishlistItem) : item)
-            )
-          } else if (eventType === 'DELETE') {
-            setFriendWishlist(prev => prev.filter(item => item.id !== oldData.id))
-          }
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [selectedFriendId, viewMode, friendWishlist])
+  }, [user, viewMode])
 
   const fetchMyWishlist = async () => {
     if (!user) return
@@ -173,69 +97,23 @@ export function WishlistSection() {
           title: formData.title,
           description: formData.description || null,
           link: formData.link || null,
-          price: formData.price ? parseFloat(formData.price) : null,
         })
         .select()
         .single()
 
       if (!error && data) {
-        if (!myWishlist.some(item => item.id === data.id)) {
-          addWishlistItem(data)
-        }
-        resetForm()
+        addWishlistItem(data)
+        // Reset form
+        setFormData({
+          title: '',
+          description: '',
+          link: '',
+        })
         setShowItemForm(false)
       }
     } catch (error) {
       console.error('Error creating wishlist item:', error)
     }
-  }
-
-  const handleUpdateItem = async () => {
-    if (!editingItem || !formData.title) return
-
-    try {
-      const supabase = getSupabaseClient()
-      const { data, error } = await supabase
-        .from('wishlist_items')
-        .update({
-          title: formData.title,
-          description: formData.description || null,
-          link: formData.link || null,
-          price: formData.price ? parseFloat(formData.price) : null,
-        })
-        .eq('id', editingItem.id)
-        .select()
-        .single()
-
-      if (!error && data) {
-        updateWishlistItem(editingItem.id, data)
-        resetForm()
-        setEditingItem(null)
-        setShowItemForm(false)
-      }
-    } catch (error) {
-      console.error('Error updating wishlist item:', error)
-    }
-  }
-
-  const resetForm = () => {
-    setFormData({
-      title: '',
-      description: '',
-      link: '',
-      price: '',
-    })
-  }
-
-  const handleEditItem = (item: WishlistItem) => {
-    setEditingItem(item)
-    setFormData({
-      title: item.title,
-      description: item.description || '',
-      link: item.link || '',
-      price: item.price ? item.price.toString() : '',
-    })
-    setShowItemForm(true)
   }
 
   const handleDeleteItem = async (itemId: string) => {
@@ -269,7 +147,7 @@ export function WishlistSection() {
 
       if (!error) {
         if (viewMode === 'own') {
-          updateWishlistItem(itemId, { is_booked: true, booked_by: user.id } as WishlistItem)
+          bookItem(itemId, user.id)
         } else {
           setFriendWishlist(
             friendWishlist.map((i) =>
@@ -299,7 +177,7 @@ export function WishlistSection() {
 
       if (!error) {
         if (viewMode === 'own') {
-          updateWishlistItem(itemId, { is_booked: false, booked_by: null } as WishlistItem)
+          unbookItem(itemId)
         } else {
           setFriendWishlist(
             friendWishlist.map((i) =>
@@ -319,215 +197,159 @@ export function WishlistSection() {
     fetchFriendWishlist(friendId)
   }
 
-  const handleCloseForm = () => {
-    resetForm()
-    setEditingItem(null)
-    setShowItemForm(false)
-  }
-
   const displayItems = viewMode === 'own' ? myWishlist : friendWishlist
 
   return (
-    <>
-      {/* Main content */}
-      <div className="flex-1 flex flex-col bg-[#f5fffa]">
-        {/* View mode switcher */}
-        <div className="px-4 py-3">
-          <div className="flex gap-2">
-            <button
-              onClick={() => setViewMode('own')}
-              className={cn(
-                'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200',
-              )}
-              style={{
-                backgroundColor: viewMode === 'own' ? '#3E000C' : '#FFFFFF',
-                color: viewMode === 'own' ? '#f5fffa' : '#3E000C',
-              }}
+    <div className="flex-1 flex flex-col">
+      {/* View mode switcher */}
+      <div className="px-4 py-3">
+        <div className="flex gap-2">
+          <Button
+            variant={viewMode === 'own' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('own')}
+            className={viewMode === 'own' ? 'bg-burgundy hover:bg-burgundy-light rounded-full' : 'rounded-full'}
+          >
+            <Heart className="w-4 h-4 mr-1" />
+            Мой вишлист
+          </Button>
+          {friends.length > 0 && (
+            <Button
+              variant={viewMode === 'friend' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('friend')}
+              className={viewMode === 'friend' ? 'bg-burgundy hover:bg-burgundy-light rounded-full' : 'rounded-full'}
             >
-              <Heart className="w-4 h-4" />
-              Мой Wishlist
-            </button>
-            {friends.length > 0 && (
-              <button
-                onClick={() => setViewMode('friend')}
-                className={cn(
-                  'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200',
-                )}
-                style={{
-                  backgroundColor: viewMode === 'friend' ? '#3E000C' : '#FFFFFF',
-                  color: viewMode === 'friend' ? '#f5fffa' : '#3E000C',
-                }}
-              >
-                <Gift className="w-4 h-4" />
-                Друзья
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Friend selector */}
-        {viewMode === 'friend' && (
-          <div className="px-4 py-3 overflow-x-auto">
-            <div className="flex gap-2">
-              {friends.map((friend) => (
-                <button
-                  key={friend.id}
-                  onClick={() => handleSelectFriend(friend.id)}
-                  className={cn(
-                    'flex items-center gap-2 px-4 py-2 rounded-xl whitespace-nowrap transition-all',
-                  )}
-                  style={{
-                    backgroundColor: selectedFriendId === friend.id ? '#3E000C' : '#FFFFFF',
-                    color: selectedFriendId === friend.id ? '#f5fffa' : '#3E000C',
-                  }}
-                >
-                  <span>{friend.first_name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Wishlist items */}
-        <div className="flex-1 overflow-y-auto px-4 pb-32 space-y-4">
-          {!selectedFriendId && viewMode === 'friend' ? (
-            <EmptyState
-              icon={Gift}
-              title="Выберите друга"
-              description="Посмотрите Wishlist друга, чтобы выбрать подарок"
-            />
-          ) : displayItems.length === 0 ? (
-            <EmptyState
-              icon={Gift}
-              title={viewMode === 'own' ? 'Wishlist пуст' : 'Wishlist пуст'}
-              description={
-                viewMode === 'own'
-                  ? 'Добавьте желаемые подарки'
-                  : 'У друга пока нет желаний в Wishlist'
-              }
-            />
-          ) : (
-            displayItems.map((item) => (
-              <WishlistCard
-                key={item.id}
-                item={item}
-                isOwner={viewMode === 'own'}
-                currentUserId={user?.id}
-                onBook={handleBook}
-                onUnbook={handleUnbook}
-                onDelete={handleDeleteItem}
-                onEdit={handleEditItem}
-              />
-            ))
+              <Gift className="w-4 h-4 mr-1" />
+              Друзья
+            </Button>
           )}
         </div>
+      </div>
 
-        {/* Floating action button */}
-        {viewMode === 'own' && (
-          <button
-            onClick={() => setShowItemForm(true)}
-            className="fixed bottom-28 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 backdrop-blur-xl glass-fab"
-            style={{
-              backgroundColor: 'rgba(62, 0, 12, 0.15)',
-              boxShadow: '0 4px 30px rgba(0, 0, 0, 0.08)',
-              border: '1px solid rgba(255, 255, 255, 0.25)',
-            }}
-          >
-            <Plus className="w-6 h-6 text-[#3E000C]" strokeWidth={2.5} />
-          </button>
+      {/* Friend selector */}
+      {viewMode === 'friend' && (
+        <div className="px-4 py-3 border-b border-[#F0E8E8] overflow-x-auto horizontal-scroll">
+          <div className="flex gap-2">
+            {friends.map((friend) => (
+              <button
+                key={friend.id}
+                onClick={() => handleSelectFriend(friend.id)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl whitespace-nowrap transition-all ${
+                  selectedFriendId === friend.id
+                    ? 'text-white'
+                    : 'bg-[#F8F5F5] hover:bg-[#F0E8E8]'
+                }`}
+                style={selectedFriendId === friend.id ? { backgroundColor: '#8B1E3F' } : {}}
+              >
+                <span>{friend.first_name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Wishlist items */}
+      <div className="flex-1 overflow-y-auto px-4 pb-32 space-y-4">
+        {!selectedFriendId && viewMode === 'friend' ? (
+          <EmptyState
+            icon={Gift}
+            title="Выберите друга"
+            description="Посмотрите вишлист друга, чтобы выбрать подарок"
+          />
+        ) : displayItems.length === 0 ? (
+          <EmptyState
+            icon={Gift}
+            title={viewMode === 'own' ? 'Вишлист пуст' : 'Вишлист пуст'}
+            description={
+              viewMode === 'own'
+                ? 'Добавьте желаемые подарки'
+                : 'У друга пока нет желаний в вишлисте'
+            }
+          />
+        ) : (
+          displayItems.map((item) => (
+            <WishlistCard
+              key={item.id}
+              item={item}
+              isOwner={viewMode === 'own'}
+              currentUserId={user?.id}
+              onBook={handleBook}
+              onUnbook={handleUnbook}
+              onDelete={handleDeleteItem}
+            />
+          ))
         )}
       </div>
 
-      {/* Full screen form */}
-      {showItemForm && (
-        <div className="fixed inset-0 z-[60] flex flex-col bg-[#f5fffa]">
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 bg-[#3E000C]" style={{ paddingTop: '64px' }}>
-            <button
-              onClick={handleCloseForm}
-              className="p-2 -ml-2 rounded-full bg-[#f5fffa]/10"
-            >
-              <ChevronLeft className="w-6 h-6 text-[#f5fffa]" />
-            </button>
-            
-            <h1 className="text-lg font-semibold text-[#f5fffa]">
-              {editingItem ? 'Редактировать' : 'Добавить желание'}
-            </h1>
-            
-            <button
-              onClick={handleCloseForm}
-              className="p-2 -mr-2 rounded-full bg-[#f5fffa]/10"
-            >
-              <X className="w-6 h-6 text-[#f5fffa]" />
-            </button>
-          </div>
+      {/* Floating action button (only for own wishlist) */}
+      {viewMode === 'own' && (
+        <button
+          onClick={() => setShowItemForm(true)}
+          className="fixed bottom-28 right-4 z-40 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 bg-burgundy"
+          style={{
+            boxShadow: '0 4px 20px rgba(139, 30, 63, 0.3)'
+          }}
+        >
+          <Plus className="w-6 h-6 text-white" strokeWidth={2.5} />
+        </button>
+      )}
 
-          {/* Form content */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {/* Title */}
+      {/* Item form modal */}
+      <Dialog open={showItemForm} onOpenChange={setShowItemForm}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-burgundy">Добавить желание</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#3E000C]">Название</label>
+              <Label htmlFor="title">Название *</Label>
               <Input
+                id="title"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="Что бы вы хотели?"
-                className="border-[#3E000C]/20 focus:border-[#3E000C] bg-white rounded-xl py-3"
               />
             </div>
 
-            {/* Price */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#3E000C]">Цена (₽)</label>
-              <Input
-                type="number"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                placeholder="Примерная стоимость"
-                className="border-[#3E000C]/20 focus:border-[#3E000C] bg-white rounded-xl py-3"
-              />
-            </div>
-
-            {/* Description */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-[#3E000C]">Описание</label>
+              <Label htmlFor="description">Описание</Label>
               <Textarea
+                id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Размер, цвет, детали..."
                 rows={2}
-                className="border-[#3E000C]/20 focus:border-[#3E000C] resize-none bg-white rounded-xl"
               />
             </div>
 
-            {/* Link */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[#3E000C]">Ссылка</label>
+              <Label htmlFor="link">Ссылка</Label>
               <Input
+                id="link"
                 type="url"
                 value={formData.link}
                 onChange={(e) => setFormData({ ...formData, link: e.target.value })}
                 placeholder="https://..."
-                className="border-[#3E000C]/20 focus:border-[#3E000C] bg-white rounded-xl py-3"
               />
             </div>
           </div>
 
-          {/* Submit button */}
-          <div className="p-4">
-            <button
-              onClick={editingItem ? handleUpdateItem : handleCreateItem}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowItemForm(false)}>
+              Отмена
+            </Button>
+            <Button
+              onClick={handleCreateItem}
               disabled={!formData.title}
-              className="w-full py-4 rounded-2xl font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{
-                backgroundColor: '#3E000C',
-                color: '#f5fffa',
-              }}
+              style={{ backgroundColor: '#8B1E3F', color: 'white' }}
             >
-              {editingItem ? 'Сохранить' : 'Добавить'}
-            </button>
-          </div>
-        </div>
-      )}
-    </>
+              Добавить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   )
 }

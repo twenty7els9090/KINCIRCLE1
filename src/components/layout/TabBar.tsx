@@ -6,34 +6,33 @@ import { cn } from '@/lib/utils'
 
 interface TabItem {
   id: TabId
-  icon: React.ComponentType<{ className?: string }>
   label: string
+  icon: React.ComponentType<{ className?: string }>
 }
 
 const tabs: TabItem[] = [
-  { id: 'tasks', icon: ListTodo, label: 'Задачи' },
-  { id: 'events', icon: Calendar, label: 'События' },
-  { id: 'wishlist', icon: Gift, label: 'Вишлист' },
-  { id: 'profile', icon: User, label: 'Профиль' },
+  { id: 'tasks', label: 'Задачи', icon: ListTodo },
+  { id: 'events', label: 'События', icon: Calendar },
+  { id: 'wishlist', label: 'Вишлист', icon: Gift },
+  { id: 'profile', label: 'Профиль', icon: User },
 ]
 
 export function TabBar() {
   const { activeTab, setActiveTab } = useUIStore()
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 pointer-events-none">
+    <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-4 pointer-events-none">
       <nav
         className={cn(
-          'max-w-[90%] mx-auto pointer-events-auto',
-          'rounded-full px-4 py-3',
-          'flex items-center justify-around',
+          'max-w-[350px] mx-auto pointer-events-auto',
+          'rounded-full px-2 py-2',
+          'flex items-center justify-around'
         )}
         style={{
-          background: 'rgba(26, 31, 53, 0.5)',
-          backdropFilter: 'blur(25px)',
-          WebkitBackdropFilter: 'blur(25px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: '0 -4px 30px rgba(0, 0, 0, 0.5)',
+          backgroundColor: 'rgba(255, 255, 255, 0.85)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.03), 0 4px 20px rgba(0, 0, 0, 0.05)',
         }}
       >
         {tabs.map((tab) => {
@@ -45,43 +44,25 @@ export function TabBar() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'flex flex-col items-center gap-1',
-                'px-4 py-2 rounded-full',
+                'flex items-center justify-center',
+                'p-3 rounded-full',
                 'transition-all duration-200 ease-out',
-                'active:scale-95'
+                isActive ? 'scale-110' : 'scale-100'
               )}
             >
               <div
                 className={cn(
-                  'p-2 rounded-full transition-all duration-200',
-                  isActive && 'bg-[#6C5CE7]/20'
+                  'p-2.5 rounded-full transition-all duration-200',
+                  isActive && 'bg-burgundy'
                 )}
-                style={{
-                  boxShadow: isActive
-                    ? '0 0 20px rgba(108, 92, 231, 0.3)'
-                    : 'none'
-                }}
               >
                 <Icon
                   className={cn(
-                    'w-5 h-5 transition-all duration-200',
-                    isActive 
-                      ? 'text-[#6C5CE7]' 
-                      : 'text-white/50'
+                    'w-6 h-6 transition-all duration-200',
+                    isActive ? 'text-white stroke-[2.5]' : 'text-[#8E8E93] stroke-[2]'
                   )}
-                  strokeWidth={isActive ? 2.5 : 2}
                 />
               </div>
-              <span
-                className={cn(
-                  'text-xs font-medium transition-all duration-200',
-                  isActive 
-                    ? 'text-[#6C5CE7]' 
-                    : 'text-white/50'
-                )}
-              >
-                {tab.label}
-              </span>
             </button>
           )
         })}

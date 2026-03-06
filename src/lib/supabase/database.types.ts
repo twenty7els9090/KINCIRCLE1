@@ -138,35 +138,6 @@ export interface Database {
           joined_at?: string
         }
       }
-      family_invitations: {
-        Row: {
-          id: string
-          family_id: string
-          inviter_id: string
-          invitee_id: string
-          status: 'pending' | 'accepted' | 'declined'
-          created_at: string
-          responded_at: string | null
-        }
-        Insert: {
-          id?: string
-          family_id: string
-          inviter_id: string
-          invitee_id: string
-          status?: 'pending' | 'accepted' | 'declined'
-          created_at?: string
-          responded_at?: string | null
-        }
-        Update: {
-          id?: string
-          family_id?: string
-          inviter_id?: string
-          invitee_id?: string
-          status?: 'pending' | 'accepted' | 'declined'
-          created_at?: string
-          responded_at?: string | null
-        }
-      }
       task_categories: {
         Row: {
           id: string
@@ -264,7 +235,6 @@ export interface Database {
           location: string | null
           event_date: string
           invited_users: string[] | null
-          is_public: boolean
           image_url: string | null
           created_at: string
         }
@@ -276,7 +246,6 @@ export interface Database {
           location?: string | null
           event_date: string
           invited_users?: string[] | null
-          is_public?: boolean
           image_url?: string | null
           created_at?: string
         }
@@ -288,7 +257,6 @@ export interface Database {
           location?: string | null
           event_date?: string
           invited_users?: string[] | null
-          is_public?: boolean
           image_url?: string | null
           created_at?: string
         }
@@ -400,35 +368,6 @@ export interface Database {
           created_at?: string
         }
       }
-      task_items: {
-        Row: {
-          id: string
-          category_id: string
-          name: string
-          image_url: string | null
-          unit: string
-          order: number
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          category_id: string
-          name: string
-          image_url?: string | null
-          unit?: string
-          order?: number
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          category_id?: string
-          name?: string
-          image_url?: string | null
-          unit?: string
-          order?: number
-          created_at?: string
-        }
-      }
     }
     Views: {
       [_ in never]: never
@@ -462,9 +401,6 @@ export type FamilyGroupInsert = Database['public']['Tables']['family_groups']['I
 
 export type FamilyMember = Database['public']['Tables']['family_members']['Row']
 export type FamilyMemberInsert = Database['public']['Tables']['family_members']['Insert']
-
-export type FamilyInvitation = Database['public']['Tables']['family_invitations']['Row']
-export type FamilyInvitationInsert = Database['public']['Tables']['family_invitations']['Insert']
 
 export type TaskCategory = Database['public']['Tables']['task_categories']['Row']
 export type TaskCategoryInsert = Database['public']['Tables']['task_categories']['Insert']
@@ -514,9 +450,4 @@ export type UserWithFriends = User & {
 
 export type WishlistItemWithOwner = WishlistItem & {
   owner: User
-}
-
-export type TaskItem = Database['public']['Tables']['task_items']['Row']
-export type TaskItemWithCategory = TaskItem & {
-  category: TaskCategory
 }

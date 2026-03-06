@@ -39,67 +39,36 @@ export function Header({ onNotificationsClick, onSettingsClick }: HeaderProps) {
   }
 
   return (
-    <header 
-      className="sticky top-0 z-40"
-      style={{
-        paddingTop: '64px',
-        background: 'linear-gradient(180deg, rgba(12, 15, 30, 0.95) 0%, rgba(12, 15, 30, 0.8) 100%)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-      }}
-    >
-      <div className="max-w-[450px] mx-auto px-4 pb-3">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-[#F0E8E8]">
+      <div className="max-w-[450px] mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Left: Family selector or App name */}
           <div className="flex items-center gap-2">
             {activeTab === 'tasks' && families.length > 0 ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button 
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                    style={{
-                      background: 'rgba(26, 31, 53, 0.6)',
-                      backdropFilter: 'blur(10px)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                    }}
-                  >
-                    <Users className="w-4 h-4 text-[#6C5CE7]" />
-                    <span className="font-medium text-white">
+                  <button className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[#F8F5F5] hover:bg-[#F0E8E8] transition-colors">
+                    <Users className="w-4 h-4 text-burgundy" />
+                    <span className="font-medium text-[#1C1C1E]">
                       {currentFamily?.name || 'Выберите семью'}
                     </span>
-                    <ChevronDown className="w-4 h-4 text-white/50" />
+                    <ChevronDown className="w-4 h-4 text-[#8E8E93]" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent 
-                  align="start" 
-                  className="w-48"
-                  style={{
-                    background: 'rgba(26, 31, 53, 0.95)',
-                    backdropFilter: 'blur(20px)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                  }}
-                >
+                <DropdownMenuContent align="start" className="w-48">
                   {families.map((family) => (
                     <DropdownMenuItem
                       key={family.id}
                       onClick={() => setCurrentFamily(family.id)}
                       className={cn(
-                        'cursor-pointer text-white hover:bg-white/10 focus:bg-white/10',
-                        family.id === currentFamilyId && 'bg-white/5'
+                        'cursor-pointer',
+                        family.id === currentFamilyId && 'bg-[#F8F5F5]'
                       )}
                     >
-                      <Users className="w-4 h-4 mr-2 text-[#6C5CE7]" />
+                      <Users className="w-4 h-4 mr-2 text-burgundy" />
                       {family.name}
                       {family.id === currentFamilyId && (
-                        <Badge 
-                          className="ml-auto text-xs"
-                          style={{
-                            background: 'rgba(108, 92, 231, 0.2)',
-                            color: '#6C5CE7',
-                            border: '1px solid rgba(108, 92, 231, 0.3)',
-                          }}
-                        >
+                        <Badge variant="secondary" className="ml-auto text-xs">
                           {family.members?.length || 0}
                         </Badge>
                       )}
@@ -108,17 +77,7 @@ export function Header({ onNotificationsClick, onSettingsClick }: HeaderProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <h1 
-                className="text-2xl font-bold"
-                style={{
-                  background: 'linear-gradient(135deg, #FFFFFF 0%, rgba(255, 255, 255, 0.8) 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}
-              >
-                {getTabTitle()}
-              </h1>
+              <h1 className="text-2xl font-bold text-burgundy">{getTabTitle()}</h1>
             )}
           </div>
 
@@ -127,48 +86,30 @@ export function Header({ onNotificationsClick, onSettingsClick }: HeaderProps) {
             {/* Notifications */}
             <button
               onClick={onNotificationsClick}
-              className="relative p-2.5 rounded-full transition-all duration-200 hover:bg-white/10 active:scale-95"
-              style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-              }}
+              className="relative p-2 rounded-xl hover:bg-[#F8F5F5] transition-colors"
             >
-              <Bell className="w-5 h-5 text-white/70" />
+              <Bell className="w-5 h-5 text-[#8E8E93]" />
               {/* Notification badge */}
-              <span 
-                className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full"
-                style={{
-                  background: '#6C5CE7',
-                  boxShadow: '0 0 8px rgba(108, 92, 231, 0.6)',
-                }}
-              />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-burgundy rounded-full" />
             </button>
 
             {/* User avatar / Settings */}
             <button
               onClick={onSettingsClick}
-              className="flex items-center gap-2 p-1 rounded-full transition-all duration-200 hover:scale-105 active:scale-95"
+              className="flex items-center gap-2 p-1 rounded-xl hover:bg-[#F8F5F5] transition-colors"
             >
-              <Avatar 
-                className="w-9 h-9"
-                style={{
-                  boxShadow: '0 0 0 2px rgba(108, 92, 231, 0.4)',
-                }}
-              >
+              <Avatar className="w-8 h-8 border-2 border-burgundy/20">
                 <AvatarImage src={user?.avatar_url || undefined} alt={user?.first_name || ''} />
-                <AvatarFallback 
-                  className="text-sm font-medium"
-                  style={{
-                    background: 'linear-gradient(145deg, #6C5CE7, #5F5FEF)',
-                    color: '#FFFFFF',
-                  }}
-                >
+                <AvatarFallback className="bg-burgundy text-white text-sm font-medium">
                   {user?.first_name?.[0]?.toUpperCase() || '?'}
                 </AvatarFallback>
               </Avatar>
             </button>
           </div>
         </div>
+
+        {/* Typing indicator */}
+        {/* <TypingIndicator /> */}
       </div>
     </header>
   )

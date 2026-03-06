@@ -4,8 +4,8 @@ import { useState } from 'react'
 import {
   Check,
   Trash2,
-  Archive,
   Package,
+  Plus,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Task, TaskCategory, User as UserType } from '@/lib/supabase/database.types'
@@ -40,9 +40,20 @@ export function TaskCard({
   isHighlighted,
 }: TaskCardProps) {
   const [isAnimating, setIsAnimating] = useState(false)
-  const [isExiting, setIsExiting] = useState(false)
 
   const isCompleted = task.status === 'completed'
+
+  // Get gradient class based on category type
+  const getGradientClass = () => {
+    switch (task.type) {
+      case 'shopping':
+        return 'gradient-shopping'
+      case 'home':
+        return 'gradient-home'
+      default:
+        return 'gradient-other'
+    }
+  }
 
   // Format quantity display
   const getQuantityDisplay = () => {
@@ -70,63 +81,72 @@ export function TaskCard({
   // Handle delete/archive click
   const handleDeleteOrArchive = (e: React.MouseEvent) => {
     e.stopPropagation()
-    setIsExiting(true)
-    
-    setTimeout(() => {
-      if (isCompleted && onArchive) {
-        onArchive(task.id)
-      } else if (!isCompleted && onDelete) {
-        onDelete(task.id)
-      }
-      setIsExiting(false)
-    }, 200)
+    if (isCompleted && onArchive) {
+      onArchive(task.id)
+    } else if (!isCompleted && onDelete) {
+      onDelete(task.id)
+    }
   }
 
   return (
     <div
       onClick={() => onClick?.(task.id)}
       className={cn(
-        'relative rounded-3xl overflow-hidden',
+        'relative rounded-[20px] overflow-hidden',
         'transition-all duration-300 ease-out',
         'cursor-pointer',
-        isHighlighted && 'ring-2 ring-[#6C5CE7]',
-        isExiting && 'animate-card-exit',
-        'animate-card-enter'
+        isHighlighted && 'ring-2 ring-burgundy',
+        isCompleted && 'opacity-85'
       )}
       style={{
-        background: 'rgba(26, 31, 53, 0.6)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        borderTop: '1px solid rgba(255, 255, 255, 0.15)',
-        boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5), 0 8px 16px rgba(0, 0, 0, 0.4)',
-        marginBottom: '12px',
+        boxShadow: '0 8px 20px rgba(0, 0, 0, 0.08)',
+        height: '220px',
       }}
     >
-      <div className="p-4">
-        {/* Top row - Category image + Action button */}
-        <div className="flex items-start justify-between mb-3">
-          {/* Category image with gradient */}
-          <div 
-            className="w-20 h-20 rounded-2xl flex items-center justify-center overflow-hidden"
-            style={{
-              background: 'linear-gradient(145deg, #6C5CE7, #5F5FEF)',
-              boxShadow: '0 8px 20px rgba(108, 92, 231, 0.3)',
-            }}
-          >
-            {task.image_url ? (
-              <img
-                src={task.image_url}
-                alt={task.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <DynamicIcon
-                name={task.category?.icon || 'Package'}
-                className="w-10 h-10 text-white/80"
-              />
-            )}
+      {/* Background image/gradient */}
+      <div
+        className={cn(
+          'absolute inset-0',
+          !task.image_url && getGradientClass()
+        )}
+      >
+        {task.image_url ? (
+          <img
+            src={task.image_url}
+            alt={task.title}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <DynamicIcon
+              name={task.category?.icon || 'Package'}
+              className="w-20 h-20 text-white/30"
+            />
           </div>
+        )}
+      </div>
+
+      {/* Overlay gradient for text readability */}
+      <div 
+        className="absolute inset-0"
+        style={{
+          background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)'
+        }}
+      />
+
+      {/* Content on top of image */}
+      <div className="absolute inset-0 flex flex-col justify-end p-4">
+        {/* Top row - badges */}
+        <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
+          {/* Category badge */}
+          {task.category && (
+            <span className={cn(
+              'px-3 py-1 rounded-full text-xs font-medium',
+              'bg-white/20 backdrop-blur-sm text-white'
+            )}>
+              {task.category.name}
+            </span>
+          )}
 
           {/* Delete/Archive button */}
           <button
@@ -136,77 +156,55 @@ export function TaskCard({
               'flex items-center justify-center',
               'transition-all duration-200',
               'hover:scale-110 active:scale-95',
-              'bg-white/10 backdrop-blur-sm',
-              'hover:bg-white/15'
+              'bg-white/20 backdrop-blur-sm'
             )}
           >
-            {isCompleted ? (
-              <Archive className="w-4 h-4 text-white/70" />
-            ) : (
-              <Trash2 className="w-4 h-4 text-white/70" />
-            )}
+            <Trash2 className="w-4 h-4 text-white" />
           </button>
         </div>
 
-        {/* Category label */}
-        {task.category && (
-          <span className="text-xs uppercase tracking-wider text-white/50 font-medium">
-            {task.category.name}
-          </span>
-        )}
+        {/* Bottom content */}
+        <div className="space-y-2">
+          {/* Title */}
+          <h3 className="text-2xl font-bold text-white drop-shadow-md">
+            {task.title}
+          </h3>
 
-        {/* Title */}
-        <h3 className="text-xl font-bold text-white mt-1">
-          {task.title}
-        </h3>
+          {/* Meta row - only quantity */}
+          {getQuantityDisplay() && (
+            <span className="text-sm text-white/80">
+              {getQuantityDisplay()}
+            </span>
+          )}
 
-        {/* Description */}
-        {task.description && (
-          <p className="text-sm text-white/50 mt-0.5 line-clamp-1">
-            {task.description}
-          </p>
-        )}
-
-        {/* Quantity */}
-        {getQuantityDisplay() && (
-          <span className="text-base font-semibold text-[#6C5CE7] mt-2 block">
-            {getQuantityDisplay()}
-          </span>
-        )}
-
-        {/* Action button */}
-        <div className="flex justify-end mt-4">
-          <button
-            onClick={handleActionClick}
-            disabled={isAnimating}
-            className={cn(
-              'flex items-center gap-2 px-6 py-2.5 rounded-full',
-              'text-sm font-medium transition-all duration-200',
-              'active:scale-[0.97]',
-              isAnimating && 'scale-105'
-            )}
-            style={{
-              background: isCompleted
-                ? 'linear-gradient(145deg, #6C5CE7, #5F5FEF)'
-                : 'rgba(108, 92, 231, 0.2)',
-              border: isCompleted
-                ? 'none'
-                : '1px solid #6C5CE7',
-              color: '#FFFFFF',
-              boxShadow: isCompleted
-                ? '0 8px 20px rgba(108, 92, 231, 0.4)'
-                : 'none',
-            }}
-          >
-            {isCompleted ? (
-              <>
-                <Check className="w-4 h-4" strokeWidth={2.5} />
-                <span>Добавлено</span>
-              </>
-            ) : (
-              <span>Добавить</span>
-            )}
-          </button>
+          {/* Action button */}
+          <div className="flex justify-end pt-2">
+            <button
+              onClick={handleActionClick}
+              disabled={isAnimating}
+              className={cn(
+                'flex items-center gap-2 px-5 py-2.5 rounded-full',
+                'text-sm font-medium transition-all duration-300',
+                'active:scale-95',
+                isAnimating && 'scale-110',
+                isCompleted
+                  ? 'bg-white text-burgundy'
+                  : 'bg-burgundy text-white hover:bg-burgundy-light'
+              )}
+            >
+              {isCompleted ? (
+                <>
+                  <Check className="w-4 h-4" strokeWidth={2.5} />
+                  <span>Добавлено</span>
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4" strokeWidth={2.5} />
+                  <span>Добавить</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>
