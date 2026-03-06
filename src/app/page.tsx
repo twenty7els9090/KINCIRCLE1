@@ -9,87 +9,22 @@ import { WishlistSection } from '@/components/wishlist/WishlistSection'
 import { ProfileSection } from '@/components/profile/ProfileSection'
 import { BirthdayReminders } from '@/components/shared/BirthdayReminders'
 import { useUIStore, useUserStore, useFriendsStore } from '@/store'
-import { getSupabaseClient } from '@/lib/supabase'
 import { Loader2 } from 'lucide-react'
 
 export default function Home() {
   const { activeTab } = useUIStore()
   const { user, setUser, setFamilies, setLoading, isLoading } = useUserStore()
-  const { friends, setFriends, setPendingRequests } = useFriendsStore()
+  const { friends } = useFriendsStore()
   const [isInitialized, setIsInitialized] = useState(false)
   const [birthdayUsers, setBirthdayUsers] = useState<any[]>([])
 
-  // Fetch friends globally
-  const fetchFriends = useCallback(async (userId: string) => {
-    try {
-      const supabase = getSupabaseClient()
-      const { data, error } = await supabase
-        .from('friendships')
-        .select(`
-          created_at,
-          friend:users!friendships_friend_id_fkey(*)
-        `)
-        .eq('user_id', userId)
-
-      if (!error && data) {
-        const friendsList = data.map((f: any) => ({
-          ...f.friend,
-          friendship_created_at: f.created_at,
-        }))
-        setFriends(friendsList)
-      }
-    } catch (error) {
-      console.error('Error fetching friends:', error)
-    }
-  }, [setFriends])
-
-  // Fetch pending friend requests
-  const fetchPendingRequests = useCallback(async (userId: string) => {
-    try {
-      const supabase = getSupabaseClient()
-      const { data: received } = await supabase
-        .from('friend_requests')
-        .select(`
-          *,
-          sender:users!friend_requests_sender_id_fkey(*),
-          receiver:users!friend_requests_receiver_id_fkey(*)
-        `)
-        .eq('receiver_id', userId)
-        .eq('status', 'pending')
-
-      if (received) {
-        setPendingRequests(received as any)
-      }
-    } catch (error) {
-      console.error('Error fetching friend requests:', error)
-    }
-  }, [setPendingRequests])
-
   const fetchUserFamilies = useCallback(async (userId: string) => {
     try {
-      const supabase = getSupabaseClient()
-      const { data, error } = await supabase
-        .from('family_members')
-        .select(`
-          *,
-          family:family_groups(
-            *,
-            members:family_members(
-              *,
-              user:users(*)
-            )
-          )
-        `)
-        .eq('user_id', userId)
-
-      if (!error && data) {
-        const familiesList = data.map((fm: any) => fm.family)
-        setFamilies(familiesList)
-        
-        // Set current family to first one if exists
-        if (familiesList.length > 0 && familiesList[0].id) {
-          useUserStore.getState().setCurrentFamily(familiesList[0].id)
-        }
+      const response = await fetch(`/api/families?userId=${userId}`)
+      const data = await response.json()
+      
+      if (data.families) {
+        setFamilies(data.families)
       }
     } catch (error) {
       console.error('Error fetching families:', error)
@@ -108,13 +43,14 @@ export default function Home() {
       
       if (data.user) {
         setUser(data.user)
-        return data.user
+        await fetchUserFamilies(data.user.id)
+        return true
       }
     } catch (error) {
       console.error('Error authenticating:', error)
     }
-    return null
-  }, [setUser])
+    return false
+  }, [setUser, fetchUserFamilies])
 
   const initializeApp = useCallback(async () => {
     setLoading(true)
@@ -136,8 +72,6 @@ export default function Home() {
         }
       }
 
-      let authenticatedUser = null
-
       if (tg) {
         console.log('Telegram WebApp detected, initializing...')
         
@@ -149,6 +83,11 @@ export default function Home() {
           tg.ready()
         }
 
+        // Set dark theme for Telegram
+        if (tg.setHeaderColor) {
+          tg.setHeaderColor('#0C0F1E')
+        }
+
         // Get init data
         const initData = tg.initData
         const tgUser = tg.initDataUnsafe?.user
@@ -156,29 +95,20 @@ export default function Home() {
         console.log('Telegram user:', tgUser)
 
         if (tgUser && initData) {
-          authenticatedUser = await authenticateWithTelegram(tgUser, initData)
-          if (authenticatedUser) {
+          const success = await authenticateWithTelegram(tgUser, initData)
+          if (success) {
             console.log('Successfully authenticated with Telegram')
           } else {
             console.log('Failed to authenticate, falling back to demo')
-            authenticatedUser = await initializeDemoMode()
+            await initializeDemoMode()
           }
         } else {
           console.log('No Telegram user data, falling back to demo')
-          authenticatedUser = await initializeDemoMode()
+          await initializeDemoMode()
         }
       } else {
         console.log('Telegram WebApp not found after retries, using demo mode')
-        authenticatedUser = await initializeDemoMode()
-      }
-
-      // Load all data after authentication
-      if (authenticatedUser) {
-        await Promise.all([
-          fetchUserFamilies(authenticatedUser.id),
-          fetchFriends(authenticatedUser.id),
-          fetchPendingRequests(authenticatedUser.id),
-        ])
+        await initializeDemoMode()
       }
     } catch (error) {
       console.error('Error initializing app:', error)
@@ -187,7 +117,7 @@ export default function Home() {
       setLoading(false)
       setIsInitialized(true)
     }
-  }, [setLoading, authenticateWithTelegram, fetchUserFamilies, fetchFriends, fetchPendingRequests])
+  }, [setLoading, authenticateWithTelegram])
 
   const initializeDemoMode = async () => {
     const demoUser = {
@@ -218,41 +148,6 @@ export default function Home() {
         user: demoUser,
       }],
     }])
-    
-    // Set current family
-    useUserStore.getState().setCurrentFamily('demo-family-id')
-
-    // Demo friends
-    setFriends([
-      {
-        id: 'demo-friend-1',
-        telegram_id: 111111111,
-        username: 'friend1',
-        first_name: 'Алексей',
-        last_name: 'Иванов',
-        avatar_url: null,
-        birthday: '1992-03-20',
-        chat_id: 111111111,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        friendship_created_at: new Date().toISOString(),
-      },
-      {
-        id: 'demo-friend-2',
-        telegram_id: 222222222,
-        username: 'friend2',
-        first_name: 'Мария',
-        last_name: 'Петрова',
-        avatar_url: null,
-        birthday: '1995-07-10',
-        chat_id: 222222222,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        friendship_created_at: new Date().toISOString(),
-      },
-    ])
-
-    return demoUser
   }
 
   // Initialize Telegram WebApp and authenticate
@@ -291,17 +186,34 @@ export default function Home() {
   // Loading state
   if (isLoading || !isInitialized) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#f5fffa' }}>
+      <div 
+        className="min-h-screen flex items-center justify-center"
+        style={{
+          background: 'linear-gradient(145deg, #0C0F1E 0%, #1A1F35 100%)',
+        }}
+      >
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 animate-spin" style={{ color: '#3E000C' }} />
-          <p style={{ color: '#3E000C60' }}>Загрузка...</p>
+          <div 
+            className="w-12 h-12 rounded-full"
+            style={{
+              background: 'linear-gradient(145deg, #6C5CE7, #5F5FEF)',
+              boxShadow: '0 0 30px rgba(108, 92, 231, 0.4)',
+              animation: 'pulse 2s ease-in-out infinite',
+            }}
+          />
+          <p className="text-white/50">Загрузка...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex flex-col max-w-[450px] mx-auto" style={{ backgroundColor: '#f5fffa' }}>
+    <div 
+      className="min-h-screen flex flex-col max-w-[450px] mx-auto"
+      style={{
+        background: 'linear-gradient(145deg, #0C0F1E 0%, #1A1F35 100%)',
+      }}
+    >
       {/* Header */}
       <Header />
 
