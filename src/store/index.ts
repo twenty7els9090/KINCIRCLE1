@@ -1,5 +1,6 @@
 export { useUserStore } from './user.store'
 export { useUIStore } from './ui.store'
+export type { TabId } from './ui.store'
 export { useTaskStore } from './tasks.store'
 export { useFriendsStore } from './friends.store'
 export { useEventsStore } from './events.store'

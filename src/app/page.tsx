@@ -83,6 +83,11 @@ export default function Home() {
           tg.ready()
         }
 
+        // Set header color for Telegram
+        if (tg.setHeaderColor) {
+          tg.setHeaderColor('#f5fffa')
+        }
+
         // Get init data
         const initData = tg.initData
         const tgUser = tg.initDataUnsafe?.user
@@ -181,17 +186,17 @@ export default function Home() {
   // Loading state
   if (isLoading || !isInitialized) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-[#f5fffa]">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 text-burgundy animate-spin" />
-          <p className="text-[#8E8E93]">Загрузка...</p>
+          <Loader2 className="w-8 h-8 animate-spin text-[#3E000C]" />
+          <p className="text-[#1a1a1a]/50">Загрузка...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col max-w-[450px] mx-auto">
+    <div className="min-h-screen flex flex-col max-w-[450px] mx-auto bg-[#f5fffa]">
       {/* Header */}
       <Header />
 

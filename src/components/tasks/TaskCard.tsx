@@ -4,8 +4,9 @@ import { useState } from 'react'
 import {
   Check,
   Trash2,
+  Archive,
   Package,
-  Plus,
+  ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Task, TaskCategory, User as UserType } from '@/lib/supabase/database.types'
@@ -40,20 +41,9 @@ export function TaskCard({
   isHighlighted,
 }: TaskCardProps) {
   const [isAnimating, setIsAnimating] = useState(false)
+  const [isExiting, setIsExiting] = useState(false)
 
   const isCompleted = task.status === 'completed'
-
-  // Get gradient class based on category type
-  const getGradientClass = () => {
-    switch (task.type) {
-      case 'shopping':
-        return 'gradient-shopping'
-      case 'home':
-        return 'gradient-home'
-      default:
-        return 'gradient-other'
-    }
-  }
 
   // Format quantity display
   const getQuantityDisplay = () => {
@@ -66,7 +56,7 @@ export function TaskCard({
   const handleActionClick = (e: React.MouseEvent) => {
     e.stopPropagation()
     setIsAnimating(true)
-    
+
     setTimeout(() => {
       setIsAnimating(false)
     }, 300)
@@ -81,132 +71,156 @@ export function TaskCard({
   // Handle delete/archive click
   const handleDeleteOrArchive = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (isCompleted && onArchive) {
-      onArchive(task.id)
-    } else if (!isCompleted && onDelete) {
-      onDelete(task.id)
-    }
+    setIsExiting(true)
+
+    setTimeout(() => {
+      if (isCompleted && onArchive) {
+        onArchive(task.id)
+      } else if (!isCompleted && onDelete) {
+        onDelete(task.id)
+      }
+      setIsExiting(false)
+    }, 200)
   }
 
   return (
     <div
       onClick={() => onClick?.(task.id)}
       className={cn(
-        'relative rounded-[20px] overflow-hidden',
-        'transition-all duration-300 ease-out',
-        'cursor-pointer',
-        isHighlighted && 'ring-2 ring-burgundy',
-        isCompleted && 'opacity-85'
+        'relative overflow-hidden',
+        'transition-all duration-300 ease-out cursor-pointer',
+        isHighlighted && 'glow-accent',
+        isExiting && 'card-exit',
+        'card-enter'
       )}
       style={{
-        boxShadow: '0 8px 20px rgba(0, 0, 0, 0.08)',
-        height: '220px',
+        background: 'rgba(255, 255, 255, 0.75)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        border: '1px solid rgba(62, 0, 12, 0.08)',
+        borderRadius: '20px',
+        boxShadow: isHighlighted
+          ? '0 8px 32px rgba(62, 0, 12, 0.12), 0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9)'
+          : '0 4px 24px rgba(62, 0, 12, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+        marginBottom: '12px',
       }}
     >
-      {/* Background image/gradient */}
-      <div
-        className={cn(
-          'absolute inset-0',
-          !task.image_url && getGradientClass()
-        )}
-      >
-        {task.image_url ? (
-          <img
-            src={task.image_url}
-            alt={task.title}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <DynamicIcon
-              name={task.category?.icon || 'Package'}
-              className="w-20 h-20 text-white/30"
-            />
-          </div>
-        )}
-      </div>
-
-      {/* Overlay gradient for text readability */}
-      <div 
-        className="absolute inset-0"
-        style={{
-          background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)'
-        }}
-      />
-
-      {/* Content on top of image */}
-      <div className="absolute inset-0 flex flex-col justify-end p-4">
-        {/* Top row - badges */}
-        <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
-          {/* Category badge */}
-          {task.category && (
-            <span className={cn(
-              'px-3 py-1 rounded-full text-xs font-medium',
-              'bg-white/20 backdrop-blur-sm text-white'
-            )}>
-              {task.category.name}
-            </span>
-          )}
-
-          {/* Delete/Archive button */}
-          <button
-            onClick={handleDeleteOrArchive}
-            className={cn(
-              'w-9 h-9 rounded-full',
-              'flex items-center justify-center',
-              'transition-all duration-200',
-              'hover:scale-110 active:scale-95',
-              'bg-white/20 backdrop-blur-sm'
-            )}
+      {/* Inner content container */}
+      <div className="p-4">
+        {/* Top row - Category image + Content + Action */}
+        <div className="flex items-center gap-4">
+          {/* Category image with gradient */}
+          <div
+            className="w-16 h-16 rounded-2xl flex items-center justify-center overflow-hidden flex-shrink-0"
+            style={{
+              background: 'linear-gradient(135deg, #3E000C 0%, #5a1525 100%)',
+              boxShadow: '0 4px 16px rgba(62, 0, 12, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
+            }}
           >
-            <Trash2 className="w-4 h-4 text-white" />
-          </button>
-        </div>
+            {task.image_url ? (
+              <img
+                src={task.image_url}
+                alt={task.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <DynamicIcon
+                name={task.category?.icon || 'Package'}
+                className="w-8 h-8 text-white/90"
+              />
+            )}
+          </div>
 
-        {/* Bottom content */}
-        <div className="space-y-2">
-          {/* Title */}
-          <h3 className="text-2xl font-bold text-white drop-shadow-md">
-            {task.title}
-          </h3>
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            {/* Category label */}
+            {task.category && (
+              <span className="text-[10px] text-[#3E000C]/50 font-semibold uppercase tracking-wider">
+                {task.category.name}
+              </span>
+            )}
 
-          {/* Meta row - only quantity */}
-          {getQuantityDisplay() && (
-            <span className="text-sm text-white/80">
-              {getQuantityDisplay()}
-            </span>
-          )}
+            {/* Title */}
+            <h3 className="text-base font-semibold text-[#1a1a1a] truncate mt-0.5">
+              {task.title}
+            </h3>
 
-          {/* Action button */}
-          <div className="flex justify-end pt-2">
+            {/* Description or quantity */}
+            {task.description ? (
+              <p className="text-sm text-[#1a1a1a]/50 truncate mt-0.5">
+                {task.description}
+              </p>
+            ) : getQuantityDisplay() ? (
+              <span className="text-sm font-semibold text-[#3E000C] mt-0.5 block">
+                {getQuantityDisplay()}
+              </span>
+            ) : null}
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Delete/Archive button */}
+            <button
+              onClick={handleDeleteOrArchive}
+              className={cn(
+                'w-9 h-9 rounded-xl',
+                'flex items-center justify-center',
+                'transition-all duration-200',
+              )}
+              style={{
+                background: 'rgba(62, 0, 12, 0.04)',
+                border: '1px solid rgba(62, 0, 12, 0.06)',
+              }}
+            >
+              {isCompleted ? (
+                <Archive className="w-4 h-4 text-[#1a1a1a]/40" />
+              ) : (
+                <Trash2 className="w-4 h-4 text-[#1a1a1a]/40" />
+              )}
+            </button>
+
+            {/* Complete/Uncomplete button */}
             <button
               onClick={handleActionClick}
               disabled={isAnimating}
               className={cn(
-                'flex items-center gap-2 px-5 py-2.5 rounded-full',
-                'text-sm font-medium transition-all duration-300',
-                'active:scale-95',
-                isAnimating && 'scale-110',
-                isCompleted
-                  ? 'bg-white text-burgundy'
-                  : 'bg-burgundy text-white hover:bg-burgundy-light'
+                'w-11 h-11 rounded-xl',
+                'flex items-center justify-center',
+                'transition-all duration-200',
+                isAnimating && 'scale-105'
               )}
+              style={{
+                background: isCompleted
+                  ? 'rgba(62, 0, 12, 0.08)'
+                  : 'linear-gradient(135deg, #3E000C 0%, #5a1525 100%)',
+                border: isCompleted
+                  ? '1px solid rgba(62, 0, 12, 0.12)'
+                  : 'none',
+                boxShadow: isCompleted
+                  ? 'none'
+                  : '0 4px 16px rgba(62, 0, 12, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
+              }}
             >
               {isCompleted ? (
-                <>
-                  <Check className="w-4 h-4" strokeWidth={2.5} />
-                  <span>Добавлено</span>
-                </>
+                <Check className="w-5 h-5 text-[#3E000C]" strokeWidth={2.5} />
               ) : (
-                <>
-                  <Plus className="w-4 h-4" strokeWidth={2.5} />
-                  <span>Добавить</span>
-                </>
+                <ChevronRight className="w-5 h-5 text-white" strokeWidth={2.5} />
               )}
             </button>
           </div>
         </div>
       </div>
+
+      {/* Completed indicator line */}
+      {isCompleted && (
+        <div
+          className="absolute bottom-0 left-0 right-0 h-1"
+          style={{
+            background: 'linear-gradient(90deg, #3E000C 0%, #5a1525 100%)',
+            opacity: 0.6,
+          }}
+        />
+      )}
     </div>
   )
 }
